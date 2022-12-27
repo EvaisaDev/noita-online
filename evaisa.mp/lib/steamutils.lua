@@ -18,4 +18,14 @@ steam_utils.getLobbyMembers = function(lobby_id)
 	return list
 end
 
+steam_utils.isInLobby = function(lobby_id, steam_id)
+	local list = steam_utils.getLobbyMembers(lobby_id)
+	for i = 1, #list do
+		if(list[i].id == steam_id)then
+			return true
+		end
+	end
+	return false
+end
+
 return steam_utils

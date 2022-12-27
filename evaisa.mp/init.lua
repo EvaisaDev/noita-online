@@ -40,7 +40,7 @@ dofile("mods/evaisa.mp/data/gamemodes.lua")
 
 function OnWorldPreUpdate()
 	if steam then 
-
+		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 		dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
 		dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
@@ -63,6 +63,11 @@ function OnWorldPreUpdate()
 
 			if(game_in_progress)then
 				gamemodes[lobby_gamemode].update(lobby_code)
+				
+				local messages = steam.networking.pollMessages() or {}
+				for k, v in ipairs(messages)do
+					print(tostring(v))
+				end
 			end
 		end
 	end
@@ -141,6 +146,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 	end
 end
 
+--[[
 function steam.networking.onP2PSessionRequest(data)
 	pretty.table(data)
 	--steam.networking.acceptP2PSessionWithUser(data.userID)
@@ -148,6 +154,14 @@ end
 
 function steam.networking.onP2PSessionConnectFail(data)
 	pretty.table(data)
+end
+]]
+
+function steam.networking.onSessionRequest(steamID)
+	--pretty.table(data)
+	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
+		steam.networking.acceptSession(steamID)
+	end
 end
 
 local get_content = ModTextFileGetContent
