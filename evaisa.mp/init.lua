@@ -146,6 +146,10 @@ function steam.networking.onP2PSessionRequest(data)
 	--steam.networking.acceptP2PSessionWithUser(data.userID)
 end
 
+function steam.networking.onP2PSessionConnectFail(data)
+	pretty.table(data)
+end
+
 local get_content = ModTextFileGetContent
 local set_content = ModTextFileSetContent
 
