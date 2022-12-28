@@ -28,4 +28,65 @@ steam_utils.isInLobby = function(lobby_id, steam_id)
 	return false
 end
 
+steam_utils.messageTypes = {
+	AllPlayers = 0,
+	OtherPlayers = 1,
+	Clients = 2,
+	Host = 3,
+}
+
+local json = dofile("mods/evaisa.mp/lib/json.lua")
+
+message_handlers = {
+	[steam_utils.messageTypes.AllPlayers] = function (data, lobby) 
+		local members = steamutils.getLobbyMembers(lobby)
+		for k, member in pairs(members)do
+			
+			local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+			if(success ~= 1)then
+				print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				pretty.table(steam.networking.getConnectionInfo(member.id))
+			end
+		end
+	end,
+	[steam_utils.messageTypes.OtherPlayers] = function (data, lobby) 
+		local members = steamutils.getLobbyMembers(lobby)
+		for k, member in pairs(members)do
+			if(member.id ~= steam.user.getSteamID())then
+				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+				if(success ~= 1)then
+					print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				end
+			end
+		end
+	end,
+	[steam_utils.messageTypes.Clients] = function (data, lobby) 
+		local members = steamutils.getLobbyMembers(lobby)
+		for k, member in pairs(members)do
+			if(member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby))then
+				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+				if(success ~= 1)then
+					print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				end
+			end
+		end
+	end,
+	[steam_utils.messageTypes.Host] = function (data, lobby) 
+		local success = tonumber(tostring(steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)))
+		if(success ~= 1)then
+			print("Failed to send message to Host (" .. tostring(success) .. ")")
+		end
+	end,
+}
+
+steam_utils.sendData = function(data, messageType, lobby)
+	local encodedData = json.stringify(data)
+	message_handlers[messageType](encodedData, lobby)
+end
+
+steam_utils.parseData = function(data)
+	local decodedData = json.parse(data)
+	return decodedData
+end
+
 return steam_utils

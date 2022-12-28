@@ -3,7 +3,7 @@
 	name="Noita Online"
 	description="Noita multiplayer framework"
 	request_no_api_restrictions="1"	
-	is_game_mode="1"
+	is_game_mode="0"
 	is_translation="0"
 	ui_newgame_name="Noita Online"
 	ui_newgame_description="A framework for writing online gamemodes in Noita"

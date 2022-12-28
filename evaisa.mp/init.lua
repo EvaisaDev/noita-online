@@ -66,7 +66,9 @@ function OnWorldPreUpdate()
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
-					print(tostring(v))
+					if(gamemodes[lobby_gamemode].message)then
+						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
+					end
 				end
 			end
 		end
@@ -160,7 +162,8 @@ end
 function steam.networking.onSessionRequest(steamID)
 	--pretty.table(data)
 	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
-		steam.networking.acceptSession(steamID)
+		local success = steam.networking.acceptSession(steamID)
+		GamePrint("Session accepted: "..tostring(success))
 	end
 end
 

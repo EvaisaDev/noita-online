@@ -4,12 +4,14 @@ gamemodes = {
 		enter = function(lobby) -- Runs when the player enters a lobby
 			local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 			SetWorldSeed( seed )
-			BiomeMapLoad_KeepPlayer( "mods/evaisa.mp/data/gamemode_data/coop_test/biome_map.lua", "data/biome/_pixel_scenes.xml" )
 		end,
 		start = function(lobby) -- Runs when the host presses the start game button.
 
 		end,
 		update = function(lobby) -- Runs every frame while the game is in progress.
+
+		end,
+		message = function(lobby, data, user)
 
 		end,
 	}]]
