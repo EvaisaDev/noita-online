@@ -44,7 +44,7 @@ message_handlers = {
 			
 			local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
 			if(success ~= 1)then
-				print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				pretty.table(steam.networking.getConnectionInfo(member.id))
 			end
 		end
@@ -55,7 +55,7 @@ message_handlers = {
 			if(member.id ~= steam.user.getSteamID())then
 				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
 				if(success ~= 1)then
-					print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				end
 			end
 		end
@@ -66,7 +66,7 @@ message_handlers = {
 			if(member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby))then
 				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
 				if(success ~= 1)then
-					print("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				end
 			end
 		end
@@ -74,7 +74,7 @@ message_handlers = {
 	[steam_utils.messageTypes.Host] = function (data, lobby) 
 		local success = tonumber(tostring(steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)))
 		if(success ~= 1)then
-			print("Failed to send message to Host (" .. tostring(success) .. ")")
+			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
 		end
 	end,
 }

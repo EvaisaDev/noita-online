@@ -29,7 +29,7 @@ instance = instance or nil
 activity = activity or nil
 
 
-local game_in_progress = false
+game_in_progress = false
 
 dofile("mods/evaisa.mp/files/scripts/lobby_handler.lua")
 dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
@@ -136,14 +136,29 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		
 		if(gamemodes[lobby_gamemode])then
-			gamemodes[lobby_gamemode].start(lobby_code)
+			if(gamemodes[lobby_gamemode].start)then
+				gamemodes[lobby_gamemode].start(lobby_code)
+			end
 			game_in_progress = true
+		else
+			disconnect({
+				lobbyID = lobby_code,
+				message = "Gamemode missing: "..tostring(lobby_gamemode)
+			})
 		end
 	elseif(data.fromOwner and data.message == "refresh")then
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 		if(gamemodes[lobby_gamemode])then
-			gamemodes[lobby_gamemode].enter(lobby_code)
+			game_in_progress = false
+			if(gamemodes[lobby_gamemode].refresh)then
+				gamemodes[lobby_gamemode].refresh(lobby_code)
+			end
+		else
+			disconnect({
+				lobbyID = lobby_code,
+				message = "Gamemode missing: "..tostring(lobby_gamemode)
+			})
 		end
 	end
 end

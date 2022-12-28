@@ -34,6 +34,20 @@ function handleDisconnect(data)
 	end
 end
 
+function disconnect(data)
+	msg.log("You were disconnected from the lobby.")
+	if(lobby_gamemode and gamemodes[lobby_gamemode] and gamemodes[lobby_gamemode])then
+		gamemodes[lobby_gamemode].leave()
+	end
+	steam.matchmaking.leaveLobby(data.lobbyID)
+	invite_menu_open = false
+	menu_status = status.disconnected
+	disconnect_message = data.message
+	show_lobby_code = false
+	lobby_code = nil
+	banned_members = {}
+end
+
 function handleBanCheck(user)
 	if(banned_members[tostring(user)] ~= nil)then
 		print("Disconnected member: "..tostring(user))

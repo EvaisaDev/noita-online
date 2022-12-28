@@ -223,9 +223,15 @@ local windows = {
 				end, -5100, -150, -20)
 				
 			end, true, function()
+				
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
+				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Leave lobby"))then
+					if(gamemodes[lobby_gamemode] and gamemodes[lobby_gamemode])then
+						gamemodes[lobby_gamemode].leave()
+					end
 					steam.matchmaking.leaveLobby(lobby_code)
 					initial_refreshes = 10
 					invite_menu_open = false
@@ -236,7 +242,6 @@ local windows = {
 					return
 				end
 
-				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 	
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, invite_menu_open and "< Invite players" or "> Invite players"))then
 					invite_menu_open = not invite_menu_open
@@ -248,10 +253,11 @@ local windows = {
 					invite_menu_open = false
 				end
 
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Start Game"))then
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Start Game" ) and owner == steam.user.getSteamID())then
 					gui_closed = not gui_closed
 					invite_menu_open = false
 					steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+					steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
 				end
 
 				GuiText(menu_gui, 2, 0, "--------------------")
@@ -374,6 +380,9 @@ local windows = {
 					"Friends Only"
 				}
 
+				
+				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
 				local internal_types = { "Public", "Private", "FriendsOnly"}
 				local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
 
@@ -396,14 +405,14 @@ local windows = {
 	
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Lobby type: "..lobby_types[edit_lobby_type]))then
 						edit_lobby_type = edit_lobby_type + 1
-						if(edit_lobby_type > #lobby_types)then
+						if(edit_lobby_type > #lobby_types and owner == steam.user.getSteamID())then
 							edit_lobby_type = 1
 						end
 					end
 	
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, "Gamemode: "..gamemodes[edit_lobby_gamemode].name))then
 						edit_lobby_gamemode = edit_lobby_gamemode + 1
-						if(edit_lobby_gamemode > #gamemodes)then
+						if(edit_lobby_gamemode > #gamemodes and owner == steam.user.getSteamID())then
 							edit_lobby_gamemode = 1
 						end
 					end
@@ -411,7 +420,7 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, "Lobby name: ")
 					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
-					if(lobby_name_value ~= edit_lobby_name)then
+					if(lobby_name_value ~= edit_lobby_name and owner == steam.user.getSteamID())then
 						edit_lobby_name = lobby_name_value
 					end
 					GuiLayoutEnd(menu_gui)
@@ -419,7 +428,7 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 3, "Max players: ")
 					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
-					if(slider_value ~= edit_lobby_max_players)then
+					if(slider_value ~= edit_lobby_max_players and owner == steam.user.getSteamID())then
 						edit_lobby_max_players = slider_value
 					end
 					GuiLayoutEnd(menu_gui)
@@ -427,14 +436,14 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 4, "World seed: ")
 					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 120, 10, "1234567890")
-					if(edit_lobby_seed_value ~= edit_lobby_seed)then
+					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam.user.getSteamID())then
 						edit_lobby_seed = edit_lobby_seed_value
 					end
 					GuiLayoutEnd(menu_gui)
 
 					GuiText(menu_gui, 2, 6, "--------------------")
 
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings"))then
+					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings") and owner == steam.user.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
 						steam.matchmaking.setLobbyData(lobby_code, "gamemode", tostring(edit_lobby_gamemode))
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
