@@ -17,6 +17,7 @@ local application_id = 943584660334739457LL
 --GameSDK = require("game_sdk")
 
 steam = require("luasteam")
+require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 
 pretty = require("pretty_print")
@@ -192,6 +193,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 end
 
 function OnWorldInitialized()
+	--pretty.table(physics)
 	ModTextFileGetContent = get_content
 	ModTextFileSetContent = set_content
 end
