@@ -46,8 +46,9 @@ end
 
 
 function CreateLobby(type, max_players, callback)
-
-	local type = steam.matchmaking.createLobby(type, max_players, function(e) 
+	--print("yeah?")
+	steam.matchmaking.createLobby(type, max_players, function(e) 
+		--print("did this run?")
 		if(tostring(e.result) == "1")then
 			callback(e.lobby)
 		else
@@ -571,6 +572,8 @@ local windows = {
 						steam.matchmaking.setLobbyData(code, "name", lobby_name)
 						steam.matchmaking.setLobbyData(code, "gamemode", tostring(lobby_gamemode))
 						steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
+						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[lobby_gamemode].version))
+						steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
 
 						steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
 

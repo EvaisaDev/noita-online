@@ -4,7 +4,7 @@ package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
 
-
+MP_VERSION = 1.0
 
 base64 = require("base64")
 
@@ -38,7 +38,6 @@ dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
-
 function OnWorldPreUpdate()
 	if steam then 
 		--pretty.table(steam.networking)
@@ -82,8 +81,12 @@ function steam.matchmaking.onLobbyEnter(data)
 		lobby_code = data.lobbyID
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if(gamemodes[lobby_gamemode])then
-			gamemodes[lobby_gamemode].enter(lobby_code)
+		if handleVersionCheck() then
+			if handleGamemodeVersionCheck() then
+				if(gamemodes[lobby_gamemode])then
+					gamemodes[lobby_gamemode].enter(lobby_code)
+				end
+			end
 		end
 	else
 		msg.log("Invalid lobby ID")
@@ -136,30 +139,39 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 	if(data.fromOwner and data.message == "start")then
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		
-		if(gamemodes[lobby_gamemode])then
-			if(gamemodes[lobby_gamemode].start)then
-				gamemodes[lobby_gamemode].start(lobby_code)
+		if handleVersionCheck() then
+			if handleGamemodeVersionCheck() then
+				if(gamemodes[lobby_gamemode])then
+					if(gamemodes[lobby_gamemode].start)then
+						gamemodes[lobby_gamemode].start(lobby_code)
+					end
+					game_in_progress = true
+					gui_closed = true
+				else
+					disconnect({
+						lobbyID = lobby_code,
+						message = "Gamemode missing: "..tostring(lobby_gamemode)
+					})
+				end
 			end
-			game_in_progress = true
-		else
-			disconnect({
-				lobbyID = lobby_code,
-				message = "Gamemode missing: "..tostring(lobby_gamemode)
-			})
 		end
 	elseif(data.fromOwner and data.message == "refresh")then
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if(gamemodes[lobby_gamemode])then
-			game_in_progress = false
-			if(gamemodes[lobby_gamemode].refresh)then
-				gamemodes[lobby_gamemode].refresh(lobby_code)
+		if handleVersionCheck() then
+			if handleGamemodeVersionCheck() then
+				if(gamemodes[lobby_gamemode])then
+					game_in_progress = false
+					if(gamemodes[lobby_gamemode].refresh)then
+						gamemodes[lobby_gamemode].refresh(lobby_code)
+					end
+				else
+					disconnect({
+						lobbyID = lobby_code,
+						message = "Gamemode missing: "..tostring(lobby_gamemode)
+					})
+				end
 			end
-		else
-			disconnect({
-				lobbyID = lobby_code,
-				message = "Gamemode missing: "..tostring(lobby_gamemode)
-			})
 		end
 	end
 end
@@ -187,6 +199,8 @@ local get_content = ModTextFileGetContent
 local set_content = ModTextFileSetContent
 
 function OnMagicNumbersAndWorldSeedInitialized()
+	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
+	
 	steam.init()
 
 	steam.friends.setRichPresence( "status", "Noita Online - Menu" )

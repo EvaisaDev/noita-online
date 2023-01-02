@@ -55,6 +55,54 @@ function handleBanCheck(user)
 	end
 end
 
+function handleVersionCheck()
+	local version = steam.matchmaking.getLobbyData(lobby_code, "version")
+	if(version > tostring(MP_VERSION))then
+		disconnect({
+			lobbyID = lobby_code,
+			message = "You are using an outdated version of Noita Online"
+		})
+		return false
+	elseif(version < tostring(MP_VERSION))then
+		disconnect({
+			lobbyID = lobby_code,
+			message = "The host is using an outdated version of Noita Online"
+		})
+		return false
+	end
+	return true
+end
+
+function handleGamemodeVersionCheck()
+	local gamemode_version = steam.matchmaking.getLobbyData(lobby_code, "gamemode_version")
+	local gamemode = steam.matchmaking.getLobbyData(lobby_code, "gamemode")
+	if(gamemode ~= nil and gamemode_version ~= nil)then
+		gamemode = tonumber(gamemode)
+		if(gamemodes[gamemode] ~= nil)then
+			if(gamemodes[gamemode].version > tonumber(gamemode_version))then
+				disconnect({
+					lobbyID = lobby_code,
+					message = "The host is using an outdated version of the gamemode: "..gamemodes[gamemode].name
+				})
+				return false
+			elseif(gamemodes[gamemode].version < tonumber(gamemode_version))then
+				disconnect({
+					lobbyID = lobby_code,
+					message = "You are using an outdated version of the gamemode: "..gamemodes[gamemode].name
+				})
+				return false
+			end
+		else
+			disconnect({
+				lobbyID = lobby_code,
+				message = "Gamemode missing: "..gamemodes[gamemode].name
+			})
+			return false
+		end
+	end
+	return true
+end
+
 function handleChatMessage(data)
 	--[[ 
 		example data: 
