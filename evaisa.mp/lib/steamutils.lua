@@ -81,7 +81,14 @@ message_handlers = {
 
 steam_utils.sendData = function(data, messageType, lobby)
 	local encodedData = json.stringify(data)
-	message_handlers[messageType](encodedData, lobby)
+	if(encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number"))then
+		if(type(encodedData) == "number")then
+			encodedData = tostring(encodedData)
+		end
+		message_handlers[messageType](encodedData, lobby)
+	else
+		GamePrint("Failed to send data, encodedData is nil or not a string")
+	end
 end
 
 steam_utils.parseData = function(data)

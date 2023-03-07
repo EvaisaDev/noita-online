@@ -1,5 +1,5 @@
 gamemodes = {
-	{
+	--[[{
 		name = "CoopTest",
 		version = 1,
 		enter = function(lobby) -- Runs when the player enters a lobby
@@ -11,10 +11,13 @@ gamemodes = {
 		update = function(lobby) -- Runs every frame while the game is in progress.
 
 		end,
+		leave = function(lobby)
+
+		end,
 		message = function(lobby, data, user)
 
 		end,
-	}
+	}]]
 }
 
 return gamemodes

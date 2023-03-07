@@ -8,6 +8,19 @@ function NewID(identifier)
 	return generated_id
 end
 
+
+function WorldToScreenPos(gui_input, x, y)
+    local virt_x = MagicNumbersGetValue("VIRTUAL_RESOLUTION_X")
+    local virt_y = MagicNumbersGetValue("VIRTUAL_RESOLUTION_Y")
+    local screen_width, screen_height = GuiGetScreenDimensions(gui_input)
+    local scale_x = virt_x / screen_width
+    local scale_y = virt_y / screen_height
+    local cx, cy = GameGetCameraPos()
+    local sx, sy = (x - cx) / scale_x + screen_width / 2 + 1.5, (y - cy) / scale_y + screen_height / 2
+    return sx, sy
+end
+
+
 function GetGuiMousePosition(gui)
 	local players = get_players()
 	if(players ~= nil)then

@@ -11,6 +11,26 @@ distance = {
 disconnect_message = disconnect_message or ""
 banned_members = banned_members or {}
 
+local function SplitMessage(message, characters)
+	-- split string at first space after X characters
+	-- concatenate with \n\t 
+	local split = {}
+	local i = 1
+	while i <= #message do
+		local j = i + characters
+		if j > #message then
+			j = #message
+		end
+		local k = string.find(message, " ", j)
+		if k == nil then
+			k = #message
+		end
+		table.insert(split, string.sub(message, i, k))
+		i = k + 1
+	end
+	return table.concat(split, "\n")
+end
+
 function handleDisconnect(data)
 	local message = data.message
 	local split_data = {}
@@ -25,7 +45,7 @@ function handleDisconnect(data)
 				steam.matchmaking.leaveLobby(data.lobbyID)
 				invite_menu_open = false
 				menu_status = status.disconnected
-				disconnect_message = split_data[3]
+				disconnect_message = SplitMessage(split_data[3], 30)
 				show_lobby_code = false
 				lobby_code = nil
 				banned_members = {}
@@ -42,7 +62,7 @@ function disconnect(data)
 	steam.matchmaking.leaveLobby(data.lobbyID)
 	invite_menu_open = false
 	menu_status = status.disconnected
-	disconnect_message = data.message
+	disconnect_message = SplitMessage(data.message, 30)
 	show_lobby_code = false
 	lobby_code = nil
 	banned_members = {}
@@ -73,28 +93,30 @@ function handleVersionCheck()
 	return true
 end
 
-function handleGamemodeVersionCheck()
-	local gamemode_version = steam.matchmaking.getLobbyData(lobby_code, "gamemode_version")
-	local gamemode = steam.matchmaking.getLobbyData(lobby_code, "gamemode")
+function handleGamemodeVersionCheck(lobbycode)
+	local gamemode_version = steam.matchmaking.getLobbyData(lobbycode, "gamemode_version")
+	local gamemode = steam.matchmaking.getLobbyData(lobbycode, "gamemode")
+	print("Gamemode: "..tostring(gamemode))
+	print("Version: "..tostring(gamemode_version))
 	if(gamemode ~= nil and gamemode_version ~= nil)then
 		gamemode = tonumber(gamemode)
 		if(gamemodes[gamemode] ~= nil)then
 			if(gamemodes[gamemode].version > tonumber(gamemode_version))then
 				disconnect({
-					lobbyID = lobby_code,
+					lobbyID = lobbycode,
 					message = "The host is using an outdated version of the gamemode: "..gamemodes[gamemode].name
 				})
 				return false
 			elseif(gamemodes[gamemode].version < tonumber(gamemode_version))then
 				disconnect({
-					lobbyID = lobby_code,
+					lobbyID = lobbycode,
 					message = "You are using an outdated version of the gamemode: "..gamemodes[gamemode].name
 				})
 				return false
 			end
 		else
 			disconnect({
-				lobbyID = lobby_code,
+				lobbyID = lobbycode,
 				message = "Gamemode missing: "..gamemodes[gamemode].name
 			})
 			return false
@@ -126,10 +148,10 @@ function handleChatMessage(data)
 	
 	-- check if first item is "chat"
 	if(#split_data > 1 and split_data[1] == "chat")then
-		print("Chat message received: "..data.message)
+		--print("Chat message received: "..data.message)
 		-- add remainder of data to chat_log table
 		-- reverse loop through table
-		for i = #split_data, 1, -1 do
+		for i = 1, #split_data do
 			if(i ~= 1)then
 				--table.insert(chat_log, split_data[i])
 				-- loop through chat_log and find the first index that matches a empty string ""
@@ -143,6 +165,7 @@ function handleChatMessage(data)
 				end
 				if(not was_found)then
 					-- insert at end
+					GamePrint(tostring(split_data[i]))
 					table.insert(chat_log, split_data[i])
 				end
 			end

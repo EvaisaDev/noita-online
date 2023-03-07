@@ -80,6 +80,6 @@ pretty_print.table = function(node)
     table.insert(output,output_str)
     output_str = table.concat(output)
    
-    print(output_str)
+    return output_str
 end
 return pretty_print

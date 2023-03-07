@@ -4,7 +4,7 @@ package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
 
-MP_VERSION = 1.0
+MP_VERSION = 1.1
 
 base64 = require("base64")
 
@@ -79,11 +79,17 @@ function steam.matchmaking.onLobbyEnter(data)
 	game_in_progress = false
 	if(data.response ~= 2)then
 		lobby_code = data.lobbyID
+		print("Code set to: "..tostring(lobby_code).."["..type(lobby_code).."]")
+		ModSettingSet("last_lobby_code", tostring(lobby_code))
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 		if handleVersionCheck() then
-			if handleGamemodeVersionCheck() then
+			if handleGamemodeVersionCheck(lobby_code) then
 				if(gamemodes[lobby_gamemode])then
+					game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+					if(game_in_progress)then
+						gui_closed = true
+					end
 					gamemodes[lobby_gamemode].enter(lobby_code)
 				end
 			end
@@ -104,17 +110,22 @@ end
 
 function steam.matchmaking.onGameLobbyJoinRequested(data)
 	---pretty.table(data)
-
-	steam.matchmaking.joinLobby(data.lobbyID, function(e)
-		if(e.response == 2)then
-			steam.matchmaking.leaveLobby(e.lobbyID)
-			invite_menu_open = false
-			menu_status = status.main_menu
-			initial_refreshes = 10
-			show_lobby_code = false
-			lobby_code = nil
-		end
-	end)
+	if(steam.extra.isSteamIDValid(data.lobbyID))then
+		steam.matchmaking.leaveLobby(data.lobbyID)
+		steam.matchmaking.joinLobby(data.lobbyID, function(e)
+			if(e.response == 2)then
+				steam.matchmaking.leaveLobby(e.lobbyID)
+				invite_menu_open = false
+				menu_status = status.main_menu
+				initial_refreshes = 10
+				show_lobby_code = false
+				lobby_code = nil
+			end
+		end)
+	else
+		-- force refresh
+		refreshLobbies()
+	end
 end
 
 
@@ -133,6 +144,8 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		}
 	]]
 
+	print(tostring(data.message))
+
 	handleDisconnect(data)
 	handleChatMessage(data)
 
@@ -140,7 +153,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		
 		if handleVersionCheck() then
-			if handleGamemodeVersionCheck() then
+			if handleGamemodeVersionCheck(lobby_code) then
 				if(gamemodes[lobby_gamemode])then
 					if(gamemodes[lobby_gamemode].start)then
 						gamemodes[lobby_gamemode].start(lobby_code)
@@ -159,7 +172,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 		if handleVersionCheck() then
-			if handleGamemodeVersionCheck() then
+			if handleGamemodeVersionCheck(lobby_code) then
 				if(gamemodes[lobby_gamemode])then
 					game_in_progress = false
 					if(gamemodes[lobby_gamemode].refresh)then
@@ -213,5 +226,18 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
-	print("yea")
+	local lastCode = ModSettingGet("last_lobby_code")
+	--print("Code: "..tostring(lastCode))
+	if(steam)then
+		if(lastCode ~= nil and lastCode ~= "")then
+			local lobCode = steam.extra.parseUint64(lastCode)
+			if(tostring(lobCode) ~= "0")then
+				if(steam.extra.isSteamIDValid(lobCode))then
+					steam.matchmaking.leaveLobby(lobCode)
+				end
+			end
+			ModSettingRemove("last_lobby_code")
+		end
+	end
+	--print("yea")
 end

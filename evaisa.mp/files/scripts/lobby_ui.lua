@@ -107,6 +107,7 @@ local windows = {
 
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 							if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								steam.matchmaking.leaveLobby(v)
 								steam.matchmaking.joinLobby(v, function(e)
 								end)
 							end
@@ -124,13 +125,17 @@ local windows = {
 					for k, v in ipairs(lobbies.public)do
 						local lobby_gamemode = steam.matchmaking.getLobbyData(v, "gamemode")
 						local lobby_name = steam.matchmaking.getLobbyData(v, "name")
+						local lobby_gamemode_name = steam.matchmaking.getLobbyData(v, "gamemode_name")
+						local lobby_gamemode_version = steam.matchmaking.getLobbyData(v, "gamemode_version")
+						local lobby_version = steam.matchmaking.getLobbyData(v, "version")
 
 						local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 						local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
 
 
 						GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-						if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+						if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_gamemode_name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+							steam.matchmaking.leaveLobby(v)
 							steam.matchmaking.joinLobby(v, function(e)
 							end)
 						end
@@ -447,6 +452,8 @@ local windows = {
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings") and owner == steam.user.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
 						steam.matchmaking.setLobbyData(lobby_code, "gamemode", tostring(edit_lobby_gamemode))
+						steam.matchmaking.setLobbyData(lobby_code, "gamemode_version", tostring(gamemodes[edit_lobby_gamemode].version))
+						steam.matchmaking.setLobbyData(lobby_code, "gamemode_name", tostring(gamemodes[edit_lobby_gamemode].name))
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
@@ -571,8 +578,9 @@ local windows = {
 						
 						steam.matchmaking.setLobbyData(code, "name", lobby_name)
 						steam.matchmaking.setLobbyData(code, "gamemode", tostring(lobby_gamemode))
-						steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[lobby_gamemode].version))
+						steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[lobby_gamemode].name))
+						steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 						steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
 
 						steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
@@ -704,6 +712,10 @@ local windows = {
 
 				GuiText(menu_gui, 2, 0, "Disconnected.")
 				GuiText(menu_gui, 2, 0, "Reason: "..disconnect_message)
+
+				for i = 1, 40 do
+					GuiText(menu_gui, 2, 0, " ")
+				end
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
