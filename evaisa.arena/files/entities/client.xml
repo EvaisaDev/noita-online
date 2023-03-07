@@ -1,0 +1,162 @@
+<Entity name="client" tags="client">
+
+  <VelocityComponent
+    updates_velocity="0"
+  ></VelocityComponent>
+
+  <ControlsComponent 
+    _enabled="1" 
+    enabled="0" 
+    gamepad_fire_on_thumbstick_extend="0" 
+    gamepad_fire_on_thumbstick_extend_threshold="0.7" 
+    gamepad_indirect_aiming_enabled="0" 
+    polymorph_hax="0" 
+    polymorph_next_attack_frame="0" >
+
+  </ControlsComponent>
+
+  <CharacterDataComponent 
+    platforming_type="0"
+    check_collision_max_size_x="4" 
+    check_collision_max_size_y="4" 
+    climb_over_y="4" 
+    collision_aabb_min_x="-2.0" 
+    collision_aabb_max_x="2.0" 
+    collision_aabb_min_y="-4.5" 
+    collision_aabb_max_y="2.1"
+    eff_hg_offset_y="1.28572" 
+    eff_hg_position_x="0" 
+    eff_hg_position_y="5" 
+    eff_hg_size_x="6.42857" 
+    eff_hg_size_y="5.14286" 
+    eff_hg_velocity_max_x="19.5787896514" 
+    eff_hg_velocity_max_y="-11.5714" 
+    eff_hg_velocity_min_x="-19.5714" 
+    eff_hg_velocity_min_y="-40" 
+    eff_hg_damage_min="10"
+    eff_hg_damage_max="95"
+    eff_hg_update_box2d="0"
+    eff_hg_b2force_multiplier="0.0015"
+    effect_hit_ground="1" 
+    fly_time_max="3.0"
+    fly_recharge_spd="0.4"
+    fly_recharge_spd_ground="6"
+    flying_needs_recharge="1"
+    flying_in_air_wait_frames="38"
+    flying_recharge_removal_frames="8"
+    gravity="0"
+    buoyancy_check_offset_y="-7"
+    send_transform_update_message="1"
+  ></CharacterDataComponent>
+
+  <HotspotComponent
+      _tags="hand"
+      sprite_hotspot_name="hand"
+  ></HotspotComponent>
+
+  <SpriteAnimatorComponent>
+  </SpriteAnimatorComponent>
+
+  <SpriteComponent 
+    _tags="character" 
+    alpha="1" 
+    image_file="data/enemies_gfx/player.xml" 
+    next_rect_animation="" 
+    offset_x="6" 
+    offset_y="14" 
+    rect_animation="walk" 
+    z_index="0.6"
+  ></SpriteComponent>
+
+  <HotspotComponent
+    _tags="right_arm_root"
+    sprite_hotspot_name="right_arm_start"
+    transform_with_scale="1"
+  ></HotspotComponent>
+
+  <Entity name="arm_r" tags="player_arm_r">
+
+    <SpriteComponent 
+      _tags="with_item" 
+      alpha="1" 
+      image_file="data/enemies_gfx/player_arm.xml" 
+      next_rect_animation="" 
+      rect_animation="default" 
+      z_index="0.59"
+    ></SpriteComponent>
+
+    <InheritTransformComponent
+      parent_hotspot_tag="right_arm_root"
+      only_position="1"
+    ></InheritTransformComponent>  
+
+    <HotspotComponent
+      _tags="hand"
+      sprite_hotspot_name="hand"
+      transform_with_scale="1"
+    ></HotspotComponent>
+
+  </Entity>
+
+  <HotspotComponent
+      _tags="cape_root"
+      sprite_hotspot_name="cape" >
+  </HotspotComponent>
+
+  <Entity name="cape">  
+      <Base file="data/entities/verlet_chains/cape/cape.xml">
+      </Base>  
+  </Entity>
+
+  <Inventory2Component 
+    _enabled="1" 
+    full_inventory_slots_x="8" 
+    full_inventory_slots_y="8" 
+    mSavedActiveItemIndex="0" 
+    quick_inventory_slots="1" >
+
+  </Inventory2Component>
+
+   <Entity name="inventory_quick">
+  </Entity>
+
+    <SpriteComponent
+        _tags="username"
+        image_file = "data/fonts/font_pixel_white.xml"
+        emissive = "1"
+        is_text_sprite = "1"
+        offset_x = "0"
+        offset_y = "32"
+        alpha = "1"
+        update_transform = "1"
+        update_transform_rotation = "0"
+        never_ragdollify_on_death = "1"
+        text = ""
+        has_special_scale = "1"
+        special_scale_x = "0.7"
+        special_scale_y = "0.7"
+        z_index = "-5000"
+    ></SpriteComponent>
+    <StreamingKeepAliveComponent/>
+
+  
+  <GunComponent>
+  </GunComponent>
+
+  <ItemPickUpperComponent
+    drop_items_on_death="0"
+  ></ItemPickUpperComponent>
+
+  <PlatformShooterPlayerComponent
+    center_camera_on_this_entity="0"
+    aiming_reticle_distance_from_character="60"
+    camera_max_distance_from_character="50"
+    move_camera_with_aim="0"
+    eating_area_min.x="-6"
+    eating_area_max.x="6"
+    eating_area_min.y="-4"
+    eating_area_max.y="6"
+    eating_cells_per_frame="2"
+  ></PlatformShooterPlayerComponent>
+
+</Entity>
