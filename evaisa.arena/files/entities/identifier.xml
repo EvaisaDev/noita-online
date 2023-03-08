@@ -1,0 +1,8 @@
+<Entity>
+    <LuaComponent
+        script_source_file="mods/evaisa.arena/files/scripts/projectile_identifier.lua"
+        execute_every_n_frame="1"
+        execute_on_added="0"
+        remove_after_executed="1"
+    />
+</Entity>

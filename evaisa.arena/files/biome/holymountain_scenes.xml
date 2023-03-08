@@ -1,0 +1,5 @@
+<PixelScenes>
+    <mBufferedPixelScenes>
+        <PixelScene background_filename="mods/evaisa.arena/files/pixelscenes/holymountain/background.png" colors_filename="mods/evaisa.arena/files/pixelscenes/holymountain/visuals.png" material_filename="mods/evaisa.arena/files/pixelscenes/holymountain/materials.png" pos_x="0" pos_y="0" skip_biome_checks="1" clean_area_before="1" ></PixelScene>
+    </mBufferedPixelScenes>
+</PixelScenes>

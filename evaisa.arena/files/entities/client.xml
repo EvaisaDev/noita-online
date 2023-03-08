@@ -1,4 +1,4 @@
-<Entity name="client" tags="client">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey">
 
   <VelocityComponent
     updates_velocity="0"
@@ -49,10 +49,102 @@
     send_transform_update_message="1"
   ></CharacterDataComponent>
 
+  <CharacterPlatformingComponent 
+    animation_to_play="" 
+    jump_keydown_buffer="2" 
+    jump_velocity_y="-95" 
+    jump_velocity_x="56"
+    fly_model_player="0"
+    fly_smooth_y="0"
+    fly_speed_max_up="95"
+    fly_speed_max_down="85"
+    fly_speed_mult="20"
+    fly_speed_change_spd="0.25"
+    mouse_look="0" 
+    keyboard_look="0"
+    mouse_look_buffer="1" 
+    pixel_gravity="350" 
+    run_velocity="154"
+    fly_velocity_x="52" 
+    accel_x="0.15" 
+    turning_buffer="0.5" 
+    velocity_min_x="-57" 
+    velocity_max_x="57" 
+    velocity_min_y="-200"
+    velocity_max_y="350"
+  ></CharacterPlatformingComponent>
+
+  <HitboxComponent 
+    aabb_max_x="3" 
+    aabb_max_y="4" 
+    aabb_min_x="-3" 
+    aabb_min_y="-12" 
+    is_enemy="1" 
+    is_item="0" 
+    is_player="0"
+  ></HitboxComponent>
+
+    <LiquidDisplacerComponent
+    radius="1"
+  ></LiquidDisplacerComponent>
+
+  <KickComponent>
+  </KickComponent>
+
+
+	<Base file="data/entities/base_jetpack_nosound.xml">
+
+    <ParticleEmitterComponent
+        offset.x="-2"
+        offset.y="5"
+        lifetime_min="0.0" 
+    ></ParticleEmitterComponent>
+  
+  </Base>
+
+
+    <GenomeDataComponent 
+    herd_id="0"
+    food_chain_rank="20"
+    is_predator="1"
+    berserk_dont_attack_friends="1"
+  ></GenomeDataComponent>
+
+
   <HotspotComponent
       _tags="hand"
       sprite_hotspot_name="hand"
   ></HotspotComponent>
+
+
+    <DamageModelComponent 
+    air_in_lungs="7" 
+    air_in_lungs_max="7" 
+    air_lack_of_damage="0.6" 
+    air_needed="1" 
+    falling_damage_damage_max="1.2" 
+    falling_damage_damage_min="0.1" 
+    falling_damage_height_max="250" 
+    falling_damage_height_min="70" 
+    falling_damages="0" 
+    fire_damage_amount="0.2" 
+    fire_probability_of_ignition="1" 
+    invincibility_frames="60"
+    hp="400" 
+    is_on_fire="0" 
+    materials_damage="1" 
+    materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,poison,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
+    materials_how_much_damage="0.005,0.003,0.0006,0.0009,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005,-0.005,0.0002,0.0002,0.004,0.0005,0.00001" 
+    ragdoll_filenames_file="data/ragdolls/player/filenames.txt" 
+    ragdoll_offset_y="-5"
+    ragdollify_child_entity_sprites="1"
+    blood_spray_material="blood"
+    physics_objects_damage="0"
+    critical_damage_resistance="1"
+    ><damage_multipliers
+      explosion="0.35" >
+    </damage_multipliers>
+  </DamageModelComponent>
 
   <SpriteAnimatorComponent>
   </SpriteAnimatorComponent>

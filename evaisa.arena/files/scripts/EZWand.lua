@@ -232,7 +232,7 @@ local function deserialize(str)
     return "Wrong wand import string format"
   end
   local values = string_split(str, ";")
-  if #values ~= 17 then
+  if #values < 17 then
     return "Wrong wand import string format"
   end
 
@@ -257,6 +257,30 @@ local function deserialize(str)
     tip_x = tonumber(values[16]),
     tip_y = tonumber(values[17])
   }
+
+  if #values == 18 then
+    out = {
+      props = {
+        shuffle = values[2] == "1",
+        spellsPerCast = tonumber(values[3]),
+        castDelay = tonumber(values[4]),
+        rechargeTime = tonumber(values[5]),
+        manaMax = tonumber(values[6]),
+        mana = tonumber(values[7]),
+        manaChargeSpeed = tonumber(values[8]),
+        capacity = tonumber(values[9]),
+        spread = tonumber(values[10]),
+        speedMultiplier = tonumber(values[11])
+      },
+      spells = string_split(values[12] == "-" and "" or values[12], ","),
+      always_cast_spells = string_split(values[13] == "-" and "" or values[13], ","),
+      sprite_image_file = values[14],
+      offset_x = tonumber(values[15]),
+      offset_y = tonumber(values[16]),
+      tip_x = tonumber(values[17]),
+      tip_y = tonumber(values[18])
+    }
+  end
 
   if #out.spells == 1 and out.spells[1] == "" then
     out.spells = {}
@@ -1085,7 +1109,8 @@ end
 -- Output string looks like:
 -- EZWv(version);shuffle[1|0];spellsPerCast;castDelay;rechargeTime;manaMax;mana;manaChargeSpeed;capacity;spread;speedMultiplier;
 -- SPELL_ONE,SPELL_TWO;ALWAYS_CAST_ONE,ALWAYS_CAST_TWO;sprite.png;offset_x;offset_y;tip_x;tip_y
-function wand:Serialize()
+function wand:Serialize(include_mana)
+  include_mana = include_mana or false
   local spells_string = ""
   local always_casts_string = ""
   local spells, always_casts = self:GetSpells()
@@ -1112,6 +1137,26 @@ function wand:Serialize()
   end
 
   local serialize_version = "1"
+
+  if(include_mana)then
+    return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
+      serialize_version,
+      self.shuffle and 1 or 0,
+      self.spellsPerCast,
+      self.castDelay,
+      self.rechargeTime,
+      self.manaMax,
+      self.mana,
+      self.manaChargeSpeed,
+      self.capacity,
+      self.spread,
+      self.speedMultiplier,
+      spells_string == "" and "-" or spells_string,
+      always_casts_string == "" and "-" or always_casts_string,
+      sprite_image_file, offset_x, offset_y, tip_x, tip_y
+    )
+  end
+
   return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
     serialize_version,
     self.shuffle and 1 or 0,

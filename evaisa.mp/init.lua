@@ -62,7 +62,35 @@ function OnWorldPreUpdate()
 			]]
 
 			if(game_in_progress)then
+				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
+				if(owner == steam.user.getSteamID())then
+					steam.matchmaking.setLobbyData(lobby_code, "update_seed", tostring(math.random(1, 1000000)))
+				end
+				
 				gamemodes[lobby_gamemode].update(lobby_code)
+				
+				local messages = steam.networking.pollMessages() or {}
+				for k, v in ipairs(messages)do
+					if(gamemodes[lobby_gamemode].message)then
+						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
+					end
+				end
+			end
+		end
+	end
+end
+
+function OnWorldPostUpdate()
+	if steam then 
+		--pretty.table(steam.networking)
+		lobby_code = lobby_code or nil
+
+		if(lobby_code ~= nil)then
+			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+			if(game_in_progress)then
+				gamemodes[lobby_gamemode].late_update(lobby_code)
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
@@ -226,6 +254,12 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
+
+	-- replace contents of "mods/evaisa.forcerestart/filechange.txt" with a random number between 0 and 10000000
+	--local file = io.open("mods/evaisa.forcerestart/filechange.txt", "w")
+	--file:write(math.random(0, 10000000))
+	--file:close()
+
 	local lastCode = ModSettingGet("last_lobby_code")
 	--print("Code: "..tostring(lastCode))
 	if(steam)then
@@ -237,7 +271,8 @@ function OnPlayerSpawned(player)
 				end
 			end
 			ModSettingRemove("last_lobby_code")
+			lobby_code = nil
 		end
 	end
-	--print("yea")
+
 end

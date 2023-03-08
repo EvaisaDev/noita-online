@@ -1,7 +1,31 @@
 dofile_once("data/scripts/lib/utilities.lua")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
+tween = dofile_once("mods/evaisa.arena/lib/tween.lua")
+Vector = dofile_once("mods/evaisa.arena/lib/vector.lua")
+json = dofile_once("mods/evaisa.arena/lib/json.lua")
 arenaPlayerData = {}
 arenaPlayerEntities = {}
+activeTweens = {}
+selfReady = false
+local arenaGameState = "lobby"
+
+local function addTween(start_value, end_value, num_frames, callback)
+    table.insert(activeTweens, tween.basic(start_value, end_value, num_frames, callback))
+end
+
+local function addVectorTween(start_value, end_value, num_frames, callback)
+    table.insert(activeTweens, tween.vector(start_value, end_value, num_frames, callback))
+end
+
+local function updateTweens()
+    -- iterate backwards so we can remove tweens
+    for i = #activeTweens, 1, -1 do
+        local tween = activeTweens[i]
+        if tween:update() then
+            table.remove(activeTweens, i)
+        end
+    end
+end
 
 local function KillPlayerData(user)
     if(arenaPlayerData[tostring(user)] ~= nil)then
@@ -17,11 +41,13 @@ end
 local function spawnPlayer(user, data)
     KillPlayerData(user)
     local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", data.x, data.y)
+    EntitySetName(client, tostring(user))
+    ModSettingSet("projectile_count_" .. tostring(user), 0)
     local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
     local name = steam.friends.getFriendPersonaName(user)
     ComponentSetValue2(usernameSprite, "text", name)
     ComponentSetValue2(usernameSprite, "offset_x", string.len(name) * (1.8))
-    arenaPlayerData[tostring(user)] = {entity = client, item = nil}
+    arenaPlayerData[tostring(user)] = {entity = client, item = nil, ready = false, alive = true}
     arenaPlayerEntities[tostring(user)] = client
 end
 
@@ -135,6 +161,47 @@ local function SetAimData(entity, aim_data)
     ComponentSetValue2(controlsComp, "mAimingVector", aim_data.x, aim_data.y)
 end
 
+local function GetLastProjectileData(id)
+
+    print("whar?")
+
+    local id = tostring(id)
+    local projectile_count = ModSettingGet("projectile_count_" .. id) or 0
+
+    print("projectile_count: " .. projectile_count)
+
+    if(projectile_count == 0)then
+        return nil
+    end
+
+    local projectile_data = {
+        velocity_x = ModSettingGet("projectile_" .. id .. tostring(projectile_count) .. "velocity_x"),
+        velocity_y = ModSettingGet("projectile_" .. id .. tostring(projectile_count) .. "velocity_y"),
+        position_x = ModSettingGet("projectile_" .. id .. tostring(projectile_count) .. "position_x"),
+        position_y = ModSettingGet("projectile_" .. id .. tostring(projectile_count) .. "position_y")
+    }
+
+    ModSettingSet("projectile_count_" .. id, projectile_count - 1)
+
+    print(json.stringify(projectile_data))
+    
+    return projectile_data
+end
+
+local function SetLastProjectileData(user, data)
+    local id = tostring(user)
+    local projectile_count = ModSettingGet("projectile_count_" .. id) or 0
+
+    projectile_count = projectile_count + 1
+
+    ModSettingSet("projectile_" .. id .. tostring(projectile_count) .. "velocity_x", data.velocity_x)
+    ModSettingSet("projectile_" .. id .. tostring(projectile_count) .. "velocity_y", data.velocity_y)
+    ModSettingSet("projectile_" .. id .. tostring(projectile_count) .. "position_x", data.position_x)
+    ModSettingSet("projectile_" .. id .. tostring(projectile_count) .. "position_y", data.position_y)
+
+    ModSettingSet("projectile_count_" .. id, projectile_count)
+end
+
 local EZWand = dofile("mods/evaisa.arena/files/scripts/EZWand.lua")
 
 local function GetWandData()
@@ -143,6 +210,15 @@ local function GetWandData()
         return nil
     end
     local wandData = wand:Serialize()
+    return wandData
+end
+
+local function GetWandDataMana()
+    local wand = EZWand.GetHeldWand()
+    if(wand == nil)then
+        return nil
+    end
+    local wandData = wand:Serialize(true)
     return wandData
 end
 
@@ -179,10 +255,22 @@ local function HandleData(lobby, data, user)
 
             local x, y = EntityGetTransform(playerEntity)
             local characterData = EntityGetFirstComponentIncludingDisabled(playerEntity, "CharacterDataComponent")
-            ComponentSetValue2(characterData, "mVelocity", data.velocity_x, data.velocity_y)
+            
+            local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
+
+            --[[ComponentSetValue2(characterData, "mVelocity", data.velocity_x, data.velocity_y)
             
             EntitySetTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)
-            EntityApplyTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)
+            EntityApplyTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)]]
+
+            addVectorTween(Vector.new(x, y), Vector.new(data.x, data.y), 5, function(value)
+                EntitySetTransform(playerEntity, value.x, value.y, data.r, data.w, data.h)
+                EntityApplyTransform(playerEntity, value.x, value.y, data.r, data.w, data.h)
+            end)
+
+            addVectorTween(Vector.new(vel_x, vel_y), Vector.new(data.velocity_x, data.velocity_y), 5, function(value)
+                ComponentSetValue2(characterData, "mVelocity", value.x, value.y)
+            end)
 
         elseif(data.type == "character_animation")then
 
@@ -190,23 +278,180 @@ local function HandleData(lobby, data, user)
             if(data.rectAnim)then
                 SetAnimationData(playerEntity, sprite, data.rectAnim)
             end
-        
+            --[[
             if(data.armData)then
                 SetArmData(playerEntity, data.armData)
             end
+            ]]
 
-            if(data.aimData ~= 0)then
+
+
+        elseif (data.type == "aim_data")then
+            if(data.aimData)then
                 SetAimData(playerEntity, data.aimData)
             end
-
         elseif(data.type == "wand_update")then
-            GamePrint("Wand data changed")
+            --GamePrint("Wand data changed")
             print(data.wandData)
 
             SetWandData(user, playerEntity, data.wandData)
+        elseif(data.type == "player_fired_wand")then
+            --GamePrint("Player: " .. tostring(user) .. " fired wand")
+            local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(playerEntity, "PlatformShooterPlayerComponent")
+            ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+            --[[
+            if(data.projectileData ~= nil)then
 
+                print(json.stringify(data.projectileData))
+
+                SetLastProjectileData(user, data.projectileData)
+            end
+            ]]
+
+            --EntitySave(playerEntity, "player_client.xml")
+        elseif(data.type == "player_ready_state")then
+            arenaPlayerData[tostring(user)].ready = data.state
+            GamePrint("Player: " .. tostring(user) .. " ready state: " .. tostring(data.state))
         end
     end
+end
+
+local function KillPlayer()
+    -- kill any entity with tag "player_unit"
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+    for k, v in pairs(player)do
+        EntityKill(v)
+    end
+end
+
+local function CleanAndLockPlayer()
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+    for k, v in pairs(player)do
+        GameDestroyInventoryItems( v )
+        -- disable controls component
+        local controls = EntityGetFirstComponentIncludingDisabled(v, "ControlsComponent")
+        if(controls ~= nil)then
+            ComponentSetValue2(controls, "enabled", false)
+        end
+        local characterDataComponent = EntityGetFirstComponentIncludingDisabled(v, "CharacterDataComponent")
+        if(characterDataComponent ~= nil)then
+            EntitySetComponentIsEnabled(v, characterDataComponent, false)
+        end
+        local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(v, "PlatformShooterPlayerComponent")
+        if(platformShooterPlayerComponent ~= nil)then
+            EntitySetComponentIsEnabled(v, platformShooterPlayerComponent, false)
+        end
+    end
+end
+
+local function UnlockPlayer()
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+    for k, v in pairs(player)do
+        -- disable controls component
+        local controls = EntityGetFirstComponentIncludingDisabled(v, "ControlsComponent")
+        if(controls ~= nil)then
+            ComponentSetValue2(controls, "enabled", true)
+        end
+        local characterDataComponent = EntityGetFirstComponentIncludingDisabled(v, "CharacterDataComponent")
+        if(characterDataComponent ~= nil)then
+            EntitySetComponentIsEnabled(v, characterDataComponent, true)
+        end
+        local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(v, "PlatformShooterPlayerComponent")
+        if(platformShooterPlayerComponent ~= nil)then
+            EntitySetComponentIsEnabled(v, platformShooterPlayerComponent, true)
+        end
+    end
+end
+
+local function GiveStartingGear()
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+    for k, v in pairs(player)do
+        local x, y = EntityGetTransform(v)
+        local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
+        GamePickUpInventoryItem(v, wand, false)
+        print("Wand: " .. tostring(wand))
+    end
+
+end
+
+local function SpawnPlayer(x, y)
+    --[[KillPlayer()
+
+    local player = EntityLoad("data/entities//player.xml", x, y)
+    EntitySetName(player, tostring(steam.user.getSteamID()))
+    ModSettingSet("projectile_count_" .. tostring(steam.user.getSteamID()), 0)]]
+
+    UnlockPlayer()
+
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+
+    for k, v in pairs(player)do
+        EntitySetTransform(v, x, y)
+        EntityApplyTransform(v, x, y)
+    end
+    --EntityLoadToEntity("mods/evaisa.arena/files/entities/player.xml", player)
+end
+
+local function LoadArena()
+    BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
+    BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
+    --[[local players = EntityGetWithTag("player_unit") or {}
+    if(players[1])then
+        EntityApplyTransform(players[1], 0, 0 )
+    end]]
+    
+    SpawnPlayer(0, 0)
+end
+
+local function LoadHolyMountain()
+    BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
+    BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
+    --[[local players = EntityGetWithTag("player_unit") or {}
+    if(players[1])then
+        EntityApplyTransform(players[1], 0, 0 )
+    end]]
+    SpawnPlayer(174, 133)
+end
+
+function HidePlayer(player)
+    -- disable controls component
+    local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+    if(controls ~= nil)then
+        ComponentSetValue(controls, "enabled", "0")
+    end
+
+    local characterDataComponent = EntityGetFirstComponent(player, "CharacterDataComponent")
+    if(characterDataComponent ~= nil)then
+        EntitySetComponentIsEnabled(player, characterDataComponent, false)
+    end
+
+    EntitySetComponentsWithTagEnabled(player, "character", false)
+end
+
+function CheckReadyState()
+    local ready = selfReady
+    for k, v in pairs(arenaPlayerData)do
+        if(v.ready == false)then
+            ready = false
+            break
+        end
+    end
+    return ready
 end
 
 arenaMode = {
@@ -217,6 +462,8 @@ arenaMode = {
             KillPlayerData(k)
         end
         
+        lastWandData = nil
+
         arenaPlayerData = {}
         game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
@@ -224,7 +471,42 @@ arenaMode = {
         end
     end,
     start = function(lobby) -- Runs when the host presses the start game button.
+        local owner = steam.matchmaking.getLobbyOwner(lobby)
+
         GamePrint("Starting game...")
+
+        if(owner == steam.user.getSteamID())then
+            steam.matchmaking.setLobbyData(lobby, "arena_state", "lobby")
+        end
+
+
+        arenaGameState = steam.matchmaking.getLobbyData(lobby, "arena_state")
+        --[[
+        local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state")
+        --LoadArena()
+        if(lobby_state == "arena")then
+            LoadArena()
+        elseif(lobby_state == "lobby")then
+            LoadHolyMountain()
+        end
+        ]]
+        LoadHolyMountain()
+
+        GiveStartingGear()
+
+        local year, month, day, hour, minute, second = GameGetDateAndTimeLocal()
+
+        local num = year + month + day + hour + minute + second
+
+        
+
+        --SetRandomSeed(GameGetFrameNum() + num + tonumber(tostring(steam.user.getSteamID())), GameGetFrameNum() + num + tonumber(tostring(steam.user.getSteamID())))
+
+        --ModSettingSet("projectile_identifier", Random(0, 10000000))
+
+        lastWandData = nil
+        lastRectAnim = nil
+
         local self_x, self_y = GetPlayerPosition()
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
         for k, v in pairs(arenaPlayerData)do
@@ -239,64 +521,131 @@ arenaMode = {
         end
     end,
     update = function(lobby) -- Runs every frame while the game is in progress.
+        local owner = steam.matchmaking.getLobbyOwner(lobby)
+
+        local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state")
+
         killInactiveUsers(lobby)
         local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 
-        game_funcs.RenderOffScreenMarkers(arenaPlayerEntities)
-        game_funcs.RenderAboveHeadMarkers(arenaPlayerEntities, 0, 27)
+        if(lobby_state == "arena")then
+            game_funcs.RenderOffScreenMarkers(arenaPlayerEntities)
+            game_funcs.RenderAboveHeadMarkers(arenaPlayerEntities, 0, 27)
+        --[[else
+            for k, v in ipairs(arenaPlayerEntities)do
+                EntitySetTransform(v, -100, -100)
+                EntityApplyTransform(v, -100, -100)
+            end]]
+        end
 
-        if(GameGetFrameNum() % 2 == 0)then
+        if(lobby_state == "lobby")then
+            if(CheckReadyState())then
+                if(owner == steam.user.getSteamID())then
+                    steam.matchmaking.setLobbyData(lobby, "arena_state", "arena")
+                end
+            end
+        end
+
+        if(lobby_state == "arena" and arenaGameState ~= "arena")then
+            arenaGameState = "arena"
+            LoadArena()
+        end
+
+        updateTweens()
+
+        if(GameHasFlagRun("player_ready"))then
+            GameRemoveFlagRun("player_ready")
+            selfReady = true
+            steamutils.sendData({type = "player_ready_state", state = true}, steamutils.messageTypes.OtherPlayers, lobby)
+        end
+
+        if(GameHasFlagRun("player_unready"))then
+            GameRemoveFlagRun("player_unready")
+            selfReady = false
+            steamutils.sendData({type = "player_ready_state", state = false}, steamutils.messageTypes.OtherPlayers, lobby)
+        end
+
+        --if(lobby_state == "arena")then
             local players = EntityGetWithTag("player_unit")
             if(players ~= nil and #players > 0)then
-                local x, y, r, w, h = EntityGetTransform(players[1])
-   
-                local characterData = EntityGetFirstComponentIncludingDisabled(players[1], "CharacterDataComponent")
-                local velocity_x, velocity_y = ComponentGetValue2(characterData, "mVelocity")
+                local px, py = EntityGetTransform(players[1])
 
-                local rectAnim = GetAnimationData(EntityGetFirstComponentIncludingDisabled(players[1], "SpriteComponent", "character"))
-                lastRectAnim = lastRectAnim or nil
-                lastWandData = lastWandData or nil
-                if(x and y and velocity_x and velocity_y)then
-                    steamutils.sendData({
-                        is_multi = true,
-                        data = {
-                            {
-                                type = "character_update", 
-                                x = x, 
-                                y = y, 
-                                r = r, 
-                                w = w, 
-                                h = h, 
-                                velocity_x = velocity_x, 
-                                velocity_y = velocity_y
-                            },
-                            {
-                                type = "character_animation", 
-                                rectAnim = rectAnim ~= lastRectAnim and rectAnim or nil, 
-                                aimData = GetAimData(players[1])
-                            }
-                        }
-                    }, steamutils.messageTypes.OtherPlayers, lobby)
-                end
-
-                --local arm_data = GetArmData()
-
-                local wandData = GetWandData()
-
-                if(wandData ~= nil)then
-                    if(wandData ~= lastWandData)then
-                        steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
-                    end
-                    lastWandData = wandData
-                end
-                lastRectAnim = rectAnim
                 
+                if(GameHasFlagRun("player_fired_wand"))then
+                    GameRemoveFlagRun("player_fired_wand")
+                    
+                    --local projectileData = GetLastProjectileData(steam.user.getSteamID())
 
+                    steamutils.sendData({type = "player_fired_wand", --[[projectile_data = projectileData]]}, steamutils.messageTypes.OtherPlayers, lobby)
+                end
+
+                steamutils.sendData({type = "aim_data", aimData = GetAimData(players[1])}, steamutils.messageTypes.OtherPlayers, lobby)
             end
+            if(GameGetFrameNum() % 5 == 0)then
+                
+                if(players ~= nil and #players > 0)then
+                    local x, y, r, w, h = EntityGetTransform(players[1])
+    
+                    local characterData = EntityGetFirstComponentIncludingDisabled(players[1], "CharacterDataComponent")
+                    local velocity_x, velocity_y = ComponentGetValue2(characterData, "mVelocity")
+
+                    local rectAnim = GetAnimationData(EntityGetFirstComponentIncludingDisabled(players[1], "SpriteComponent", "character"))
+                    lastRectAnim = lastRectAnim or nil
+                    lastWandData = lastWandData or nil
+                    if(x and y and velocity_x and velocity_y)then
+                        steamutils.sendData({
+                            is_multi = true,
+                            data = {
+                                {
+                                    type = "character_update", 
+                                    x = x, 
+                                    y = y, 
+                                    r = r, 
+                                    w = w, 
+                                    h = h, 
+                                    velocity_x = velocity_x, 
+                                    velocity_y = velocity_y
+                                },
+                                {
+                                    type = "character_animation", 
+                                    rectAnim = rectAnim ~= lastRectAnim and rectAnim or nil, 
+                                }
+                            }
+                        }, steamutils.messageTypes.OtherPlayers, lobby)
+                    end
+
+                    --local arm_data = GetArmData()
+
+
+                    local wandData = GetWandData()
+
+
+                    if(wandData ~= nil)then
+                        if(wandData ~= lastWandData)then
+                            local wandDataMana = GetWandDataMana()
+                            steamutils.sendData({type = "wand_update", wandData = wandDataMana}, steamutils.messageTypes.OtherPlayers, lobby)
+                        end
+                        lastWandData = wandData
+                    end
+                    lastRectAnim = rectAnim
+                    
+
+                end
+            end
+        --end
+    end,
+    late_update = function (lobby)
+        if(GameHasFlagRun("player_fired_wand"))then
+            GameRemoveFlagRun("player_fired_wand")
+                
+            --local projectileData = GetLastProjectileData(steam.user.getSteamID())
+
+            steamutils.sendData({type = "player_fired_wand", --[[projectile_data = projectileData]]}, steamutils.messageTypes.OtherPlayers, lobby)
         end
     end,
     leave = function(lobby)
-
+        --KillPlayer()
+        CleanAndLockPlayer()
     end,
     message = function(lobby, data, user)
         if(IsUserActive(lobby, user))then
