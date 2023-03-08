@@ -408,24 +408,23 @@ local function SpawnPlayer(x, y)
 end
 
 local function LoadArena()
+    SpawnPlayer(0, 0)
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
     --BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
     --[[local players = EntityGetWithTag("player_unit") or {}
     if(players[1])then
         EntityApplyTransform(players[1], 0, 0 )
     end]]
-    
-    SpawnPlayer(0, 0)
 end
 
 local function LoadHolyMountain()
+    SpawnPlayer(174, 133)
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
     --BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
     --[[local players = EntityGetWithTag("player_unit") or {}
     if(players[1])then
         EntityApplyTransform(players[1], 0, 0 )
     end]]
-    SpawnPlayer(174, 133)
 end
 
 function HidePlayer(player)
@@ -475,12 +474,12 @@ arenaMode = {
 
         GamePrint("Starting game...")
 
-        if(owner == steam.user.getSteamID())then
-            steam.matchmaking.setLobbyData(lobby, "arena_state", "lobby")
-        end
+        --if(owner == steam.user.getSteamID())then
+        --    steam.matchmaking.setLobbyData(lobby, "arena_state", "lobby")
+        --end
 
 
-        arenaGameState = steam.matchmaking.getLobbyData(lobby, "arena_state")
+        arenaGameState = "lobby"
         --[[
         local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state")
         --LoadArena()
@@ -522,13 +521,11 @@ arenaMode = {
     end,
     update = function(lobby) -- Runs every frame while the game is in progress.
         local owner = steam.matchmaking.getLobbyOwner(lobby)
-
-        local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state")
-
+        
         killInactiveUsers(lobby)
         local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 
-        if(lobby_state == "arena")then
+        if(arenaGameState == "arena")then
             game_funcs.RenderOffScreenMarkers(arenaPlayerEntities)
             game_funcs.RenderAboveHeadMarkers(arenaPlayerEntities, 0, 27)
         --[[else
@@ -538,17 +535,11 @@ arenaMode = {
             end]]
         end
 
-        if(lobby_state == "lobby")then
+        if(arenaGameState == "lobby")then
             if(CheckReadyState())then
-                if(owner == steam.user.getSteamID())then
-                    steam.matchmaking.setLobbyData(lobby, "arena_state", "arena")
-                end
+                LoadArena()
+                arenaGameState = "arena"
             end
-        end
-
-        if(lobby_state == "arena" and arenaGameState ~= "arena")then
-            arenaGameState = "arena"
-            LoadArena()
         end
 
         updateTweens()
