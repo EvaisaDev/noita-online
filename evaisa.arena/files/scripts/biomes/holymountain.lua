@@ -45,6 +45,10 @@ function spawn_all_shopitems( x, y )
 		return
 	end
 
+	local round = ModSettingGet("arena_round") or 1
+
+	local round = math.min(math.ceil(round / 2), 7)
+
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	
 	SetRandomSeed( x, y )
@@ -56,20 +60,20 @@ function spawn_all_shopitems( x, y )
 	if( Random( 0, 100 ) <= 50 ) then
 		for i=1,count do
 			if( i == sale_item_i ) then
-				generate_shop_item( x + (i-1)*item_width, y, true, nil, true )
+				generate_shop_item( x + (i-1)*item_width, y, true, round, true )
 			else
-				generate_shop_item( x + (i-1)*item_width, y, false, nil, true )
+				generate_shop_item( x + (i-1)*item_width, y, false, round, true )
 			end
 			
-			generate_shop_item( x + (i-1)*item_width, y - 30, false, nil, true )
+			generate_shop_item( x + (i-1)*item_width, y - 30, false, round, true )
 			LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
 		end
 	else	
 		for i=1,count do
 			if( i == sale_item_i ) then
-				generate_shop_wand( x + (i-1)*item_width, y, true )
+				generate_shop_wand( x + (i-1)*item_width, y, true, round )
 			else
-				generate_shop_wand( x + (i-1)*item_width, y, false )
+				generate_shop_wand( x + (i-1)*item_width, y, false, round )
 			end
 		end
 	end

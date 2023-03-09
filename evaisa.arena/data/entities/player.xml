@@ -17,15 +17,20 @@
       <Entity><Base file="data/entities/items/pickup/potion_water.xml" /></Entity>
   </Entity>
   -->
-
+<!--
   <LuaComponent
       script_source_file = "mods/evaisa.arena/files/scripts/smooth_camera.lua"
       execute_every_n_frame = "0"
       >
   </LuaComponent>
-
+-->
     <LuaComponent
       script_wand_fired = "mods/evaisa.arena/files/scripts/on_fire.lua"
+      >
+  </LuaComponent>
+
+    <LuaComponent
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/kill_check.lua"
       >
   </LuaComponent>
 

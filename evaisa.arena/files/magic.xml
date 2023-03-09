@@ -2,7 +2,6 @@
   _DEBUG_DONT_SAVE_MAGIC_NUMBERS = "1"
   DESIGN_PLAYER_START_POS_X = "0"
   DESIGN_PLAYER_START_POS_Y = "0"
-  DEBUG_FREE_CAMERA_SPEED = "0"
   BIOME_MAP = "mods/evaisa.arena/files/scripts/biome_map_arena.lua"
   > 
 </MagicNumbers>

@@ -32,6 +32,7 @@ local function CleanAndLockPlayer()
 end
 
 function OnPlayerSpawned(player)
+    GameRemoveFlagRun("ready_check")
     CleanAndLockPlayer()
     --EntityKill(player)
 end
