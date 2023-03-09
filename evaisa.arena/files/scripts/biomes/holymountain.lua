@@ -1,7 +1,7 @@
 CHEST_LEVEL = 3
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/generate_shop_item.lua" )
 dofile_once("data/scripts/lib/utilities.lua")
 dofile( "data/scripts/biomes/temple_shared.lua" )
 dofile( "data/scripts/perks/perk.lua" )
@@ -51,7 +51,11 @@ function spawn_all_shopitems( x, y )
 
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	
-	SetRandomSeed( x, y )
+	print("Generated shop items for mountain #"..tostring(round))
+
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count

@@ -5,8 +5,9 @@ dofile( "data/scripts/gun/gun_actions.lua" )
 -- cardcost = tostring(math.max(40, cardcost + math.random(-4,4) * 10))
 
 function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
-	-- this makes the shop items deterministic
-	SetRandomSeed( x, y )
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+
 
 	local biomes =
 	{
@@ -72,7 +73,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	local level = biomeid
 	biomeid = biomeid * biomeid
 
-	item = GetRandomAction( x, y, level, 0 )
+	item = GetRandomAction( x + Random(-10000, 10000), y + Random(-10000, 10000), level, 0 )
 	cardcost = 0
 
 	for i,thisitem in ipairs( actions ) do
@@ -172,13 +173,16 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 				} )
 		end
 	end)]]--
+
 end
 
 ------------ generate shop wand -----------------------------------------------
 
 function generate_shop_wand( x, y, cheap_item, biomeid_ )
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+
 	-- this makes the shop items deterministic
-	SetRandomSeed( x, y )
+	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
 
 	local biomes =
 	{
@@ -273,7 +277,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	-- local x, y = EntityGetTransform( entity_id )
 	-- SetRandomSeed( x, y )
-	local eid = EntityLoad( item, x, y )
+	local eid = EntityLoad( item, x + Random(-1000, 1000), y + Random(-1000, 1000))
 
 	EntityAddComponent( eid, "SpriteComponent", { 
 		_tags="shop_cost,enabled_in_world",
@@ -297,4 +301,6 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 		script_item_picked_up="data/scripts/items/shop_effect.lua"
 		} )
 
+	EntitySetTransform( eid, x, y )
+	EntityApplyTransform( eid, x, y )
 end

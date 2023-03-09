@@ -104,7 +104,7 @@
 
 
     <GenomeDataComponent 
-    herd_id="0"
+    herd_id="pvp_client"
     food_chain_rank="20"
     is_predator="1"
     berserk_dont_attack_friends="1"
@@ -127,9 +127,10 @@
     falling_damage_height_max="250" 
     falling_damage_height_min="70" 
     falling_damages="0" 
-    fire_damage_amount="0.2" 
-    fire_probability_of_ignition="1" 
+    fire_damage_amount="0" 
     invincibility_frames="60"
+    fire_probability_of_ignition="0"
+    fire_how_much_fire_generates="0"
     hp="400" 
     is_on_fire="0" 
     materials_damage="1" 
@@ -159,6 +160,11 @@
     rect_animation="walk" 
     z_index="0.6"
   ></SpriteComponent>
+
+    <LuaComponent
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/immortal_client.lua"
+      >
+  </LuaComponent>
 
   <HotspotComponent
     _tags="right_arm_root"
@@ -237,6 +243,7 @@
 
   <ItemPickUpperComponent
     drop_items_on_death="0"
+    is_immune_to_kicks="1"
   ></ItemPickUpperComponent>
 
   <PlatformShooterPlayerComponent

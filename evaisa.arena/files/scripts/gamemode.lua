@@ -293,7 +293,7 @@ end
 local function findUser(lobby, user_string)
     local members = steamutils.getLobbyMembers(lobby)
     for k, member in pairs(members)do
-        print("Member: " .. tostring(member.id))
+        --print("Member: " .. tostring(member.id))
         if(tostring(member.id) == user_string)then
             return member.id
         end
@@ -430,7 +430,7 @@ end
 local function LoadPlayers(lobby)
     local self_x, self_y = GetPlayerPosition()
 
-    --KillPlayers()
+    KillPlayers()
 
     GamePrintImportant("You have entered the arena", "FIGHT!")
 
@@ -443,13 +443,26 @@ local function LoadPlayers(lobby)
     end
 end
 
+local function FixReadyState(lobby)
+    selfReady = false
+    GameRemoveFlagRun("ready_check")
+    for k, v in pairs(arenaPlayerData)do
+        arenaPlayerData[k].ready = false
+    end
+end
+
 local function LoadArena(lobby)
     arenaGameState = "arena"
     GamePrint("Attempting to load arena")
+    GameRemoveFlagRun("in_hm")
     selfAlive = true
+    lastWandData = nil
+    lastRectAnim = nil
+    FixReadyState(lobby)
     SpawnPlayer(0, 0)
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
     LoadPlayers(lobby)
+    
     --[[local players = EntityGetWithTag("player_unit") or {}
     if(players[1])then
         EntityApplyTransform(players[1], 0, 0 )
@@ -471,7 +484,12 @@ end
 
 local function LoadHolyMountain(lobby, show_message)
     selfReady = false
+    GameAddFlagRun("in_hm")
+    FixReadyState(lobby)
+    GameRemoveFlagRun("ready_check")
     arenaGameState = "lobby"
+    lastWandData = nil
+    lastRectAnim = nil
     activeTweens = {}
     show_message = show_message or false
     PreparePlayers(lobby)
@@ -506,14 +524,12 @@ end
 
 function CheckReadyState()
     local ready = selfReady
-    print("selfReady: " .. tostring(selfReady))
     for k, v in pairs(arenaPlayerData)do
         if(v.ready == false)then
             ready = false
             break
         end
     end
-    print("ready: " .. tostring(ready))
     return ready
 end
 
@@ -586,13 +602,15 @@ local function HandleData(lobby, data, user)
             
             local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
-            --[[ComponentSetValue2(characterData, "mVelocity", data.velocity_x, data.velocity_y)
+            --[[
+            ComponentSetValue2(characterData, "mVelocity", data.velocity_x, data.velocity_y)
             
             EntitySetTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)
-            EntityApplyTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)]]
+            EntityApplyTransform(playerEntity, data.x, data.y, data.r, data.w, data.h)
+            ]]
 
-            
-            local positionTween = tween.vector(Vector.new(x, y), Vector.new(data.x, data.y), 5, function(value)
+          
+            local positionTween = tween.vector(Vector.new(x, y), Vector.new(data.x, data.y), 2, function(value)
                 local newPlayerEntity = arenaPlayerEntities[tostring(user)]
                 if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
                     EntitySetTransform(playerEntity, value.x, value.y, data.r, data.w, data.h)
@@ -604,7 +622,7 @@ local function HandleData(lobby, data, user)
 
             table.insert(activeTweens, positionTween)
 
-            local velocityTween = tween.vector(Vector.new(vel_x, vel_y), Vector.new(data.velocity_x, data.velocity_y), 5, function(value)
+            local velocityTween = tween.vector(Vector.new(vel_x, vel_y), Vector.new(data.velocity_x, data.velocity_y), 2, function(value)
                 local newPlayerEntity = arenaPlayerEntities[tostring(user)]
                 if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
                     local characterData = EntityGetFirstComponentIncludingDisabled(playerEntity, "CharacterDataComponent")
@@ -642,7 +660,7 @@ local function HandleData(lobby, data, user)
         elseif(data.type == "wand_update")then
             --GamePrint("Wand data changed")
             if(playerEntity ~= nil)then
-                print(data.wandData)
+                --print(data.wandData)
 
                 SetWandData(user, playerEntity, data.wandData)
 
@@ -826,7 +844,7 @@ arenaMode = {
 
                     steamutils.sendData({type = "aim_data", aimData = GetAimData(players[1])}, steamutils.messageTypes.OtherPlayers, lobby)
                 end
-                if(GameGetFrameNum() % 5 == 0)then
+                if(GameGetFrameNum() % 2 == 0)then
                     
                     if(players ~= nil and #players > 0)then
                         local x, y, r, w, h = EntityGetTransform(players[1])
@@ -900,6 +918,7 @@ arenaMode = {
         arenaPlayerEntities = {}
         activeTweens = {}
         selfReady = false
+        GameRemoveFlagRun("ready_check")
     end,
     message = function(lobby, data, user)
         if(IsUserActive(lobby, user))then
