@@ -730,7 +730,7 @@ arenaMode = {
         if(owner == steam.user.getSteamID())then
             steam.matchmaking.setLobbyData(lobby, "round", tostring(1))
         end
-        
+
         lastWandData = nil
 
         arenaPlayerData = {}
@@ -782,6 +782,10 @@ arenaMode = {
             end
         end
 
+    end,
+    on_wand_fired = function(lobby, entity, rng)
+        --local rng = tonumber(steam.matchmaking.getLobbyData(lobby, "update_seed") or 0)
+        --np.SetWandSpreadRNG(rng)
     end,
     update = function(lobby) -- Runs every frame while the game is in progress.
         local owner = steam.matchmaking.getLobbyOwner(lobby)

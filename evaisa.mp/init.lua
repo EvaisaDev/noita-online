@@ -81,6 +81,28 @@ function OnWorldPreUpdate()
 	end
 end
 
+np = require("noitapatcher")
+function OnWandFired(entity, rng)
+	print("Wand fired")
+	--[[
+	if steam then 
+		--pretty.table(steam.networking)
+		lobby_code = lobby_code or nil
+
+		if(lobby_code ~= nil)then
+			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+			if(game_in_progress)then
+				if(gamemodes[lobby_gamemode].on_wand_fired)then
+					gamemodes[lobby_gamemode].on_wand_fired(lobby_code, entity, rng)
+				end
+			end
+		end
+	end
+	]]
+    
+end
+
 function OnWorldPostUpdate()
 	if steam then 
 		--pretty.table(steam.networking)
