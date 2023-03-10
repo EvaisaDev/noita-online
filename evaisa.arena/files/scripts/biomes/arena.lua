@@ -2,14 +2,15 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/director_helpers_design.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 
---[[
-local data = dofile_once("mods/evaisa.climb/courses/data.lua")
+RegisterSpawnFunction( 0xffff54e3, "spawn_point" )
+--RegisterSpawnFunction( 0xff0051ff, "spawn_kill_zone" )
 
-for k, v in ipairs(data.spawn_functions)do
-	
-	_G[v.id] = function(x, y)
-		v.func(x, y)
-	end
-	RegisterSpawnFunction( v.color, v.id )
+function spawn_point( x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/spawn_point.xml", x, y )
+end
+
+--[[
+function spawn_kill_zone( x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/kill_zone.xml", x, y )
 end
 ]]

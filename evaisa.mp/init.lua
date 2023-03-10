@@ -4,6 +4,8 @@ package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
 
+np = require("noitapatcher")
+
 MP_VERSION = 1.1
 
 base64 = require("base64")
@@ -81,10 +83,9 @@ function OnWorldPreUpdate()
 	end
 end
 
-np = require("noitapatcher")
 function OnWandFired(entity, rng)
 	print("Wand fired")
-	--[[
+
 	if steam then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
@@ -99,7 +100,6 @@ function OnWandFired(entity, rng)
 			end
 		end
 	end
-	]]
     
 end
 

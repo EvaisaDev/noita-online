@@ -10,11 +10,14 @@ steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 tween = dofile_once("mods/evaisa.arena/lib/tween.lua")
 Vector = dofile_once("mods/evaisa.arena/lib/vector.lua")
 json = dofile_once("mods/evaisa.arena/lib/json.lua")
+countdown = dofile_once("mods/evaisa.arena/files/scripts/utils/countdown.lua")
+dofile_once("mods/evaisa.arena/files/scripts/utils/utilities.lua")
 arenaPlayerData = {}
 arenaPlayerEntities = {}
 activeTweens = {}
 selfReady = false
 selfAlive = true
+deaths = 0
 local arenaGameState = "lobby"
 
 local function updateTweens(lobby)
@@ -406,14 +409,19 @@ local function GiveStartingGear()
 
 end
 
-local function SpawnPlayer(x, y)
+
+local function SpawnPlayer(x, y, randomize)
+    randomize = randomize or false
+
+    if(randomize)then
+        x, y = get_spawn_pos(0, 100, x, y)
+    end
+
     --[[KillPlayer()
 
     local player = EntityLoad("data/entities//player.xml", x, y)
     EntitySetName(player, tostring(steam.user.getSteamID()))
     ModSettingSet("projectile_count_" .. tostring(steam.user.getSteamID()), 0)]]
-
-    UnlockPlayer()
 
     local player = EntityGetWithTag("player_unit") or {}
     if(player == nil or #player == 0)then
@@ -451,16 +459,22 @@ local function FixReadyState(lobby)
     end
 end
 
+local PrepareForSpawn = false
+
 local function LoadArena(lobby)
+    GameRemoveFlagRun("first_death")
     arenaGameState = "arena"
     GamePrint("Attempting to load arena")
     GameRemoveFlagRun("in_hm")
+    deaths = 0
     selfAlive = true
     lastWandData = nil
     lastRectAnim = nil
     FixReadyState(lobby)
-    SpawnPlayer(0, 0)
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_arena.lua", "mods/evaisa.arena/files/biome/arena_scenes.xml" )
+    SpawnPlayer(0, 0)
+    PrepareForSpawn = true
+
     LoadPlayers(lobby)
     
     --[[local players = EntityGetWithTag("player_unit") or {}
@@ -487,12 +501,14 @@ local function LoadHolyMountain(lobby, show_message)
     GameAddFlagRun("in_hm")
     FixReadyState(lobby)
     GameRemoveFlagRun("ready_check")
+    GameAddFlagRun("Immortal")
     arenaGameState = "lobby"
     lastWandData = nil
     lastRectAnim = nil
     activeTweens = {}
     show_message = show_message or false
     PreparePlayers(lobby)
+    UnlockPlayer()
     SpawnPlayer(174, 133)
     KillPlayers()
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
@@ -506,6 +522,7 @@ local function LoadHolyMountain(lobby, show_message)
         EntityApplyTransform(players[1], 0, 0 )
     end]]
 end
+
 
 function HidePlayer(player)
     -- disable controls component
@@ -553,6 +570,17 @@ local function CheckForWinner(lobby)
         end
         LoadHolyMountain(lobby)
         selfAlive = true
+    elseif(alive == 0)then
+        local owner = steam.matchmaking.getLobbyOwner(lobby)
+
+        GamePrintImportant("Nobody won this round!", "Prepare for the next round in your holy mountain.")
+        if(owner == steam.user.getSteamID())then
+            local round = steam.matchmaking.getLobbyData(lobby, "round") or "1"
+            round = tonumber(round) + 1
+            steam.matchmaking.setLobbyData(lobby, "round", tostring(round))
+        end
+        LoadHolyMountain(lobby)
+        selfAlive = true
     end
 end
 
@@ -572,11 +600,19 @@ function KillCheck(lobby)
             end
         end
 
+        if(deaths == 0)then
+            GameAddFlagRun("first_death")
+            print("You will be compensated for your being the first one to die.")
+        end
+
+        deaths = deaths + 1
+
         steamutils.sendData({type = "player_died", killer = killer}, steamutils.messageTypes.OtherPlayers, lobby)
         GameRemoveFlagRun("player_died")
         ModSettingRemove("killer")
         GamePrintImportant("You died!")
         selfAlive = false
+        GameAddFlagRun("Immortal")
         GameSetCameraFree(true)
         LockPlayer()
         MovePlayerOut()
@@ -584,7 +620,40 @@ function KillCheck(lobby)
     end 
 end
 
+local function DamageZoneCheck(x, y, max_distance, distance_cap)
+    local players = EntityGetWithTag("player_unit") or {}
+    for k, v in pairs(players)do
+        local x2, y2 = EntityGetTransform(v)
+        local distance = math.sqrt((x2 - x) ^ 2 + (y2 - y) ^ 2)
+        if(distance > max_distance)then
+            local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
+            if(healthComp ~= nil)then
+                local health = tonumber(ComponentGetValue(healthComp, "hp"))
+                local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
+                local base_health = 4
+                local damage_percentage = (distance - max_distance) / distance_cap
+                local damage = max_health * damage_percentage
+                EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0)
+            end
+        end
+    end
+end
 
+active_countdown = nil
+
+local function FightCountdown(lobby)
+    active_countdown = countdown.create({
+        "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
+        "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
+        "mods/evaisa.arena/files/sprites/ui/countdown/2.png",
+        "mods/evaisa.arena/files/sprites/ui/countdown/1.png",
+        "mods/evaisa.arena/files/sprites/ui/countdown/fight.png",
+    }, 60, function()
+        UnlockPlayer()
+        GameRemoveFlagRun("Immortal")
+        active_countdown = nil
+    end)
+end
 
 local function HandleData(lobby, data, user)
     local username = steam.friends.getFriendPersonaName(user)
@@ -697,6 +766,7 @@ local function HandleData(lobby, data, user)
             local killer = data.killer
             activeTweens[tostring(user)] = nil
             KillPlayerData(user)
+            deaths = deaths + 1
             arenaPlayerData[tostring(user)].alive = false
             if(killer == nil)then
                 
@@ -759,6 +829,9 @@ arenaMode = {
             LoadHolyMountain()
         end
         ]]
+
+
+
         LoadHolyMountain(lobby)
 
         GiveStartingGear()
@@ -784,8 +857,10 @@ arenaMode = {
 
     end,
     on_wand_fired = function(lobby, entity, rng)
+        print("Wand fired")
         --local rng = tonumber(steam.matchmaking.getLobbyData(lobby, "update_seed") or 0)
-        --np.SetWandSpreadRNG(rng)
+        local year, month, day, hour, minute, second = GameGetDateAndTimeUTC()
+        np.SetWandSpreadRNG(0)
     end,
     update = function(lobby) -- Runs every frame while the game is in progress.
         local owner = steam.matchmaking.getLobbyOwner(lobby)
@@ -794,6 +869,25 @@ arenaMode = {
         local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 
         if(arenaGameState == "arena")then
+            
+            if(active_countdown ~= nil)then
+                active_countdown:update()
+            end
+
+            if(PrepareForSpawn)then
+                GameAddFlagRun("Immortal")
+                local spawn_points = EntityGetWithTag("spawn_point") or {}
+                if(spawn_points == nil or #spawn_points == 0)then
+                    SpawnPlayer(0, 0)
+                else
+                    local spawn_point = spawn_points[Random(1, #spawn_points)]
+                    local x, y = EntityGetTransform(spawn_point)
+                    SpawnPlayer(x, y, true)
+                    PrepareForSpawn = false
+                    LockPlayer()
+                    FightCountdown(lobby)
+                end
+            end
             game_funcs.RenderOffScreenMarkers(arenaPlayerEntities)
             game_funcs.RenderAboveHeadMarkers(arenaPlayerEntities, 0, 27)
 
@@ -801,6 +895,7 @@ arenaMode = {
  
         if(GameGetFrameNum() % 60 == 0)then
             steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
+            DamageZoneCheck(0, 0, 450, 600)
         end
 
         
@@ -828,7 +923,6 @@ arenaMode = {
 
         if(arenaGameState == "arena")then
 
-        
             updateTweens(lobby)
             if(selfAlive)then
                 KillCheck(lobby)

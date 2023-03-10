@@ -1,0 +1,32 @@
+<Entity tags="kill_zone">
+    <!--Right-->
+    <HitboxComponent 
+        aabb_min_x="500" 
+        aabb_min_y="-700"
+        aabb_max_x="900" 
+        aabb_max_y="700" >
+    </HitboxComponent>
+    <!--Left-->
+    </HitboxComponent
+        aabb_min_x="-500"
+        aabb_min_y="-700"
+        aabb_max_x="-900"
+        aabb_max_y="700" >
+    </HitboxComponent>
+    <!--Top-->
+    </HitboxComponent
+        aabb_min_x="-500"
+        aabb_min_y="-700"
+        aabb_max_x="500"
+        aabb_max_y="-300" >
+    </HitboxComponent>
+    <!--Bottom-->
+    </HitboxComponent
+        aabb_min_x="-500"
+        aabb_min_y="500"
+        aabb_max_x="500"
+        aabb_max_y="900" >
+    </HitboxComponent>
+
+    
+</Entity>

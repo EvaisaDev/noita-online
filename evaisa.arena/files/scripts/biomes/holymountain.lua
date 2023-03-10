@@ -14,6 +14,7 @@ RegisterSpawnFunction( 0xff33934c, "spawn_all_shopitems" )
 RegisterSpawnFunction( 0xff10822d, "spawn_workshop" )
 RegisterSpawnFunction( 0xff5a822d, "spawn_workshop_extra" )
 RegisterSpawnFunction( 0xffb66ccd, "spawn_ready_point" )
+RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 
 function spawn_workshop( x, y )
 	EntityLoad( "data/entities/buildings/workshop.xml", x, y )
@@ -82,3 +83,20 @@ function spawn_all_shopitems( x, y )
 		end
 	end
 end
+
+function spawn_all_perks( x, y )
+	if(GameHasFlagRun("first_death"))then
+		a, b, c, d, e, f = GameGetDateAndTimeLocal()
+		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	
+		perk_spawn_many( x, y )
+	end
+end
+
+function spawn_perk_reroll( x, y )
+	if(GameHasFlagRun("first_death"))then
+		EntityLoad( "data/entities/items/pickup/perk_reroll.xml", x, y )
+	end
+end
+
+-- GameHasFlagRun("first_death")
