@@ -623,7 +623,7 @@ local function LoadHolyMountain(lobby, show_message)
     GameAddFlagRun("in_hm")
     FixReadyState(lobby)
 
-    local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
+    local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
     holyMountainCount = holyMountainCount + 1
     GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
 
@@ -1127,8 +1127,13 @@ arenaMode = {
 
         local rounds = steam.matchmaking.getLobbyData(lobby, "round") or "0"
 
-        GlobalsSetValue("holyMountainCount", rounds)
+        print("rounds: " .. tostring(rounds))
 
+        if(tonumber(rounds) ~= nil)then
+            GlobalsSetValue("holyMountainCount", rounds)
+        else
+            GlobalsSetValue("holyMountainCount", "0")
+        end
 
         
         LoadHolyMountain(lobby)

@@ -8,10 +8,10 @@ dofile("data/scripts/lib/coroutines.lua")
 
 np = require("noitapatcher")
 
-MP_VERSION = 1.8
+MP_VERSION = 1.9
 Version_string = "325897135236"
 
-Checksum_passed = true
+Checksum_passed = false
 
 base64 = require("base64")
 
@@ -28,11 +28,11 @@ require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 
 pretty = require("pretty_print")
---local pollnet = require("pollnet")
+local pollnet = require("pollnet")
 
 --GamePrint("Making api call")
 
---[[http_get = function(url, callback)
+http_get = function(url, callback)
 	local req_sock = pollnet.http_get(url)
 
     async( function ()
@@ -53,7 +53,7 @@ pretty = require("pretty_print")
 		end
 	end)
 
-end]]
+end
 
 if type(Steam) == 'boolean' then Steam = nil end
 
@@ -72,9 +72,14 @@ dofile_once("mods/evaisa.mp/lib/keyboard.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
 function OnWorldPreUpdate()
-	--wake_up_waiting_threads(1)
+	wake_up_waiting_threads(1)
 	math.randomseed( os.time() )
-	if steam --[[and Checksum_passed]] then 
+
+	if(not Checksum_passed)then
+		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
+	end
+
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 		dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
@@ -122,7 +127,7 @@ function OnWorldPreUpdate()
 end
 
 function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
-	if steam --[[and Checksum_passed]] then 
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -140,7 +145,7 @@ function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_
 end
 
 function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
-	if steam --[[and Checksum_passed]] then 
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -158,7 +163,7 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 end
 
 function OnWorldPostUpdate()
-	if steam --[[and Checksum_passed]] then 
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -320,7 +325,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	steam.init()
 	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
 
-	--[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
 		Checksum_passed = data == Version_string
@@ -329,7 +333,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 			print("Checksum passed: "..tostring(data))
 		end
 	end)
-	]]
 end
 
 function OnWorldInitialized()
