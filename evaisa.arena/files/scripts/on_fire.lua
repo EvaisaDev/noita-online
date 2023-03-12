@@ -1,4 +1,4 @@
 function wand_fired( gun_entity_id )
-    print("wand fired")
-    GameAddFlagRun("player_fired_wand")
+    --GameAddFlagRun("player_fired_wand")
+    EntitySave( gun_entity_id, "wand_test.xml" )
 end

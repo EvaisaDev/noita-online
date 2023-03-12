@@ -47,3 +47,24 @@ function get_spawn_pos(min_range, max_range, x, y)
     end
 
 end
+
+function ClearGameEffects(entity)
+    local components = EntityGetComponent(entity, "GameEffectComponent")
+    if components ~= nil then
+        for i,component in ipairs(components) do
+            -- check if the effect is not -1 frames
+            local frames = ComponentGetValue2(component, "frames")
+            if frames > 0 then
+                -- if it is not, set it to 0
+                ComponentSetValue2(component, "frames", 1)
+            end
+        end
+    end
+    -- also loop through children and do the same
+    local children = EntityGetAllChildren(entity)
+    if children ~= nil then
+        for i,child in ipairs(children) do
+            ClearGameEffects(child)
+        end
+    end
+end

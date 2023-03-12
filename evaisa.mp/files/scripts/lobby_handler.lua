@@ -125,6 +125,28 @@ function handleGamemodeVersionCheck(lobbycode)
 	return true
 end
 
+
+function IsCorrectVersion(lobby)
+	local version = steam.matchmaking.getLobbyData(lobby, "version")
+	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
+	local gamemode = steam.matchmaking.getLobbyData(lobby, "gamemode")
+	if(version ~= tostring(MP_VERSION))then
+		return false
+	end
+	if(gamemode ~= nil and gamemode_version ~= nil)then
+		gamemode = tonumber(gamemode)
+		if(gamemodes[gamemode] ~= nil)then
+			if(gamemodes[gamemode].version ~= tonumber(gamemode_version))then
+				return false
+			end
+		else
+			return false
+		end
+	end
+	return true
+end
+
+
 function handleChatMessage(data)
 	--[[ 
 		example data: 

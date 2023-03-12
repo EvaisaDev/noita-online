@@ -7,17 +7,27 @@
 
 dofile_once("data/scripts/lib/utilities.lua")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
-tween = dofile_once("mods/evaisa.arena/lib/tween.lua")
+local tween = dofile_once("mods/evaisa.arena/lib/tween.lua")
 Vector = dofile_once("mods/evaisa.arena/lib/vector.lua")
-json = dofile_once("mods/evaisa.arena/lib/json.lua")
-countdown = dofile_once("mods/evaisa.arena/files/scripts/utils/countdown.lua")
+local json = dofile_once("mods/evaisa.arena/lib/json.lua")
+local countdown = dofile_once("mods/evaisa.arena/files/scripts/utils/countdown.lua")
+local counter = dofile_once("mods/evaisa.arena/files/scripts/utils/ready_counter.lua")
+local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+local healthbar = dofile_once("mods/evaisa.arena/files/scripts/utils/health_bar.lua")
+locked = true
+
+dofile_once( "data/scripts/perks/perk_list.lua" )
+
+local random = nil
 dofile_once("mods/evaisa.arena/files/scripts/utils/utilities.lua")
 arenaPlayerData = {}
 arenaPlayerEntities = {}
+playerPerks = {}
 activeTweens = {}
 selfReady = false
 selfAlive = true
 deaths = 0
+seed = 0
 local arenaGameState = "lobby"
 
 local function updateTweens(lobby)
@@ -56,11 +66,19 @@ local function KillPlayerData(user)
         end
         arenaPlayerData[tostring(user)].item = nil
         arenaPlayerEntities[tostring(user)] = nil
+        if(arenaPlayerData[tostring(user)].hp_bar)then
+            arenaPlayerData[tostring(user)].hp_bar:destroy()
+            arenaPlayerData[tostring(user)].hp_bar = nil
+        end
     end
 end
 
 local function CreatePlayerData(user)
     arenaPlayerData[tostring(user)] = {item = nil, ready = false, alive = true}
+    if(arenaPlayerData[tostring(user)].hp_bar)then
+        arenaPlayerData[tostring(user)].hp_bar:destroy()
+        arenaPlayerData[tostring(user)].hp_bar = nil
+    end
 end
 
 
@@ -75,6 +93,64 @@ local function PreparePlayers(lobby)
     end
 end
 
+function give_perk( entity_who_picked, perk_id, amount )
+	-- fetch perk info ---------------------------------------------------
+	
+    local pos_x, pos_y
+
+    pos_x, pos_y = EntityGetTransform( entity_who_picked )
+
+	local perk_data = get_perk_with_id( perk_list, perk_id )
+	if perk_data == nil then
+		return
+	end
+
+	local no_remove = perk_data.do_not_remove or false
+
+	-- add a game effect or two
+	if perk_data.game_effect ~= nil then
+		local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect, true )
+		if game_effect_comp ~= nil then
+			ComponentSetValue( game_effect_comp, "frames", "-1" )
+			
+			if ( no_remove == false ) then
+				ComponentAddTag( game_effect_comp, "perk_component" )
+				EntityAddTag( game_effect_entity, "perk_entity" )
+			end
+		end
+	end
+	
+	if perk_data.game_effect2 ~= nil then
+		local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect2, true )
+		if game_effect_comp ~= nil then
+			ComponentSetValue( game_effect_comp, "frames", "-1" )
+			
+			if ( no_remove == false ) then
+				ComponentAddTag( game_effect_comp, "perk_component" )
+				EntityAddTag( game_effect_entity, "perk_entity" )
+			end
+		end
+	end
+	
+	-- particle effect only applied once
+	if perk_data.particle_effect ~= nil and ( amount <= 1 ) then
+		local particle_id = EntityLoad( "data/entities/particles/perks/" .. perk_data.particle_effect .. ".xml" )
+		
+		if ( no_remove == false ) then
+			EntityAddTag( particle_id, "perk_entity" )
+		end
+		
+		EntityAddChild( entity_who_picked, particle_id )
+	end
+	
+
+	if perk_data.func ~= nil then
+		perk_data.func( entity_item, entity_who_picked, perk_id, amount )
+	end
+	
+    --GamePrint( "Picked up perk: " .. perk_data.name )
+end
+
 local function spawnPlayer(user, data)
     KillPlayerData(user)
     local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", data.x, data.y)
@@ -86,6 +162,17 @@ local function spawnPlayer(user, data)
     ComponentSetValue2(usernameSprite, "offset_x", string.len(name) * (1.8))
     arenaPlayerEntities[tostring(user)] = client
     arenaPlayerData[tostring(user)].alive = true
+    if(playerPerks[tostring(user)])then
+        GamePrint("Giving perks to " .. tostring(user))
+        for k, v in ipairs(playerPerks[tostring(user)])do
+            local perk = v[1]
+            local count = v[2]
+            
+            for i = 1, count do
+                give_perk(client, perk, i)
+            end
+        end
+    end
 end
 
 
@@ -340,11 +427,13 @@ local function CleanAndLockPlayer()
 end
 
 local function LockPlayer()
+
     local player = EntityGetWithTag("player_unit") or {}
     if(player == nil or #player == 0)then
         return
     end
     for k, v in pairs(player)do
+        locked = true
         -- disable controls component
         local controls = EntityGetFirstComponentIncludingDisabled(v, "ControlsComponent")
         if(controls ~= nil)then
@@ -404,7 +493,7 @@ local function GiveStartingGear()
         local x, y = EntityGetTransform(v)
         local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
         GamePickUpInventoryItem(v, wand, false)
-        print("Wand: " .. tostring(wand))
+        --print("Wand: " .. tostring(wand))
     end
 
 end
@@ -429,6 +518,7 @@ local function SpawnPlayer(x, y, randomize)
     end
 
     for k, v in pairs(player)do
+        ClearGameEffects(v)
         EntitySetTransform(v, x, y)
         EntityApplyTransform(v, x, y)
     end
@@ -456,6 +546,38 @@ local function FixReadyState(lobby)
     GameRemoveFlagRun("ready_check")
     for k, v in pairs(arenaPlayerData)do
         arenaPlayerData[k].ready = false
+    end
+end
+
+active_ready_counter = nil
+
+local function LobbyCounter(lobby)
+    active_ready_counter = counter.create("Players ready: ", function()
+        local playersReady = AmountReady()
+        local totalPlayers = TotalPlayers(lobby)
+        
+        return playersReady, totalPlayers
+    end, function()
+        active_ready_counter = nil
+    end)
+end
+
+local function SendPerkData(lobby)
+    local perk_info = {}
+	for i,perk_data in ipairs(perk_list) do
+		local perk_id = perk_data.id
+		if ((( perk_data.one_off_effect == nil ) or ( perk_data.one_off_effect == false )) and perk_data.usable_by_enemies) then
+
+			local flag_name = get_perk_picked_flag_name( perk_id )
+			local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+			
+			if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+				table.insert( perk_info, { perk_id, pickup_count } )
+			end
+		end
+	end
+    if(#perk_info > 0)then
+        steamutils.sendData({type = "perk_info", perks = perk_info}, steamutils.messageTypes.OtherPlayers, lobby)
     end
 end
 
@@ -500,12 +622,18 @@ local function LoadHolyMountain(lobby, show_message)
     selfReady = false
     GameAddFlagRun("in_hm")
     FixReadyState(lobby)
+
+    local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
+    holyMountainCount = holyMountainCount + 1
+    GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+
     GameRemoveFlagRun("ready_check")
     GameAddFlagRun("Immortal")
     arenaGameState = "lobby"
     lastWandData = nil
     lastRectAnim = nil
     activeTweens = {}
+    playerPerks = {}
     show_message = show_message or false
     PreparePlayers(lobby)
     UnlockPlayer()
@@ -516,6 +644,7 @@ local function LoadHolyMountain(lobby, show_message)
     if(show_message)then
         GamePrintImportant("You have entered the holy mountain", "Prepare to enter the arena.")
     end
+    LobbyCounter(lobby)
     --BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
     --[[local players = EntityGetWithTag("player_unit") or {}
     if(players[1])then
@@ -537,6 +666,24 @@ function HidePlayer(player)
     end
 
     EntitySetComponentsWithTagEnabled(player, "character", false)
+end
+
+function AmountReady()
+    local amount = selfReady and 1 or 0
+    for k, v in pairs(arenaPlayerData)do
+        if(v.ready)then
+            amount = amount + 1
+        end
+    end
+    return amount
+end
+
+function TotalPlayers(lobby)
+    local amount = 0
+    for k, v in pairs(steamutils.getLobbyMembers(lobby))do
+        amount = amount + 1
+    end
+    return amount
 end
 
 function CheckReadyState()
@@ -649,8 +796,11 @@ local function FightCountdown(lobby)
         "mods/evaisa.arena/files/sprites/ui/countdown/1.png",
         "mods/evaisa.arena/files/sprites/ui/countdown/fight.png",
     }, 60, function()
-        UnlockPlayer()
-        GameRemoveFlagRun("Immortal")
+        steamutils.sendData({type = "unlock"}, steamutils.messageTypes.OtherPlayers, lobby)
+        if(locked)then
+            UnlockPlayer()
+            GameRemoveFlagRun("Immortal")
+        end
         active_countdown = nil
     end)
 end
@@ -658,13 +808,44 @@ end
 local function HandleData(lobby, data, user)
     local username = steam.friends.getFriendPersonaName(user)
     if(data.type)then
-        local playerData = arenaPlayerData[tostring(user)]
-        if(arenaPlayerEntities[tostring(user)] == nil and playerData and playerData.alive)then
-            spawnPlayer(user, {x = data.x, y = data.y})
+        if(data.type == "seed")then
+            local owner = steam.matchmaking.getLobbyOwner(lobby)
+            if(owner == user)then
+                seed = data.seed
+                --GamePrint("Seed set to " .. tostring(seed))
+            end
             return
+        elseif(data.type == "perk_info")then
+            --print(json.stringify(data))
+            playerPerks[tostring(user)] = data.perks
+            --GamePrint("Perk data received")
+            return
+        elseif(data.type == "unlock")then
+
+            if(locked)then
+                UnlockPlayer()
+                GameRemoveFlagRun("Immortal")
+            end
+            
+            GamePrint("Unlocked players")
+
+            locked = false
+
+        end
+        local playerData = arenaPlayerData[tostring(user)]
+        local function CheckPlayer()
+            if(arenaPlayerEntities[tostring(user)] == nil and playerData and playerData.alive)then
+                spawnPlayer(user, {x = data.x, y = data.y})
+                return false
+            end
+            return true
         end
         local playerEntity = arenaPlayerEntities[tostring(user)]
         if(data.type == "character_update")then
+
+            if(not CheckPlayer())then
+                return
+            end
 
             local x, y = EntityGetTransform(playerEntity)
             local characterData = EntityGetFirstComponentIncludingDisabled(playerEntity, "CharacterDataComponent")
@@ -706,6 +887,11 @@ local function HandleData(lobby, data, user)
 
         elseif(data.type == "character_animation")then
 
+            if(not CheckPlayer())then
+                return
+            end
+
+
             if(playerEntity ~= nil)then
                 local sprite = EntityGetFirstComponentIncludingDisabled(playerEntity, "SpriteComponent", "character")
                 if(data.rectAnim)then
@@ -721,12 +907,24 @@ local function HandleData(lobby, data, user)
 
 
         elseif (data.type == "aim_data")then
+
+            if(not CheckPlayer())then
+                return
+            end
+
+
             if(playerEntity ~= nil)then
                 if(data.aimData)then
                     SetAimData(playerEntity, data.aimData)
                 end
             end
         elseif(data.type == "wand_update")then
+
+            if(not CheckPlayer())then
+                return
+            end
+
+
             --GamePrint("Wand data changed")
             if(playerEntity ~= nil)then
                 --print(data.wandData)
@@ -735,11 +933,24 @@ local function HandleData(lobby, data, user)
 
             end
         elseif(data.type == "player_fired_wand")then
+
+            if(not CheckPlayer())then
+                return
+            end
+
+
             --GamePrint("Player: " .. tostring(user) .. " fired wand")
             if(playerEntity ~= nil)then
                 local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(playerEntity, "PlatformShooterPlayerComponent")
                 ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+
+                arenaPlayerData[tostring(user)].next_rng = data.rng
+                if(data.target)then
+                    arenaPlayerData[tostring(user)].target = data.target
+                    GamePrint("Received target: " .. tostring(data.target))
+                end
             end
+            
             --[[
             if(data.projectileData ~= nil)then
 
@@ -763,6 +974,12 @@ local function HandleData(lobby, data, user)
                 arenaGameState = "arena"
             end
         elseif(data.type == "player_died")then
+
+            if(not CheckPlayer())then
+                return
+            end
+
+
             local killer = data.killer
             activeTweens[tostring(user)] = nil
             KillPlayerData(user)
@@ -780,14 +997,75 @@ local function HandleData(lobby, data, user)
                 end
             end
             CheckForWinner(lobby)
+        elseif(data.type == "player_health")then
+            if(not CheckPlayer())then
+                return
+            end
+
+            local x, y = EntityGetTransform(playerEntity)
+
+            local health = data.health
+            local maxHealth = data.max_health
+
+            GamePrint(tostring(username) .. " health: " .. tostring(health) .. "/" .. tostring(maxHealth))
+
+            if(arenaPlayerData[tostring(user)] ~= nil and arenaPlayerData[tostring(user)].hp_bar ~= nil)then
+                arenaPlayerData[tostring(user)].hp_bar:setHealth(health, maxHealth)
+            else
+                local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                arenaPlayerData[tostring(user)].hp_bar = hp_bar
+            end
         end
     end
 end
 
 
+local function UpdateHealthbars()
+    for k, v in pairs(arenaPlayerData)do
+        if(v.hp_bar ~= nil)then
+            local playerEntity = arenaPlayerEntities[k]
+            if(playerEntity ~= nil)then
+                local x, y = EntityGetTransform(playerEntity)
+                y = y + 10
+                v.hp_bar:update(x, y)
+            end
+        end
+    end
+end
+
+local function pickRandomPlayer(include_self, only_alive)
+    local players = {}
+    if(include_self)then
+        table.insert(players, tostring(steam.user.getSteamID()))
+    end
+    for k, v in pairs(arenaPlayerData)do
+        if((v.alive and arenaPlayerEntities[k] ~= nil and EntityGetIsAlive(arenaPlayerEntities[k])) or not only_alive)then
+            table.insert(players, k)
+        end
+    end
+
+    if(#players > 0)then
+        return players[random.range(1, #players)]
+    end
+
+    return nil
+end
+
+local function pickClosestPlayer(x, y)
+    closest = EntityGetClosestWithTag(x, y, "client")
+    if(closest ~= nil)then
+        return EntityGetName(closest)
+    end
+
+    return nil
+end
+
+local projectile_seeds = {}
+local projectile_homing = {}
+
 arenaMode = {
     name = "Arena",
-    version = 1,
+    version = 0.117,
     enter = function(lobby) -- Runs when the player enters a lobby
         local owner = steam.matchmaking.getLobbyOwner(lobby)
 
@@ -800,6 +1078,8 @@ arenaMode = {
         if(owner == steam.user.getSteamID())then
             steam.matchmaking.setLobbyData(lobby, "round", tostring(1))
         end
+
+        random = rng.new((os.time() + GameGetFrameNum()) / 2)
 
         lastWandData = nil
 
@@ -831,7 +1111,6 @@ arenaMode = {
         ]]
 
 
-
         LoadHolyMountain(lobby)
 
         GiveStartingGear()
@@ -856,11 +1135,156 @@ arenaMode = {
         end
 
     end,
-    on_wand_fired = function(lobby, entity, rng)
-        print("Wand fired")
-        --local rng = tonumber(steam.matchmaking.getLobbyData(lobby, "update_seed") or 0)
-        local year, month, day, hour, minute, second = GameGetDateAndTimeUTC()
-        np.SetWandSpreadRNG(0)
+    on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+        GamePrint("fired!")
+        if(arenaGameState == "arena")then
+            -- check if entity is local player
+            local playerEntity = EntityGetWithTag("player_unit")
+            if(playerEntity ~= nil and #playerEntity > 0)then
+                if(playerEntity[1] == shooter_id)then
+                    -- get projectile component
+                    local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
+
+                    local who_shot = ComponentGetValue2(projectileComponent, "mWhoShot")
+                    local entity_that_shot  = ComponentGetValue2(projectileComponent, "mEntityThatShot")
+        
+                    if(entity_that_shot == 0)then
+                        --math.randomseed( tonumber(tostring(steam.user.getSteamID())) + ((os.time() + GameGetFrameNum()) / 2))
+                        local rand = random.range(0, 100000)
+                        local rng = math.floor(rand)
+                        --GamePrint("Setting RNG: "..tostring(rng))
+                        np.SetProjectileSpreadRNG(rng)
+
+                        projectile_seeds[projectile_id] = rng
+                        --GamePrint("generated_rng: "..tostring(rng))
+
+                        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+                        if(homingComponents ~= nil)then
+                            -- pick a random target player
+                            local targetPlayer = pickClosestPlayer(position_x, position_y)
+
+                            --GamePrint("targetPlayer: "..tostring(targetPlayer))
+
+                            if(targetPlayer ~= nil)then
+                                local targetPlayerEntity = arenaPlayerEntities[targetPlayer]
+                                for k, v in pairs(homingComponents)do
+                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                                    if(target_who_shot == false)then
+                                        ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
+                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                    end
+                                    GamePrint("Setting homing target to: "..tostring(targetPlayerEntity))
+                                end
+                                projectile_homing[projectile_id] = targetPlayerEntity
+                                steamutils.sendData({type = "player_fired_wand", rng = rng, target = targetPlayer}, steamutils.messageTypes.OtherPlayers, lobby)
+                            else
+                                steamutils.sendData({type = "player_fired_wand", rng = rng}, steamutils.messageTypes.OtherPlayers, lobby)
+                            end
+                            
+                        else
+                            steamutils.sendData({type = "player_fired_wand", rng = rng}, steamutils.messageTypes.OtherPlayers, lobby)
+                        end
+
+                        
+                    else
+                        if(projectile_seeds[entity_that_shot])then
+                            local new_seed = projectile_seeds[entity_that_shot] + 10
+                            np.SetProjectileSpreadRNG(new_seed)
+                            projectile_seeds[entity_that_shot] = projectile_seeds[entity_that_shot] + 1
+                            projectile_seeds[projectile_id] = new_seed
+                        end
+                        if(projectile_homing[entity_that_shot])then
+                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+                            if(homingComponents ~= nil)then
+                                for k, v in pairs(homingComponents)do
+                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                                    if(target_who_shot == false)then
+                                        ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
+                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                    end
+                                end
+                                projectile_homing[projectile_id] = projectile_homing[entity_that_shot]
+                            end
+                        end
+                    end
+                    return
+                end
+            end
+
+            if(tonumber(EntityGetName(shooter_id)))then
+                if(arenaPlayerData[EntityGetName(shooter_id)] and arenaPlayerData[EntityGetName(shooter_id)].next_rng)then
+                    --GamePrint("Setting RNG: "..tostring(arenaPlayerData[EntityGetName(shooter_id)].next_rng))
+                    local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
+
+                    local who_shot = ComponentGetValue2(projectileComponent, "mWhoShot")
+                    local entity_that_shot  = ComponentGetValue2(projectileComponent, "mEntityThatShot")
+                    if(entity_that_shot == 0)then
+                        np.SetProjectileSpreadRNG(arenaPlayerData[EntityGetName(shooter_id)].next_rng)
+                        projectile_seeds[projectile_id] = arenaPlayerData[EntityGetName(shooter_id)].next_rng
+                        local target = arenaPlayerData[EntityGetName(shooter_id)].target
+                        
+                        if(target)then
+                            GamePrint("Setting homing target to: "..tostring(target))
+                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+                            if(homingComponents ~= nil)then
+                                local targetPlayerEntity = arenaPlayerEntities[target]
+                                for k, v in pairs(homingComponents)do
+                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                                    if(target_who_shot == false)then
+                                        ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
+                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                    end
+                                end
+                                projectile_homing[projectile_id] = targetPlayerEntity
+                            end
+                        end
+                    else
+                        if(projectile_seeds[entity_that_shot])then
+                            local new_seed = projectile_seeds[entity_that_shot] + 10
+                            np.SetProjectileSpreadRNG(new_seed)
+                            projectile_seeds[entity_that_shot] = projectile_seeds[entity_that_shot] + 1
+                        end
+                        if(projectile_homing[entity_that_shot])then
+                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+                            if(homingComponents ~= nil)then
+                                for k, v in pairs(homingComponents)do
+                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                                    if(target_who_shot == false)then
+                                        ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
+                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                    end
+                                end
+                                projectile_homing[projectile_id] = projectile_homing[entity_that_shot]
+                            end
+                        end
+                    end
+                end
+                return
+            end
+            
+        end
+    end,
+    on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+        --GamePrint("testa: "..tostring(projectile_id))
+        --EntitySave(projectile_id, "projectile_save.xml")
+       
+        if(projectile_homing[projectile_id])then
+            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+            if(homingComponents ~= nil)then
+                for k, v in pairs(homingComponents)do
+                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                    if(target_who_shot == false)then
+                        ComponentSetValue2(v, "predefined_target", projectile_homing[projectile_id])
+                        ComponentSetValue2(v, "target_tag", "mortal")
+                    end
+                end
+            end
+        end
     end,
     update = function(lobby) -- Runs every frame while the game is in progress.
         local owner = steam.matchmaking.getLobbyOwner(lobby)
@@ -868,10 +1292,40 @@ arenaMode = {
         killInactiveUsers(lobby)
         local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 
+        if(owner == steam.user.getSteamID())then
+            if(GameGetFrameNum() % 2 == 0)then
+                seed = tostring(math.random(1, 1000000))
+                --GamePrint("Setting seed: "..seed)
+                steamutils.sendData({type = "seed", seed = seed}, steamutils.messageTypes.OtherPlayers, lobby)
+            end
+        end
+
         if(arenaGameState == "arena")then
             
+            if(GameGetFrameNum() % 5 == 0)then
+                for k, v in pairs(projectile_seeds)do
+                    if(not EntityGetIsAlive(k))then
+                        projectile_seeds[k] = nil
+                        projectile_homing[k] = nil
+                    end
+                end
+            end
+
             if(active_countdown ~= nil)then
                 active_countdown:update()
+            end
+
+            if(GameHasFlagRun("took_damage"))then
+                GameRemoveFlagRun("took_damage")
+
+                -- get player health
+                local playerEntity = EntityGetWithTag("player_unit")
+                if(playerEntity ~= nil and #playerEntity > 0)then
+                    local healthComp = EntityGetFirstComponentIncludingDisabled(playerEntity[1], "DamageModelComponent")
+                    local health = ComponentGetValue2(healthComp, "hp")
+                    local max_health = ComponentGetValue2(healthComp, "max_hp")
+                    steamutils.sendData({type = "player_health", health = health, max_health = max_health}, steamutils.messageTypes.OtherPlayers, lobby)
+                end
             end
 
             if(PrepareForSpawn)then
@@ -884,8 +1338,17 @@ arenaMode = {
                     local x, y = EntityGetTransform(spawn_point)
                     SpawnPlayer(x, y, true)
                     PrepareForSpawn = false
+                    projectile_seeds = {}
+                    projectile_homing = {}
                     LockPlayer()
                     FightCountdown(lobby)
+                    local playerEntity = EntityGetWithTag("player_unit")
+                    if(playerEntity ~= nil and #playerEntity > 0)then
+                        local healthComp = EntityGetFirstComponentIncludingDisabled(playerEntity[1], "DamageModelComponent")
+                        local health = ComponentGetValue2(healthComp, "hp")
+                        local max_health = ComponentGetValue2(healthComp, "max_hp")
+                        steamutils.sendData({type = "player_health", health = health, max_health = max_health}, steamutils.messageTypes.OtherPlayers, lobby)
+                    end
                 end
             end
             game_funcs.RenderOffScreenMarkers(arenaPlayerEntities)
@@ -895,12 +1358,18 @@ arenaMode = {
  
         if(GameGetFrameNum() % 60 == 0)then
             steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
-            DamageZoneCheck(0, 0, 450, 600)
+            DamageZoneCheck(0, 0, 600, 800)
         end
 
         
 
         if(arenaGameState == "lobby")then
+            if(GameGetFrameNum() % 3 == 0)then
+                SendPerkData(lobby)
+            end
+            if(active_ready_counter ~= nil)then
+                active_ready_counter:update()
+            end
             if(CheckReadyState())then
                 LoadArena(lobby)
                 steamutils.sendData({type = "force_arena"}, steamutils.messageTypes.OtherPlayers, lobby)
@@ -922,23 +1391,16 @@ arenaMode = {
 
 
         if(arenaGameState == "arena")then
-
+            UpdateHealthbars()
             updateTweens(lobby)
             if(selfAlive)then
                 KillCheck(lobby)
+                
 
                 local players = EntityGetWithTag("player_unit")
                 if(players ~= nil and #players > 0)then
                     local px, py = EntityGetTransform(players[1])
 
-                    
-                    if(GameHasFlagRun("player_fired_wand"))then
-                        GameRemoveFlagRun("player_fired_wand")
-                        
-                        --local projectileData = GetLastProjectileData(steam.user.getSteamID())
-
-                        steamutils.sendData({type = "player_fired_wand"}, steamutils.messageTypes.OtherPlayers, lobby)
-                    end
 
                     steamutils.sendData({type = "aim_data", aimData = GetAimData(players[1])}, steamutils.messageTypes.OtherPlayers, lobby)
                 end
@@ -999,14 +1461,6 @@ arenaMode = {
     late_update = function (lobby)
         if(arenaGameState == "arena")then
             KillCheck(lobby)
-
-            if(GameHasFlagRun("player_fired_wand"))then
-                GameRemoveFlagRun("player_fired_wand")
-                    
-                --local projectileData = GetLastProjectileData(steam.user.getSteamID())
-
-                steamutils.sendData({type = "player_fired_wand", --[[projectile_data = projectileData]]}, steamutils.messageTypes.OtherPlayers, lobby)
-            end
         end
     end,
     leave = function(lobby)

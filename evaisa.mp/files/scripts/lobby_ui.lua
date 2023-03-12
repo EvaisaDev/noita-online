@@ -106,10 +106,18 @@ local windows = {
 							local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
 
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-							if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-								steam.matchmaking.leaveLobby(v)
-								steam.matchmaking.joinLobby(v, function(e)
-								end)
+							if(not IsCorrectVersion(v))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, "[Version Mismatch] "..lobby_name))then
+									steam.matchmaking.leaveLobby(v)
+									steam.matchmaking.joinLobby(v, function(e)
+									end)
+								end
+							else
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+									steam.matchmaking.leaveLobby(v)
+									steam.matchmaking.joinLobby(v, function(e)
+									end)
+								end
 							end
 
 							GuiLayoutEnd(menu_gui)
@@ -134,10 +142,18 @@ local windows = {
 
 
 						GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-						if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_gamemode_name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-							steam.matchmaking.leaveLobby(v)
-							steam.matchmaking.joinLobby(v, function(e)
-							end)
+						if(not IsCorrectVersion(v))then
+							if(GuiButton(menu_gui, NewID(), 0, 0, "[Version Mismatch] "..lobby_name))then
+								steam.matchmaking.leaveLobby(v)
+								steam.matchmaking.joinLobby(v, function(e)
+								end)
+							end
+						else
+							if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								steam.matchmaking.leaveLobby(v)
+								steam.matchmaking.joinLobby(v, function(e)
+								end)
+							end
 						end
 
 						GuiLayoutEnd(menu_gui)

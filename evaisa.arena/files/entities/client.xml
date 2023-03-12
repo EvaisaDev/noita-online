@@ -1,4 +1,4 @@
-<Entity name="client" tags="client,mortal,human,hittable,peasant,prey">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT">
 
   <VelocityComponent
     updates_velocity="0"
@@ -14,6 +14,23 @@
     polymorph_next_attack_frame="0" >
 
   </ControlsComponent>
+
+    <!-- Protections  -->
+    <Entity>
+        <InheritTransformComponent />
+
+        <GameEffectComponent
+            effect="PROTECTION_FREEZE"
+            frames="-1"
+            >
+        </GameEffectComponent >
+        
+        <GameEffectComponent 
+            effect="STUN_PROTECTION_FREEZE"
+            frames="-1"
+        >
+        </GameEffectComponent >
+    </Entity>
 
   <CharacterDataComponent 
     platforming_type="0"

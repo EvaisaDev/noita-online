@@ -17,7 +17,7 @@ RegisterSpawnFunction( 0xffb66ccd, "spawn_ready_point" )
 RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 
 function spawn_workshop( x, y )
-	EntityLoad( "data/entities/buildings/workshop.xml", x, y )
+	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )
 end
 
 function spawn_ready_point( x, y )
@@ -25,7 +25,7 @@ function spawn_ready_point( x, y )
 end
 
 function spawn_workshop_extra( x, y )
-	EntityLoad( "data/entities/buildings/workshop_allow_mods.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/workshop_allow_mods.xml", x, y )
 end
 
 function spawn_spell_visualizer( x, y )
@@ -46,9 +46,9 @@ function spawn_all_shopitems( x, y )
 		return
 	end
 
-	local round = ModSettingGet("arena_round") or 1
+	local round = tonumber(GlobalsGetValue("holyMountainCount", "0"))
 
-	local round = math.min(math.ceil(round / 2), 7)
+	local round = math.min(math.ceil(round / 4), 7)
 
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	

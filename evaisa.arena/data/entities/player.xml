@@ -1,6 +1,6 @@
 <Entity 
   name="DEBUG_NAME:player"
-  tags="mortal,human,hittable,peasant,prey,player_unit,teleportable" >
+  tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,polymorphable_NOT" >
   
   <Base file="mods/evaisa.arena/files/entities/player_base.xml" include_children="1"> 
     <Inventory2Component

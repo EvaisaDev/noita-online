@@ -8,6 +8,8 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         local health = ComponentGetValue2( damageModelComponent, "hp" )
         if(GameHasFlagRun("Immortal"))then
             return 0, 0
+        else
+            GameAddFlagRun("took_damage")
         end
         if health - damage <= 0 then
             GameAddFlagRun("player_died")

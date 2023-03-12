@@ -4,9 +4,14 @@ package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
 
+dofile("data/scripts/lib/coroutines.lua")
+
 np = require("noitapatcher")
 
-MP_VERSION = 1.1
+MP_VERSION = 1.7
+Version_string = "325897135236"
+
+Checksum_passed = false
 
 base64 = require("base64")
 
@@ -23,7 +28,34 @@ require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 
 pretty = require("pretty_print")
+local pollnet = require("pollnet")
 
+local req_sock = pollnet.http_get("http://evaisa.dev:3000/wisdombotti")
+
+--GamePrint("Making api call")
+
+http_get = function(url, callback)
+	local req_sock = pollnet.http_get(url)
+
+    async( function ()
+		while(true)do
+			if not req_sock then return end
+			local happy, msg = req_sock:poll()
+			if not happy then
+			req_sock:close() -- good form
+			req_sock = nil
+			return
+			end
+			if msg then
+				callback(msg)
+				req_sock:close()
+				break
+			end
+			wait(1)
+		end
+	end)
+
+end
 
 if type(Steam) == 'boolean' then Steam = nil end
 
@@ -40,8 +72,11 @@ dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
+
 function OnWorldPreUpdate()
-	if steam then 
+	wake_up_waiting_threads(1)
+	math.randomseed( os.time() )
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 		dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
@@ -66,8 +101,13 @@ function OnWorldPreUpdate()
 			if(game_in_progress)then
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
+
 				if(owner == steam.user.getSteamID())then
-					steam.matchmaking.setLobbyData(lobby_code, "update_seed", tostring(math.random(1, 1000000)))
+					if(GameGetFrameNum() % 2 == 0)then
+						local seed = tostring(math.random(1, 1000000))
+						
+						steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
+					end
 				end
 				
 				gamemodes[lobby_gamemode].update(lobby_code)
@@ -83,10 +123,8 @@ function OnWorldPreUpdate()
 	end
 end
 
-function OnWandFired(entity, rng)
-	print("Wand fired")
-
-	if steam then 
+function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -94,8 +132,8 @@ function OnWandFired(entity, rng)
 			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 			if(game_in_progress)then
-				if(gamemodes[lobby_gamemode].on_wand_fired)then
-					gamemodes[lobby_gamemode].on_wand_fired(lobby_code, entity, rng)
+				if(gamemodes[lobby_gamemode].on_projectile_fired)then
+					gamemodes[lobby_gamemode].on_projectile_fired(lobby_code, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
 				end
 			end
 		end
@@ -103,8 +141,26 @@ function OnWandFired(entity, rng)
     
 end
 
+function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+	if steam and Checksum_passed then 
+		--pretty.table(steam.networking)
+		lobby_code = lobby_code or nil
+
+		if(lobby_code ~= nil)then
+			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+			if(game_in_progress)then
+				if(gamemodes[lobby_gamemode].on_projectile_fired_post)then
+					gamemodes[lobby_gamemode].on_projectile_fired_post(lobby_code, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+				end
+			end
+		end
+	end
+	
+end
+
 function OnWorldPostUpdate()
-	if steam then 
+	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -264,9 +320,18 @@ local set_content = ModTextFileSetContent
 function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 	
-	steam.init()
+	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
+		
+		Checksum_passed = data == Version_string
 
-	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
+		if(Checksum_passed)then
+			print("Checksum passed: "..tostring(data))
+
+			steam.init()
+
+			steam.friends.setRichPresence( "status", "Noita Online - Menu" )
+		end
+	end)
 end
 
 function OnWorldInitialized()
@@ -284,7 +349,7 @@ function OnPlayerSpawned(player)
 
 	local lastCode = ModSettingGet("last_lobby_code")
 	--print("Code: "..tostring(lastCode))
-	if(steam)then
+	if(steam and Checksum_passed)then
 		if(lastCode ~= nil and lastCode ~= "")then
 			local lobCode = steam.extra.parseUint64(lastCode)
 			if(tostring(lobCode) ~= "0")then
