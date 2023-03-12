@@ -1,0 +1,17 @@
+
+Kicking
+
+Sync damage numbers
+	make client entity unable to be directly hit by the player
+	damage client entity whenever health updates are received
+
+Expand tinker zone (test)
+Clear effects on holy mountain (test)
+Make homing target closest (test)
+Fix Freeze (Test)
+Fix polymorph (Test)
+Holy mountain shop level (Test)
+increase damage zone size (Test)
+Perk sync not ignoring client side perks (Test)
+Countdown not synchronized (Test)
+add version checksum into luasteam (Partially done)
