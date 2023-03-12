@@ -319,17 +319,15 @@ local set_content = ModTextFileSetContent
 
 function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
-	
+	steam.init()
+	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
+
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
 		Checksum_passed = data == Version_string
 
 		if(Checksum_passed)then
 			print("Checksum passed: "..tostring(data))
-
-			steam.init()
-
-			steam.friends.setRichPresence( "status", "Noita Online - Menu" )
 		end
 	end)
 end
@@ -349,7 +347,7 @@ function OnPlayerSpawned(player)
 
 	local lastCode = ModSettingGet("last_lobby_code")
 	--print("Code: "..tostring(lastCode))
-	if(steam and Checksum_passed)then
+	if(steam)then
 		if(lastCode ~= nil and lastCode ~= "")then
 			local lobCode = steam.extra.parseUint64(lastCode)
 			if(tostring(lobCode) ~= "0")then

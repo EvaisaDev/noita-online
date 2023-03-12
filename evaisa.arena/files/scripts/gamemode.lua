@@ -1007,7 +1007,21 @@ local function HandleData(lobby, data, user)
             local health = data.health
             local maxHealth = data.max_health
 
-            GamePrint(tostring(username) .. " health: " .. tostring(health) .. "/" .. tostring(maxHealth))
+            --GamePrint(tostring(username) .. " health: " .. tostring(health) .. "/" .. tostring(maxHealth))
+
+            if(arenaPlayerEntities[tostring(user)] ~= nil)then
+                local last_health = maxHealth
+                if(arenaPlayerData[tostring(user)].health ~= nil)then
+                    last_health = arenaPlayerData[tostring(user)].health
+                end
+                -- if health is lower than last health, damage client entity
+                if(health < last_health)then
+                    local damage = last_health - health
+                    EntityInflictDamage(arenaPlayerEntities[tostring(user)], damage, "DAMAGE_SLICE", "damage_fake", "BLOOD_SPRAY", 0, 0, nil)
+                end
+            end
+
+            arenaPlayerData[tostring(user)].health = health
 
             if(arenaPlayerData[tostring(user)] ~= nil and arenaPlayerData[tostring(user)].hp_bar ~= nil)then
                 arenaPlayerData[tostring(user)].hp_bar:setHealth(health, maxHealth)
