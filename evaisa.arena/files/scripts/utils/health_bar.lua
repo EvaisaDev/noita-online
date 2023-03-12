@@ -38,18 +38,18 @@ function health_bar.create(hp, max_hp, width, height)
             GuiDestroy(health_gui)
         end,
         update = function(self, x, y)
-
+            --[[
             if GameGetFrameNum() - self.last_changed_frame > 120 then
                 self.visible = false
             else
                 self.visible = true
             end
 
-
+            
             if not self.visible then
                 return
             end
-            
+            ]]
 
 
             GuiStartFrame(health_gui)

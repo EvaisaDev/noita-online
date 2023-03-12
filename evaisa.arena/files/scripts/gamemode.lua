@@ -627,6 +627,11 @@ local function LoadHolyMountain(lobby, show_message)
     holyMountainCount = holyMountainCount + 1
     GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
 
+    local owner = steam.matchmaking.getLobbyOwner(lobby)
+    if(owner == steam.user.getSteamID())then
+        steam.matchmaking.setLobbyData(lobby, "round", holyMountainCount)
+    end
+
     GameRemoveFlagRun("ready_check")
     GameAddFlagRun("Immortal")
     arenaGameState = "lobby"
@@ -640,7 +645,12 @@ local function LoadHolyMountain(lobby, show_message)
     SpawnPlayer(174, 133)
     KillPlayers()
     BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/biome_map_holymountain.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
-    GiveGold(400)
+    
+    local round = math.max(0, math.min(math.ceil(holyMountainCount / 2), 7) - 1)
+
+
+    
+    GiveGold(400 + (40 * (round * round)))
     if(show_message)then
         GamePrintImportant("You have entered the holy mountain", "Prepare to enter the arena.")
     end
@@ -707,25 +717,15 @@ local function CheckForWinner(lobby)
         end
     end
     if(alive == 1)then
-        local owner = steam.matchmaking.getLobbyOwner(lobby)
 
         GamePrintImportant(steam.friends.getFriendPersonaName(winner) .. " won this round!", "Prepare for the next round in your holy mountain.")
-        if(owner == steam.user.getSteamID())then
-            local round = steam.matchmaking.getLobbyData(lobby, "round") or "1"
-            round = tonumber(round) + 1
-            steam.matchmaking.setLobbyData(lobby, "round", tostring(round))
-        end
+
         LoadHolyMountain(lobby)
         selfAlive = true
     elseif(alive == 0)then
-        local owner = steam.matchmaking.getLobbyOwner(lobby)
 
         GamePrintImportant("Nobody won this round!", "Prepare for the next round in your holy mountain.")
-        if(owner == steam.user.getSteamID())then
-            local round = steam.matchmaking.getLobbyData(lobby, "round") or "1"
-            round = tonumber(round) + 1
-            steam.matchmaking.setLobbyData(lobby, "round", tostring(round))
-        end
+
         LoadHolyMountain(lobby)
         selfAlive = true
     end
@@ -1079,7 +1079,7 @@ local projectile_homing = {}
 
 arenaMode = {
     name = "Arena",
-    version = 0.117,
+    version = 0.119,
     enter = function(lobby) -- Runs when the player enters a lobby
         local owner = steam.matchmaking.getLobbyOwner(lobby)
 
@@ -1088,13 +1088,10 @@ arenaMode = {
         for k, v in pairs(arenaPlayerData)do
             KillPlayerData(k)
         end
-        
-        if(owner == steam.user.getSteamID())then
-            steam.matchmaking.setLobbyData(lobby, "round", tostring(1))
-        end
 
         random = rng.new((os.time() + GameGetFrameNum()) / 2)
 
+        
         lastWandData = nil
 
         arenaPlayerData = {}
@@ -1110,6 +1107,10 @@ arenaMode = {
         --if(owner == steam.user.getSteamID())then
         --    steam.matchmaking.setLobbyData(lobby, "arena_state", "lobby")
         --end
+        local owner = steam.matchmaking.getLobbyOwner(lobby)
+        if(owner == steam.user.getSteamID())then
+            steam.matchmaking.setLobbyData(lobby, "round", "0")
+        end
 
         --ModSettingSet("arena_round", tonumber(steam.matchmaking.getLobbyData(lobby, "round")))
 
@@ -1124,7 +1125,12 @@ arenaMode = {
         end
         ]]
 
+        local rounds = steam.matchmaking.getLobbyData(lobby, "round") or "0"
 
+        GlobalsSetValue("holyMountainCount", rounds)
+
+
+        
         LoadHolyMountain(lobby)
 
         GiveStartingGear()
@@ -1150,7 +1156,7 @@ arenaMode = {
 
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
-        GamePrint("fired!")
+        --GamePrint("fired!")
         if(arenaGameState == "arena")then
             -- check if entity is local player
             local playerEntity = EntityGetWithTag("player_unit")

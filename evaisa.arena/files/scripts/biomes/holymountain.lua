@@ -48,7 +48,7 @@ function spawn_all_shopitems( x, y )
 
 	local round = tonumber(GlobalsGetValue("holyMountainCount", "0"))
 
-	local round = math.min(math.ceil(round / 4), 7)
+	local round = math.min(math.ceil(round / 2), 7)
 
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	

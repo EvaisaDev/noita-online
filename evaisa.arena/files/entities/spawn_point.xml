@@ -1,4 +1,5 @@
 <Entity tags="spawn_point">
+    <!--
     <SpriteComponent 
         alpha="1" 
         image_file="mods/evaisa.arena/files/sprites/entities/spawn.png" 
@@ -8,5 +9,5 @@
         rect_animation="" 
         z_index="1"
     ></SpriteComponent>
-
+-->
 </Entity>

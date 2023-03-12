@@ -13,4 +13,5 @@ Done:
     Perk sync not ignoring client side perks (Test)
     Countdown not synchronized (Test)
     add version checksum into luasteam (Partially done)
+    Increase gold gain over rounds
 
