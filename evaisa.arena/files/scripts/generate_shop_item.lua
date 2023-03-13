@@ -45,18 +45,6 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		[32] = 6,
 		[33] = 6,
 	}
-
-
-	local biomepixel = math.floor(y / 512)
-	local biomeid = biomes[biomepixel] or 0
-	
-	if (biomepixel > 35) then
-		biomeid = 7
-	end
-	
-	if (biomes[biomepixel] == nil) and (biomeid_ == nil) then
-		print("Unable to find biomeid for chunk at depth " .. tostring(biomepixel))
-	end
 	
 	if (biomeid_ ~= nil) then
 		biomeid = biomeid_
@@ -71,9 +59,15 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 
 	-- Note( Petri ): Testing how much squaring the biomeid for prices affects things
 	local level = biomeid
-	biomeid = biomeid * biomeid
+
+	if(level > 7)then
+		level = 7
+	end
 
 	item = GetRandomAction( x + Random(-10000, 10000), y + Random(-10000, 10000), level, 0 )
+
+	biomeid = biomeid * biomeid
+
 	cardcost = 0
 
 	for i,thisitem in ipairs( actions ) do
@@ -95,10 +89,6 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		cardcost = 0.5 * cardcost
 	end
 	
-	if ( biomeid >= 10 ) then
-		price = price * 5.0
-		cardcost = cardcost * 5.0
-	end
 
 	local eid = CreateItemActionEntity( item, x, y )
 

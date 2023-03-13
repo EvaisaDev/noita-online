@@ -75,7 +75,7 @@ function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
 	math.randomseed( os.time() )
 
-	if(not Checksum_passed)then
+	if(steam and not Checksum_passed)then
 		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
 	end
 

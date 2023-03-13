@@ -450,6 +450,54 @@ local function LockPlayer()
     end
 end
 
+local function CancelFire()
+    local player = EntityGetWithTag("player_unit") or {}
+    if(player == nil or #player == 0)then
+        return
+    end
+    for k, v in pairs(player)do
+        -- disable controls component
+        local items = GameGetAllInventoryItems( v ) or {}
+        for k, item in ipairs(items)do
+            local abilityComponent = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+            if(abilityComponent ~= nil)then
+                -- set mNextFrameUsable to false
+                ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 2)
+                -- set mReloadFramesLeft
+                ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 2)
+                -- set mReloadNextFrameUsable to false
+                ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 2)
+
+            end
+        end
+    end
+    -- do the same for all players
+    for k, v in pairs(arenaPlayerData)do
+        if(v.entity ~= nil)then
+            local item = v.item
+            if(item ~= nil)then
+                local abilityComponent = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                if(abilityComponent ~= nil)then
+                    -- set mNextFrameUsable to false
+                    ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 2)
+                    -- set mReloadFramesLeft
+                    ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 2)
+                    -- set mReloadNextFrameUsable to false
+                    ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 2)
+                end
+            end
+        end
+    end 
+end
+
+local function PreventFiring()
+    GameAddFlagRun("no_shooting")
+end
+
+local function AllowFiring()
+    GameRemoveFlagRun("no_shooting")
+end
+
 local function MovePlayerOut()
     local player = EntityGetWithTag("player_unit") or {}
     if(player == nil or #player == 0)then
@@ -503,7 +551,7 @@ local function SpawnPlayer(x, y, randomize)
     randomize = randomize or false
 
     if(randomize)then
-        x, y = get_spawn_pos(0, 100, x, y)
+        --x, y = get_spawn_pos(0, 100, x, y)
     end
 
     --[[KillPlayer()
@@ -650,7 +698,7 @@ local function LoadHolyMountain(lobby, show_message)
 
 
     
-    GiveGold(400 + (40 * (round * round)))
+    GiveGold(400 + (70 * (round * round)))
     if(show_message)then
         GamePrintImportant("You have entered the holy mountain", "Prepare to enter the arena.")
     end
@@ -798,9 +846,11 @@ local function FightCountdown(lobby)
     }, 60, function()
         steamutils.sendData({type = "unlock"}, steamutils.messageTypes.OtherPlayers, lobby)
         if(locked)then
-            UnlockPlayer()
+            --UnlockPlayer()
+            AllowFiring()
             GameRemoveFlagRun("Immortal")
         end
+        GameRemoveFlagRun("Immortal")
         active_countdown = nil
     end)
 end
@@ -822,11 +872,8 @@ local function HandleData(lobby, data, user)
             return
         elseif(data.type == "unlock")then
 
-            if(locked)then
-                UnlockPlayer()
-                GameRemoveFlagRun("Immortal")
-            end
-            
+            AllowFiring()
+            GameRemoveFlagRun("Immortal")
             GamePrint("Unlocked players")
 
             locked = false
@@ -947,7 +994,7 @@ local function HandleData(lobby, data, user)
                 arenaPlayerData[tostring(user)].next_rng = data.rng
                 if(data.target)then
                     arenaPlayerData[tostring(user)].target = data.target
-                    GamePrint("Received target: " .. tostring(data.target))
+                    --GamePrint("Received target: " .. tostring(data.target))
                 end
             end
             
@@ -1074,12 +1121,14 @@ local function pickClosestPlayer(x, y)
     return nil
 end
 
+
+
 local projectile_seeds = {}
 local projectile_homing = {}
 
 arenaMode = {
     name = "Arena",
-    version = 0.119,
+    version = 0.124,
     enter = function(lobby) -- Runs when the player enters a lobby
         local owner = steam.matchmaking.getLobbyOwner(lobby)
 
@@ -1196,10 +1245,12 @@ arenaMode = {
                                 for k, v in pairs(homingComponents)do
                                     local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                                     if(target_who_shot == false)then
-                                        ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
-                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                        if(targetPlayerEntity ~= nil)then
+                                            ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
+                                            ComponentSetValue2(v, "target_tag", "mortal")
+                                        end
                                     end
-                                    GamePrint("Setting homing target to: "..tostring(targetPlayerEntity))
+                                    --GamePrint("Setting homing target to: "..tostring(targetPlayerEntity))
                                 end
                                 projectile_homing[projectile_id] = targetPlayerEntity
                                 steamutils.sendData({type = "player_fired_wand", rng = rng, target = targetPlayer}, steamutils.messageTypes.OtherPlayers, lobby)
@@ -1226,8 +1277,10 @@ arenaMode = {
                                 for k, v in pairs(homingComponents)do
                                     local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                                     if(target_who_shot == false)then
-                                        ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
-                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                        if(projectile_homing[entity_that_shot] ~= nil)then
+                                            ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
+                                            ComponentSetValue2(v, "target_tag", "mortal")
+                                        end
                                     end
                                 end
                                 projectile_homing[projectile_id] = projectile_homing[entity_that_shot]
@@ -1238,7 +1291,7 @@ arenaMode = {
                 end
             end
 
-            if(tonumber(EntityGetName(shooter_id)))then
+            if(EntityGetName(shooter_id) ~= nil and tonumber(EntityGetName(shooter_id)))then
                 if(arenaPlayerData[EntityGetName(shooter_id)] and arenaPlayerData[EntityGetName(shooter_id)].next_rng)then
                     --GamePrint("Setting RNG: "..tostring(arenaPlayerData[EntityGetName(shooter_id)].next_rng))
                     local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
@@ -1251,7 +1304,7 @@ arenaMode = {
                         local target = arenaPlayerData[EntityGetName(shooter_id)].target
                         
                         if(target)then
-                            GamePrint("Setting homing target to: "..tostring(target))
+                            --GamePrint("Setting homing target to: "..tostring(target))
                             local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
                             if(homingComponents ~= nil)then
@@ -1259,8 +1312,10 @@ arenaMode = {
                                 for k, v in pairs(homingComponents)do
                                     local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                                     if(target_who_shot == false)then
-                                        ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
-                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                        if(targetPlayerEntity ~= nil)then
+                                            ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
+                                            ComponentSetValue2(v, "target_tag", "mortal")
+                                        end
                                     end
                                 end
                                 projectile_homing[projectile_id] = targetPlayerEntity
@@ -1279,8 +1334,10 @@ arenaMode = {
                                 for k, v in pairs(homingComponents)do
                                     local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                                     if(target_who_shot == false)then
-                                        ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
-                                        ComponentSetValue2(v, "target_tag", "mortal")
+                                        if(projectile_homing[entity_that_shot] ~= nil)then
+                                            ComponentSetValue2(v, "predefined_target", projectile_homing[entity_that_shot])
+                                            ComponentSetValue2(v, "target_tag", "mortal")
+                                        end
                                     end
                                 end
                                 projectile_homing[projectile_id] = projectile_homing[entity_that_shot]
@@ -1365,7 +1422,8 @@ arenaMode = {
                     PrepareForSpawn = false
                     projectile_seeds = {}
                     projectile_homing = {}
-                    LockPlayer()
+                    --LockPlayer()
+                    PreventFiring()
                     FightCountdown(lobby)
                     local playerEntity = EntityGetWithTag("player_unit")
                     if(playerEntity ~= nil and #playerEntity > 0)then
@@ -1418,6 +1476,13 @@ arenaMode = {
         if(arenaGameState == "arena")then
             UpdateHealthbars()
             updateTweens(lobby)
+            if(GameHasFlagRun("no_shooting"))then
+                CancelFire()
+            end
+            if(not locked)then
+                AllowFiring()
+                GameRemoveFlagRun("Immortal")
+            end
             if(selfAlive)then
                 KillCheck(lobby)
                 
