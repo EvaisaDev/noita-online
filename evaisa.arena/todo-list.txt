@@ -4,11 +4,11 @@ Todo:
     Overeating fix
     Display self ready 
     Better way to stuff wands into client hands (right now it is kinda jank)
-    
+
     FIX HOT JOINING??? WHY IT BROKEN HELP
 
     Refactor entire code base (get out of prototype state ;-;)
-
+        - It has become unwieldy
 Broken spells:
     Polymorph anything
     Certain homing spells which use scripts?
