@@ -1,5 +1,21 @@
 Todo:
     Kicking
+    Message notifications   
+    Overeating fix
+    Display self ready 
+
+    FIX HOT JOINING??? WHY IT BROKEN HELP
+
+    Refactor entire code base (get out of prototype state ;-;)
+
+Broken spells:
+    Polymorph anything
+    Certain homing spells which use scripts?
+
+Spells that should be nerfed or removed:
+    Nuke
+    acid circle/whatever
+
 
 Done:
     Sync damage numbers (test)
