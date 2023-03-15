@@ -1,34 +1,5 @@
 Todo:
-    Kicking
-    Message notifications   
+    Kicking sync
     Overeating fix
-    Display self ready 
-    Better way to stuff wands into client hands (right now it is kinda jank)
-
-    FIX HOT JOINING??? WHY IT BROKEN HELP
-
-    Refactor entire code base (get out of prototype state ;-;)
-        - It has become unwieldy
-Broken spells:
-    Polymorph anything
-    Certain homing spells which use scripts?
-
-Spells that should be nerfed or removed:
-    Nuke
-    acid circle/whatever
-
-
-Done:
-    Sync damage numbers (test)
-    Expand tinker zone (test)
-    Clear effects on holy mountain (test)
-    Make homing target closest (test)
-    Fix Freeze (Test)
-    Fix polymorph (Test)
-    Holy mountain shop level (Test)
-    increase damage zone size (Test)
-    Perk sync not ignoring client side perks (Test)
-    Countdown not synchronized (Test)
-    add version checksum into luasteam (Partially done)
-    Increase gold gain over rounds
-
+    Implement session leave handler(?)
+    
