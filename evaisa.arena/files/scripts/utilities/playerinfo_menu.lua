@@ -230,80 +230,82 @@ function playerinfo_menu:New()
         for k, v in pairs(data.players)do
             index = index + 1
             local playerid = gameplay_handler.FindUser(lobby, k)
-            local username = v.name or steam.friends.getFriendPersonaName(playerid)
-            GuiZSetForNextWidget(self.gui, 900)
-            GuiText(self.gui, 0, 0, username)
-            if(index == 1)then
-                local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-                scroll_offset = scroll_y - self.offset_y - 2
-            end
-            local health_ratio = v.health / v.max_health
-            local health_bar_width = 90
-            local health_width = health_bar_width * health_ratio
-            local rest_width = health_bar_width - health_width
+            if(playerid ~= nil)then
 
-            --local hp_text = tostring(v.health).."/"..tostring(v.max_health)
+                local username = v.name or steam.friends.getFriendPersonaName(playerid)
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiText(self.gui, 0, 0, username)
+                if(index == 1)then
+                    local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+                    scroll_offset = scroll_y - self.offset_y - 2
+                end
+                local health_ratio = v.health / v.max_health
+                local health_bar_width = 90
+                local health_width = health_bar_width * health_ratio
+                local rest_width = health_bar_width - health_width
 
-            -- generate a percentage out of health_width and rest_width
-            local health_percentage = health_width / health_bar_width
-            local rest_percentage = rest_width / health_bar_width
-            
-            local health_bar_color = get_health_bar_color(v.health, v.max_health)
+                --local hp_text = tostring(v.health).."/"..tostring(v.max_health)
 
-            GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
-            GuiZSetForNextWidget(self.gui, 900)
-            GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
-            GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
-            local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-            if(hp_hovered1)then
-                player_index = index
-                hovered_max_hp = v.max_health
-                hovered_hp = v.health
-                draw_hp_info = true
-            end
-
-            
-            GuiZSetForNextWidget(self.gui, 900)
-            GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
-            GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
-            local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-            if(hp_hovered2)then
-                player_index = index
-                hovered_max_hp = v.max_health
-                hovered_hp = v.health
-                draw_hp_info = true
-            end
-
-            GuiZSetForNextWidget(self.gui, 900)
-            GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
-            local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-            if(hovered)then
-                player_index = index
-                if(v.perks)then
-                    for k, v in ipairs(v.perks)do
-                        local perk = v[1]
-                        local count = v[2]
+                -- generate a percentage out of health_width and rest_width
+                local health_percentage = health_width / health_bar_width
+                local rest_percentage = rest_width / health_bar_width
                 
-                        local perk_sprite = perk_sprites[perk]
-                        
-                        if(perk_sprite)then
-                            for i = 1, count do
-                                table.insert(player_perk_sprites, perk_sprite)
+                local health_bar_color = get_health_bar_color(v.health, v.max_health)
+
+                GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
+                GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
+                local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+                if(hp_hovered1)then
+                    player_index = index
+                    hovered_max_hp = v.max_health
+                    hovered_hp = v.health
+                    draw_hp_info = true
+                end
+
+                
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
+                GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
+                local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+                if(hp_hovered2)then
+                    player_index = index
+                    hovered_max_hp = v.max_health
+                    hovered_hp = v.health
+                    draw_hp_info = true
+                end
+
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
+                local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+                if(hovered)then
+                    player_index = index
+                    if(v.perks)then
+                        for k, v in ipairs(v.perks)do
+                            local perk = v[1]
+                            local count = v[2]
+                    
+                            local perk_sprite = perk_sprites[perk]
+                            
+                            if(perk_sprite)then
+                                for i = 1, count do
+                                    table.insert(player_perk_sprites, perk_sprite)
+                                end
                             end
                         end
                     end
+                    draw_perks = true
                 end
-                draw_perks = true
+                perk_draw_x = draw_x
+                perk_draw_y = draw_y
+                GuiLayoutEnd(self.gui)
+                if(index ~= player_count)then
+                    GuiText(self.gui, 0, -15, " ")
+                end
             end
-            perk_draw_x = draw_x
-            perk_draw_y = draw_y
-            GuiLayoutEnd(self.gui)
-            if(index ~= player_count)then
-                GuiText(self.gui, 0, -15, " ")
-            end
-            
         end
 
         GuiLayoutEnd(self.gui)

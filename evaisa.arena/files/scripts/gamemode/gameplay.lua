@@ -485,6 +485,17 @@ ArenaGameplay = {
             message_handler.send.AimUpdate(lobby)
         end
     end,
+    ValidatePlayers = function(lobby, data)
+        for k, v in pairs(data.players)do
+            local playerid = ArenaGameplay.FindUser(lobby, k)
+
+            if(playerid == nil)then
+                print("Player " .. k .. " is not in the lobby anymore")
+                v:Clean(lobby)
+                data.players[k] = nil
+            end
+        end
+    end,
     Update = function(lobby, data)
         if(data.state == "lobby")then
             ArenaGameplay.LobbyUpdate(lobby, data)
@@ -496,6 +507,9 @@ ArenaGameplay = {
             ArenaGameplay.CancelFire(lobby, data)
         end
         ArenaGameplay.UpdateTweens(lobby, data)
+        if(GameGetFrameNum() % 60 == 0)then
+            ArenaGameplay.ValidatePlayers(lobby, data)
+        end
     end,
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
         if(data.state == "arena")then

@@ -74,6 +74,17 @@ dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
+local bytes = 0
+local last_bytes = 0
+
+function MessageHook(v)
+	local data = v.data
+	-- use string.byte to get the total bytes of the string
+	for i = 1, #data do
+		bytes = bytes + string.byte(data, i)
+	end
+end
+
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
 	math.randomseed( os.time() )
@@ -91,6 +102,10 @@ function OnWorldPreUpdate()
 		if(lobby_code ~= nil)then
 			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
+			if(GameGetFrameNum() % 60 == 0)then
+				last_bytes = bytes
+				bytes = 0
+			end
 			--[[
 			local players = get_players()
 			
@@ -103,6 +118,12 @@ function OnWorldPreUpdate()
 				dofile("mods/evaisa.mp/files/scripts/player_update.lua")
 			end
 			]]
+
+			byte_rate_gui = byte_rate_gui or GuiCreate()
+			GuiStartFrame(byte_rate_gui)
+			local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
+			local text_width, text_height = GuiGetTextDimensions(byte_rate_gui, tostring(math.floor(last_bytes / 1024)) .. " KB/s")
+			GuiText(byte_rate_gui, screen_width - text_width - 50, 1, tostring(math.floor(last_bytes / 1024)) .. " KB/s")
 
 			if(game_in_progress)then
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
@@ -120,6 +141,7 @@ function OnWorldPreUpdate()
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
+					MessageHook(v)
 					if(gamemodes[lobby_gamemode].message)then
 						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
 					end
@@ -178,6 +200,7 @@ function OnWorldPostUpdate()
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
+					MessageHook(v)
 					if(gamemodes[lobby_gamemode].message)then
 						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
 					end
