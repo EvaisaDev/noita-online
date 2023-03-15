@@ -1,9 +1,12 @@
 dofile_once("data/scripts/lib/utilities.lua")
 local generated_id = 1000
-function NewID(identifier)
+function NewID(identifier, force)
 	generated_id = generated_id + 1
 	if(identifier ~= nil)then
 		generated_id = generated_id + tostring(string.byte(identifier))
+		if(force)then
+			generated_id = 1000 + tonumber(tostring(string.byte(identifier)))
+		end
 	end
 	return generated_id
 end
@@ -88,7 +91,7 @@ function CustomButton(gui, identifier, x, y, z, scale, image, r, g, b, alpha)
 	return clicked
 end
 
-function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_callback)
+function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_callback, identifier)
 
 	h = h - 12
 	if(centered)then
@@ -127,7 +130,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	local clicked, right_clicked, hovered, bar_x, bar_y = GuiGetPreviousWidgetInfo( gui )
 
 	GuiZSetForNextWidget( gui, z_index + 1 )
-	GuiBeginScrollContainer( gui, NewID(), x, y, w, h, true, 2, 2 )
+	GuiBeginScrollContainer( gui, NewID(identifier, true), x, y, w, h, true, 2, 2 )
 	GuiZSet( gui, z_index )
 	callback()
 	GuiZSet( gui, 0 )

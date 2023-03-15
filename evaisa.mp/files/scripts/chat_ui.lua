@@ -22,13 +22,35 @@ end
 
 chat_log = chat_log or initial_chat_log
 
+new_chat_message = new_chat_message or false
+was_new_chat_message = was_new_chat_message or false
+was_input_hovered = was_input_hovered or false
+
 if(#chat_log > 50)then
 	-- remove first item
 	table.remove(chat_log, 1)
 end
 
 if(lobby_code ~= nil)then
+	local pressed, shift_held = hack_update_keys()
+
+	local hit_enter = false
+	for _, key in ipairs(pressed) do
+		if key == "enter" or key == "return" then
+			hit_enter = true
+		end
+		if(key == "t")then
+			if(chat_open == false)then
+				chat_open = true
+			elseif(was_input_hovered == false)then
+				chat_open = false
+			end
+		end
+	end
+
 	if(chat_open)then
+		new_chat_message = false
+
 		local window_width = 200
 		local window_height = 100
 
@@ -42,20 +64,14 @@ if(lobby_code ~= nil)then
 			GuiLayoutEnd(chat_gui)
 		end, function() 
 			chat_open = false; 
-		end)
+		end, "chat_window")
 		GuiLayoutBeginHorizontal(chat_gui, 0, 0, true, 0, 0)
 
 		initial_text = initial_text or ""
 
 		local input_text = GuiTextInput(chat_gui, NewID("Chatting"), 2, screen_height - 16, initial_text, window_width + 1, 52, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}\\|:'\",./<>?`~ ")
 
-		local pressed, shift_held = hack_update_keys()
-		local hit_enter = false
-		for _, key in ipairs(pressed) do
-			if key == "enter" or key == "return" then
-				hit_enter = true
-			end
-		end
+		local _, _, input_hovered = GuiGetPreviousWidgetInfo(chat_gui)
 
 		if(initial_text ~= input_text)then
 			initial_text = input_text
@@ -116,6 +132,7 @@ if(lobby_code ~= nil)then
 
 		--GuiLayoutEnd(gui)
 
+		was_input_hovered = input_hovered
 	end
 
 
@@ -124,6 +141,21 @@ if(lobby_code ~= nil)then
 		chat_open = not chat_open
 		GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 	end
+
+	if(new_chat_message)then
+		--GamePrint("whar")
+		if(not chat_open)then
+			if(not was_new_chat_message)then
+				GamePlaySound("mods/evaisa.mp/online.bank", "message/received", 0, 0)
+				--GamePrint("Playing notification noise")
+			end
+
+			GuiZSetForNextWidget(chat_gui, -1)
+			GuiImage(chat_gui, NewID("Notification"), screen_width - 42, screen_height - 22, "mods/evaisa.mp/files/gfx/ui/notification.png", 1, 1, 1)
+		end
+	end
+
+	was_new_chat_message = new_chat_message
 else
 	chat_log = initial_chat_log
 end

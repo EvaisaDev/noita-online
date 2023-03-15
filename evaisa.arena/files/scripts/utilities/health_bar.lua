@@ -1,9 +1,5 @@
 dofile("mods/evaisa.mp/files/scripts/gui_utils.lua")
-local gui_id = 2135745
-local new_id = function()
-    gui_id = gui_id + 1
-    return gui_id
-end
+
 
 local health_bar = {}
 
@@ -50,7 +46,11 @@ function health_bar.create(hp, max_hp, width, height)
                 return
             end
             ]]
-
+            local gui_id = 2135745
+            local new_id = function()
+                gui_id = gui_id + 1
+                return gui_id
+            end
 
             GuiStartFrame(health_gui)
             local health_ratio = self.hp / self.max_hp

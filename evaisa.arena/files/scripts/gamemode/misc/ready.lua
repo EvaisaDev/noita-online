@@ -1,5 +1,14 @@
+entity = GetUpdatedEntityID()
+readyComp = EntityGetFirstComponentIncludingDisabled(entity, "InteractableComponent", "ready")
+
+if(GameHasFlagRun("ready_check"))then
+    ComponentSetValue2(readyComp, "ui_text", "Press $0 to unready")
+else
+    ComponentSetValue2(readyComp, "ui_text", "Press $0 to ready up")
+end
+
 function interacting( entity_who_interacted, entity_interacted, interactable_name )
-    local readyComp = EntityGetFirstComponentIncludingDisabled(entity_interacted, "InteractableComponent", "ready")
+    readyComp = EntityGetFirstComponentIncludingDisabled(entity_who_interacted, "InteractableComponent", "ready")
     
     if(GameHasFlagRun("ready_check"))then
         GameAddFlagRun("player_unready")

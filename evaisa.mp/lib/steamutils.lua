@@ -18,6 +18,10 @@ steam_utils.getLobbyMembers = function(lobby_id)
 	return list
 end
 
+steam_utils.IsOwner = function(lobby_id)
+	return steam.matchmaking.getLobbyOwner(lobby_id) == steam.user.getSteamID()
+end
+
 steam_utils.isInLobby = function(lobby_id, steam_id)
 	local list = steam_utils.getLobbyMembers(lobby_id)
 	for i = 1, #list do

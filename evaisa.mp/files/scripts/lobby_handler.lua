@@ -181,14 +181,15 @@ function handleChatMessage(data)
 				for j = 1, #chat_log do
 					if(chat_log[j] == " ")then
 						chat_log[j] = split_data[i]
+						new_chat_message = true
 						was_found = true
 						break
 					end
 				end
 				if(not was_found)then
 					-- insert at end
-					GamePrint(tostring(split_data[i]))
 					table.insert(chat_log, split_data[i])
+					new_chat_message = true
 				end
 			end
 		end

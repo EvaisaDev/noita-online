@@ -6,7 +6,7 @@ RegisterSpawnFunction( 0xffff54e3, "spawn_point" )
 --RegisterSpawnFunction( 0xff0051ff, "spawn_kill_zone" )
 
 function spawn_point( x, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/spawn_point.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 end
 
 --[[

@@ -3,11 +3,7 @@
   tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,polymorphable_NOT" >
   
   <Base file="mods/evaisa.arena/files/entities/player_base.xml" include_children="1"> 
-    <Inventory2Component
-        quick_inventory_slots="4"
-        full_inventory_slots_x="16"
-        full_inventory_slots_y="1"
-    ></Inventory2Component>
+
   </Base>
 
   <!--
@@ -23,14 +19,14 @@
       execute_every_n_frame = "0"
       >
   </LuaComponent>
--->
+
     <LuaComponent
       script_wand_fired = "mods/evaisa.arena/files/scripts/on_fire.lua"
       >
   </LuaComponent>
-
+-->
     <LuaComponent
-      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/kill_check.lua"
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
       >
   </LuaComponent>
 

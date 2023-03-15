@@ -3,7 +3,7 @@
     name="_EMPTY_"
     background_image=""
     background_use_neighbor="0"
-    lua_script="mods/evaisa.arena/files/scripts/biomes/arena.lua"
+    lua_script="mods/evaisa.arena/files/scripts/world/biomes/arena.lua"
     mBiomeMaterialsFile="data/materials/biome_forest.xml" 
     limit_background_image="1"
     fat_biome_edges="0"

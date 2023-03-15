@@ -148,7 +148,7 @@
     invincibility_frames="60"
     fire_probability_of_ignition="0"
     fire_how_much_fire_generates="0"
-    hp="400" 
+    hp="4" 
     is_on_fire="0" 
     materials_damage="1" 
     materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,poison,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
@@ -179,7 +179,7 @@
   ></SpriteComponent>
 
     <LuaComponent
-      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/immortal_client.lua"
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
       >
   </LuaComponent>
 

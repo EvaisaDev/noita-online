@@ -18,6 +18,11 @@
     ></SpriteComponent>
 
     <LuaComponent
-        script_interacting = "mods/evaisa.arena/files/scripts/ready.lua"
+        script_interacting = "mods/evaisa.arena/files/scripts/gamemode/misc/ready.lua"
+        script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/ready.lua"
+        execute_on_added = "1"
+        execute_every_n_frame = "5"
     />
+
+    
 </Entity>

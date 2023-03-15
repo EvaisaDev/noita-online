@@ -1,9 +1,5 @@
 local countdown = {}
-local gui_id = 125918
-local new_id = function()
-    gui_id = gui_id + 1
-    return gui_id
-end
+
 function countdown.create( table_images, frames_between_images, finish_callback )
     local gui_countdown = GuiCreate()
     
@@ -14,6 +10,12 @@ function countdown.create( table_images, frames_between_images, finish_callback 
         table_images = table_images,
         finish_callback = finish_callback,
         update = function(self)
+            local gui_id = 125918
+            local new_id = function()
+                gui_id = gui_id + 1
+                return gui_id
+            end
+
             GuiStartFrame(gui_countdown)
 
             self.frame = self.frame + 1

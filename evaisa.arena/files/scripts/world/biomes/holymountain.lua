@@ -1,7 +1,7 @@
 CHEST_LEVEL = 3
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
-dofile( "mods/evaisa.arena/files/scripts/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 dofile_once("data/scripts/lib/utilities.lua")
 dofile( "data/scripts/biomes/temple_shared.lua" )
 dofile( "data/scripts/perks/perk.lua" )
@@ -21,11 +21,11 @@ function spawn_workshop( x, y )
 end
 
 function spawn_ready_point( x, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/ready.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/ready.xml", x, y )
 end
 
 function spawn_workshop_extra( x, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/workshop_allow_mods.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/workshop_allow_mods.xml", x, y )
 end
 
 function spawn_spell_visualizer( x, y )

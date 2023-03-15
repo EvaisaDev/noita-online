@@ -4,6 +4,8 @@ package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
 
+ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
+
 dofile("data/scripts/lib/coroutines.lua")
 
 np = require("noitapatcher")
@@ -12,6 +14,7 @@ MP_VERSION = 1.9
 Version_string = "325897135236"
 
 Checksum_passed = false
+Spawned = false
 
 base64 = require("base64")
 
@@ -75,7 +78,7 @@ function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
 	math.randomseed( os.time() )
 
-	if(steam and not Checksum_passed)then
+	if(steam and not Checksum_passed and Spawned)then
 		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
 	end
 
@@ -347,6 +350,7 @@ function OnPlayerSpawned(player)
 	--local file = io.open("mods/evaisa.forcerestart/filechange.txt", "w")
 	--file:write(math.random(0, 10000000))
 	--file:close()
+	Spawned = true
 
 	local lastCode = ModSettingGet("last_lobby_code")
 	--print("Code: "..tostring(lastCode))
