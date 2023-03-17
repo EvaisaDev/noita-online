@@ -46,10 +46,15 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			
-			local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+			local success, size = steam.networking.sendString(member.id, data)
+			success = tonumber(tostring(success))
+			--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 			if(success ~= 1)then
+				
 				GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				pretty.table(steam.networking.getConnectionInfo(member.id))
+			else
+				bytes_sent = bytes_sent + size
 			end
 		end
 	end,
@@ -57,9 +62,13 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			if(member.id ~= steam.user.getSteamID())then
-				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+				local success, size = steam.networking.sendString(member.id, data)
+				success = tonumber(tostring(success))
+				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if(success ~= 1)then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				else
+					bytes_sent = bytes_sent + size
 				end
 			end
 		end
@@ -68,23 +77,36 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			if(member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby))then
-				local success = tonumber(tostring(steam.networking.sendString(member.id, data)))
+				local success, size = steam.networking.sendString(member.id, data)
+				success = tonumber(tostring(success))
+				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if(success ~= 1)then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				else
+					bytes_sent = bytes_sent + size
 				end
 			end
 		end
 	end,
 	[steam_utils.messageTypes.Host] = function (data, lobby) 
-		local success = tonumber(tostring(steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)))
+		local success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
+		success = tonumber(tostring(success))
+		--GamePrint("Sent message of size " .. tostring(size) .. " to " .. steam.friends.getFriendPersonaName(steam.matchmaking.getLobbyOwner(lobby)) .. " (" .. tostring(success) .. ")")
 		if(success ~= 1)then
 			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
+		else
+			bytes_sent = bytes_sent + size
 		end
 	end,
 }
 
 steam_utils.sendData = function(data, messageType, lobby)
-	local encodedData = json.stringify(data)
+
+	--print("Sending data")
+	--print(json.stringify(data))
+	--print(tostring(bitser.dumps(data)))
+	
+	local encodedData = bitser.dumps(data)--json.stringify(data)
 	if(encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number"))then
 		if(type(encodedData) == "number")then
 			encodedData = tostring(encodedData)
@@ -96,7 +118,7 @@ steam_utils.sendData = function(data, messageType, lobby)
 end
 
 steam_utils.parseData = function(data)
-	local decodedData = json.parse(data)
+	local decodedData = bitser.loads(data)--json.parse(data)
 	return decodedData
 end
 

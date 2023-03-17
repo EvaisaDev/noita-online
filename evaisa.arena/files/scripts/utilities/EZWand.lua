@@ -597,6 +597,7 @@ function wand:new(from, rng_seed_x, rng_seed_y)
       o:AddSpells(values.spells)
       o:AttachSpells(values.always_cast_spells)
       o:SetSprite(values.sprite_image_file, values.offset_x, values.offset_y, values.tip_x, values.tip_y)
+      o:HideWorldStuff()
     -- Load a wand by xml
     elseif ends_with(from, ".xml") then
       local x, y = GameGetCameraPos()
@@ -1070,6 +1071,14 @@ function wand:PlaceAt(x, y)
 	else
 		-- TODO: As soon as there's some way to clone Components or Transplant/Remove+Add to another Entity, copy
 		-- the SpriteParticleEmitterComponent of entities/base_wand.xml
+  end
+end
+
+function wand:HideWorldStuff()
+	-- Does this wand have a ray particle effect? Most do, except the starter wands
+	local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
+	if sprite_particle_emitter_comp ~= nil then
+		EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
   end
 end
 

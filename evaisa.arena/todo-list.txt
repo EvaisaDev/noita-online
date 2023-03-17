@@ -2,4 +2,6 @@ Todo:
     Kicking sync
     Overeating fix
     Implement session leave handler(?)
+    Wand sync is partially broken
+    sometimes connections fail??
     

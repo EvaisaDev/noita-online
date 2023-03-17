@@ -225,8 +225,8 @@
 
   <Inventory2Component 
     _enabled="1" 
-    full_inventory_slots_x="8" 
-    full_inventory_slots_y="8" 
+    full_inventory_slots_x="0" 
+    full_inventory_slots_y="0" 
     mSavedActiveItemIndex="0" 
     quick_inventory_slots="1" >
 
@@ -234,6 +234,7 @@
 
    <Entity name="inventory_quick">
   </Entity>
+  <!--<Entity name="inventory_full"/>-->
 
     <SpriteComponent
         _tags="username"

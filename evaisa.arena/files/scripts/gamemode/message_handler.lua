@@ -58,7 +58,7 @@ ArenaMessageHandler = {
                 end
                 if(health < last_health)then
                     local damage = last_health - health
-                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_SLICE", "damage_fake", "BLOOD_SPRAY", 0, 0, nil)
+                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_SLICE", "damage_fake", "NORMAL", 0, 0, nil)
                 end
 
                 local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
@@ -190,22 +190,47 @@ ArenaMessageHandler = {
                 return
             end
 
-            local wand = EZWand(message.wandData)
+            local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+
+            local wand = EZWand(message.wandData, x, y)
             if(wand == nil)then
                 return
             end
 
             -- kill old held item
-            if(data.players[tostring(user)].held_item ~= nil and EntityGetIsAlive(data.players[tostring(user)].held_item))then
-                GameKillInventoryItem(entity, data.players[tostring(user)].held_item)
-                EntityKill(data.players[tostring(user)].held_item)
+            if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                for i,item_id in ipairs(items) do
+                    GameKillInventoryItem( data.players[tostring(user)].entity, item_id )
+                    EntityKill(item_id)
+                end
             end
 
             data.players[tostring(user)].held_item = wand.entity_id
+            
+            --local x, y = EntityGetTransform(data.players[tostring(user)].entity)
 
-            wand:PlaceAt(2000, 2000)
+            GamePrint("Picking up wand for " .. tostring(user) .. " (" .. tostring(wand.entity_id) .. ")")
 
+            --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
             wand:PickUp(data.players[tostring(user)].entity)
+            --GamePickUpInventoryItem(data.players[tostring(user)].entity, wand.entity_id, false)
+            --EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+
+            -- set mActiveItem
+            --[[
+            local inventory2 = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+            if(inventory2 ~= nil)then
+                ComponentSetValue2(inventory2, "mActiveItem", wand.entity_id)
+                ComponentSetValue2(inventory2, "mActualActiveItem", wand.entity_id)
+                ComponentSetValue2( inventory2, "mInitialized", false );
+                ComponentSetValue2( inventory2, "mForceRefresh", true );
+            end
+            ]]
+
+            if(DebugGetIsDevBuild())then
+                EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
+            end
         end,
         animation_update = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then

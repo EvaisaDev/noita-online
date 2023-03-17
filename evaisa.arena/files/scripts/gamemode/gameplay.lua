@@ -4,6 +4,7 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
+local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
 ArenaGameplay = {
@@ -21,7 +22,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members)do
             if(member.id ~= steam.user.getSteamID())then
-                if(data.players[tostring(member.id)].ready)then
+                if(data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready)then
                     amount = amount + 1
                 end
             end
@@ -178,6 +179,10 @@ ArenaGameplay = {
         show_message = show_message or false
         first_entry = first_entry or false
 
+        if(first_entry and player.Get())then
+            GameDestroyInventoryItems( player.Get() )
+        end
+
         -- clean other player's data
         ArenaGameplay.CleanMembers(lobby, data)
 
@@ -252,7 +257,8 @@ ArenaGameplay = {
 
         -- manage flags
         GameRemoveFlagRun("ready_check")
-        GameAddFlagRun("in_hm")
+        GameRemoveFlagRun("first_death")
+        GameRemoveFlagRun("in_hm")
 
         data.state = "arena"
         data.preparing = true
@@ -456,6 +462,14 @@ ArenaGameplay = {
                 message_handler.send.Health(lobby)
             end
         end
+        local player_entities = {}
+        for k, v in pairs(data.players)do
+            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
+                table.insert(player_entities, v.entity)
+            end
+        end
+        game_funcs.RenderOffScreenMarkers(player_entities)
+        game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
         ArenaGameplay.UpdateHealthbars(data)
         if(steamutils.IsOwner(lobby))then
             if(not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))then
@@ -607,7 +621,7 @@ ArenaGameplay = {
                             --GamePrint("Setting homing target to: "..tostring(target))
                             local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
-                            if(homingComponents ~= nil)then
+                            if(homingComponents ~= nil and data.players[target])then
                                 local targetPlayerEntity = data.players[target].entity
                                 for k, v in pairs(homingComponents)do
                                     local target_who_shot = ComponentGetValue2(v, "target_who_shot")

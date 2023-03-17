@@ -9,6 +9,7 @@ ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 dofile("data/scripts/lib/coroutines.lua")
 
 np = require("noitapatcher")
+bitser = require("bitser")
 
 MP_VERSION = 1.9
 Version_string = "325897135236"
@@ -34,6 +35,8 @@ pretty = require("pretty_print")
 local pollnet = require("pollnet")
 
 --GamePrint("Making api call")
+
+dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
 http_get = function(url, callback)
 	local req_sock = pollnet.http_get(url)
@@ -74,16 +77,10 @@ dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
-local bytes = 0
-local last_bytes = 0
-
-function MessageHook(v)
-	local data = v.data
-	-- use string.byte to get the total bytes of the string
-	for i = 1, #data do
-		bytes = bytes + string.byte(data, i)
-	end
-end
+bytes_sent = 0
+last_bytes_sent = 0
+bytes_received = 0
+last_bytes_received = 0
 
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
@@ -103,8 +100,10 @@ function OnWorldPreUpdate()
 			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 			if(GameGetFrameNum() % 60 == 0)then
-				last_bytes = bytes
-				bytes = 0
+				last_bytes_sent = bytes_sent
+				last_bytes_received = bytes_received
+				bytes_sent = 0
+				bytes_received = 0
 			end
 			--[[
 			local players = get_players()
@@ -122,8 +121,14 @@ function OnWorldPreUpdate()
 			byte_rate_gui = byte_rate_gui or GuiCreate()
 			GuiStartFrame(byte_rate_gui)
 			local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
-			local text_width, text_height = GuiGetTextDimensions(byte_rate_gui, tostring(math.floor(last_bytes / 1024)) .. " KB/s")
-			GuiText(byte_rate_gui, screen_width - text_width - 50, 1, tostring(math.floor(last_bytes / 1024)) .. " KB/s")
+
+			local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
+
+			local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
+			
+			local text_width, text_height = GuiGetTextDimensions(byte_rate_gui, "in: "..input_string.." | out: "..output_string)
+
+			GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: "..input_string.." | out: "..output_string)
 
 			if(game_in_progress)then
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
@@ -141,7 +146,7 @@ function OnWorldPreUpdate()
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
-					MessageHook(v)
+					bytes_received = bytes_received + v.msg_size
 					if(gamemodes[lobby_gamemode].message)then
 						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
 					end
@@ -200,7 +205,7 @@ function OnWorldPostUpdate()
 				
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
-					MessageHook(v)
+					bytes_received = bytes_received + v.msg_size
 					if(gamemodes[lobby_gamemode].message)then
 						gamemodes[lobby_gamemode].message(lobby_code, steamutils.parseData(v.data), v.user)
 					end
@@ -336,10 +341,18 @@ end
 ]]
 
 function steam.networking.onSessionRequest(steamID)
-	--pretty.table(data)
+	print("Session request from ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]")
 	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
 		local success = steam.networking.acceptSession(steamID)
-		GamePrint("Session accepted: "..tostring(success))
+		print("Session accepted: "..tostring(success))
+	end
+end
+
+function steam.networking.onSessionFailed(steamID, endReason, endDebug, connectionDescription)
+	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
+		print("Session failed with ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]: "..tostring(endReason))
+		print("Debug: "..tostring(endDebug))
+		print("Connection description: "..tostring(connectionDescription))
 	end
 end
 
@@ -368,6 +381,8 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
+
+	print(pretty.table(bitser))
 
 	-- replace contents of "mods/evaisa.forcerestart/filechange.txt" with a random number between 0 and 10000000
 	--local file = io.open("mods/evaisa.forcerestart/filechange.txt", "w")
