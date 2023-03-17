@@ -11,7 +11,7 @@ dofile("data/scripts/lib/coroutines.lua")
 np = require("noitapatcher")
 bitser = require("bitser")
 
-MP_VERSION = 1.9
+MP_VERSION = 1.10
 Version_string = "325897135236"
 
 Checksum_passed = false

@@ -19,7 +19,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.200,
+    version = 0.201,
     enter = function(lobby)
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
