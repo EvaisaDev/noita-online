@@ -21,6 +21,7 @@ function data:New()
         preparing = false,
         players_loaded = false,
         deaths = 0,
+        spawn_point = {x = 0, y = 0},
         random = rng.new((os.time() + GameGetFrameNum() + os.clock()) / 2),
         DefinePlayer = function(self, lobby, user)
             self.players[tostring(user)] = playerinfo:New(user)

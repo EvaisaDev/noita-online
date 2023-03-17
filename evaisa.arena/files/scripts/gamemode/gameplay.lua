@@ -274,8 +274,7 @@ ArenaGameplay = {
         BiomeMapLoad_KeepPlayer( arena.biome_map, arena.pixel_scenes )
 
         -- move player to correct position
-        local spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
-        player.Move(spawn_point.x, spawn_point.y)
+        data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
 
         ArenaGameplay.LoadClientPlayers(lobby, data)
 
@@ -460,6 +459,8 @@ ArenaGameplay = {
                 end
 
                 message_handler.send.Health(lobby)
+            else
+                player.Move(data.spawn_point.x, data.spawn_point.y)
             end
         end
         local player_entities = {}
