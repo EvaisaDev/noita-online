@@ -383,7 +383,7 @@ end
 
 function OnPlayerSpawned(player)
 
-	print(pretty.table(bitser))
+	--print(pretty.table(bitser))
 
 	-- replace contents of "mods/evaisa.forcerestart/filechange.txt" with a random number between 0 and 10000000
 	--local file = io.open("mods/evaisa.forcerestart/filechange.txt", "w")
