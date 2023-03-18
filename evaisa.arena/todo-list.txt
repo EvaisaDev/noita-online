@@ -1,7 +1,14 @@
 Todo:
-    Kicking sync
+
     Overeating fix
-    Implement session leave handler(?)
-    Wand sync is partially broken
+    Improve session leave handler(?)
     sometimes connections fail??
-    
+    Check spawn points
+    Wand shoot position is off somehow on clients
+    Custom handler for perk and spell spawning
+    Sync perks better
+    Spell/wand/healthup/other interactions break when inventory is full
+
+Done:
+    Kicking sync
+    Sync all wands

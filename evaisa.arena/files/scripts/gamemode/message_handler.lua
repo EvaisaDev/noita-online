@@ -152,8 +152,8 @@ ArenaMessageHandler = {
                 return
             end
   
-            local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
-            ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+            --local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
+            --ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
          
             data.players[tostring(user)].next_rng = message.rng
             if(message.target)then
@@ -356,6 +356,36 @@ ArenaMessageHandler = {
                         ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                     end
 
+                    if(message.fire)then
+                        ComponentSetValue2(controlsComp, "mButtonDownFire", true)
+                        local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
+                        ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownFire", false)
+                    end
+
+                    if(message.fire2)then
+                        ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
+                    end
+                    
+                    if(message.leftClick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                    end
+
+                    if(message.rightClick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownRight", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                    end
+
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
@@ -492,6 +522,37 @@ ArenaMessageHandler = {
                         ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                     end
 
+                    
+                    if(message.fire)then
+                        ComponentSetValue2(controlsComp, "mButtonDownFire", true)
+                        local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
+                        ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownFire", false)
+                    end
+
+                    if(message.fire2)then
+                        ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
+                    end
+                    
+                    if(message.leftClick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                    end
+
+                    if(message.rightClick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownRight", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                    end
+
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
@@ -503,6 +564,10 @@ ArenaMessageHandler = {
                 ]]
 
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
+                local fire = ComponentGetValue2(controls, "mButtonDownFire")
+                local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")
+                local leftClick = ComponentGetValue2(controls, "mButtonDownLeft")
+                local rightClick = ComponentGetValue2(controls, "mButtonDownRight")
                 local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
                 local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
                 local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
@@ -514,6 +579,10 @@ ArenaMessageHandler = {
                 local data = {
                     type = "sync_controls",
                     kick = kick,
+                    fire = fire,
+                    fire2 = fire2,
+                    leftClick = leftClick,
+                    rightClick = rightClick,
                     aim = {x = aim_x, y = aim_y},
                     aimNormal = {x = aimNormal_x, y = aimNormal_y},
                     aimNonZero = {x = aimNonZero_x, y = aimNonZero_y},
