@@ -14,7 +14,7 @@ bitser = require("bitser")
 MP_VERSION = 1.10
 Version_string = "325897135236"
 
-Checksum_passed = false
+Checksum_passed = true
 Spawned = false
 
 base64 = require("base64")
@@ -32,12 +32,13 @@ require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 
 pretty = require("pretty_print")
-local pollnet = require("pollnet")
+--local pollnet = require("pollnet")
 
 --GamePrint("Making api call")
 
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
+--[[
 http_get = function(url, callback)
 	local req_sock = pollnet.http_get(url)
 
@@ -59,7 +60,7 @@ http_get = function(url, callback)
 		end
 	end)
 
-end
+end]]
 
 if type(Steam) == 'boolean' then Steam = nil end
 
@@ -363,7 +364,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 	steam.init()
 	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
-
+--[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
 		Checksum_passed = data == Version_string
@@ -371,7 +372,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		if(Checksum_passed)then
 			print("Checksum passed: "..tostring(data))
 		end
-	end)
+	end)]]
 end
 
 function OnWorldInitialized()
