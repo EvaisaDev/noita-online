@@ -228,7 +228,7 @@
     full_inventory_slots_x="0" 
     full_inventory_slots_y="0" 
     mSavedActiveItemIndex="0" 
-    quick_inventory_slots="1" >
+    quick_inventory_slots="4" >
 
   </Inventory2Component>
 

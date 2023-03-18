@@ -9,6 +9,29 @@ local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 dofile_once( "data/scripts/perks/perk_list.lua" )
 dofile_once("mods/evaisa.arena/content/data.lua")
 
+ffi = require("ffi")
+
+ffi.cdef([[
+typedef struct Entity Entity;
+
+typedef Entity* __thiscall EntityGet_f(int EntityManager, int entity_nr);
+typedef void __fastcall SetActiveHeldEntity_f(Entity* entity, Entity* item_entity, bool unknown, bool make_noise);
+]])
+
+local EntityManager = ffi.cast("int*", 0x00ff55dc)[0]
+
+local EntityGet_cfunc = ffi.cast("EntityGet_f*", 0x00527660)
+local SetActiveHeldEntity_cfunc = ffi.cast("SetActiveHeldEntity_f*", 0x009ec390)
+
+function EntityGet(entity_nr)
+    return EntityGet_cfunc(EntityManager, entity_nr)
+end
+
+-- SetActiveHeldEntity(entity_id:int, item_id:int, unknown:bool, make_noise:bool)
+function SetActiveHeldEntity(entity_id, item_id, unknown, make_noise)
+    SetActiveHeldEntity_cfunc(EntityGet(entity_id), EntityGet(item_id), unknown, make_noise)
+end
+
 ArenaMessageHandler = {
     receive = {
         ready = function(lobby, message, user, data, username)
@@ -128,10 +151,10 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-            
+  
             local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
             ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
-
+         
             data.players[tostring(user)].next_rng = message.rng
             if(message.target)then
                 data.players[tostring(user)].target = message.target
@@ -190,46 +213,89 @@ ArenaMessageHandler = {
                 return
             end
 
-            local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+            --GamePrint("Received wand update")
 
-            local wand = EZWand(message.wandData, x, y)
-            if(wand == nil)then
+            if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                    for i,item_id in ipairs(items) do
+                        GameKillInventoryItem( data.players[tostring(user)].entity, item_id )
+                        EntityKill(item_id)
+                    end
+                end
+                if(message.wandData ~= nil)then
+                    for k, wandInfo in ipairs(message.wandData)do
+
+                        local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+
+                        -- {data = v:Serialize(true), slot_x = slot_x, slot_y = slot_y, actual_active = (mActualActiveItem == wand_entity), active = (mActiveItem == wand_entity)}
+
+                        local wand = EZWand(wandInfo.data, x, y)
+                        if(wand == nil)then
+                            return
+                        end
+
+                        --data.players[tostring(user)].held_item = wand.entity_id
+
+                        --GamePrint("Picking up wand for " .. tostring(user) .. " (" .. tostring(wand.entity_id) .. ")")
+
+                        wand:PickUp(data.players[tostring(user)].entity)
+                        
+                        local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
+                        if(itemComp ~= nil)then
+                            ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
+                        end
+
+                        if(wandInfo.active)then
+                            SetActiveHeldEntity(data.players[tostring(user)].entity, wand.entity_id, false, false)
+                        end
+
+                        GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
+
+                        -- set mActiveItem
+                        --[[
+                        local inventory2 = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+                        if(inventory2 ~= nil)then
+                            if(wandInfo.active)then
+                                ComponentSetValue2(inventory2, "mActiveItem", wand.entity_id)
+                            end
+                            if(wandInfo.actual_active)then
+                                ComponentSetValue2(inventory2, "mActualActiveItem", wand.entity_id)
+                            end
+                            ComponentSetValue2( inventory2, "mInitialized", false );
+                            ComponentSetValue2( inventory2, "mForceRefresh", true );
+                        end
+                        ]]
+                        
+                    end
+                end
+                if(DebugGetIsDevBuild())then
+                    EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
+                end
+            
+            end
+        end,
+        switch_item = function(lobby, message, user, data)
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
 
-            -- kill old held item
+            --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
+            local id = message.item_id
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
-                local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
-                for i,item_id in ipairs(items) do
-                    GameKillInventoryItem( data.players[tostring(user)].entity, item_id )
-                    EntityKill(item_id)
+
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                    for i,item in ipairs(items) do
+                        -- check id
+                        local item_id = tonumber(GlobalsGetValue(tostring(item).."_wand")) or -1
+                        if(item_id == id)then
+                            SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                            return
+                        end
+                    end
                 end
-            end
-
-            data.players[tostring(user)].held_item = wand.entity_id
-            
-            --local x, y = EntityGetTransform(data.players[tostring(user)].entity)
-
-            GamePrint("Picking up wand for " .. tostring(user) .. " (" .. tostring(wand.entity_id) .. ")")
-
-            --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
-            wand:PickUp(data.players[tostring(user)].entity)
-            --GamePickUpInventoryItem(data.players[tostring(user)].entity, wand.entity_id, false)
-            --EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
-
-            -- set mActiveItem
-            --[[
-            local inventory2 = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
-            if(inventory2 ~= nil)then
-                ComponentSetValue2(inventory2, "mActiveItem", wand.entity_id)
-                ComponentSetValue2(inventory2, "mActualActiveItem", wand.entity_id)
-                ComponentSetValue2( inventory2, "mInitialized", false );
-                ComponentSetValue2( inventory2, "mForceRefresh", true );
-            end
-            ]]
-
-            if(DebugGetIsDevBuild())then
-                EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
             end
         end,
         animation_update = function(lobby, message, user, data)
@@ -255,6 +321,7 @@ ArenaMessageHandler = {
                 end
             end
         end,
+        --[[
         aim_update = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
@@ -266,9 +333,39 @@ ArenaMessageHandler = {
                 ComponentSetValue2(controlsComp, "mAimingVector", message.aimData.x, message.aimData.y)
             end
         end,
+        ]]
         perk_info = function(lobby, message, user, data)
             --print("Received perk info: "..json.stringify(message.perks))
             data.players[tostring(user)].perks = message.perks
+        end,
+        sync_controls = function(lobby, message, user, data)
+            if(not steamutils.IsOwner(lobby))then
+                return
+            end
+
+            if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                -- set mButtonDownKick to true
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
+                if(controlsComp ~= nil)then
+
+                    if(message.kick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownKick", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownKick", false)
+                    end
+
+                    ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
+                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
+
+                end
+            end
         end,
     },
     send = {
@@ -320,6 +417,7 @@ ArenaMessageHandler = {
             end
         end,
         WandUpdate = function(lobby, data)
+            --[[
             local wandData = player.GetWandData()
             if(wandData ~= nil)then
                 if(wandData ~= data.client.previous_wand)then
@@ -328,7 +426,43 @@ ArenaMessageHandler = {
                     data.client.previous_wand = wandData
                 end
             end
+            ]]
+            local wandString = player.GetWandString()
+            if(wandString ~= nil)then
+                if(wandString ~= data.client.previous_wand)then
+                    local wandData = player.GetWandData()
+                    if(wandData ~= nil)then
+                        steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
+                    end
+                    data.client.previous_wand = wandString
+                end
+            else
+                if(data.client.previous_wand ~= nil)then
+                    steamutils.sendData({type = "wand_update"}, steamutils.messageTypes.OtherPlayers, lobby) 
+                    data.client.previous_wand = nil
+                end
+            end
         end,
+        SwitchItem = function(lobby, data)
+            local held_item = player.GetActiveHeldItem()
+            if(held_item ~= nil)then
+                if(held_item ~= data.client.previous_selected_item)then
+                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item).."_wand")) or -1
+                    if(wand_id ~= -1)then
+                        steamutils.sendData({type = "switch_item", item_id = wand_id}, steamutils.messageTypes.OtherPlayers, lobby)
+                        data.client.previous_selected_item = held_item
+                    end
+                end
+            end
+        end,
+        --[[
+        Kick = function(lobby, data)
+            local didKick = player.DidKick()
+            if(didKick)then
+                steamutils.sendData({type = "kick"}, steamutils.messageTypes.OtherPlayers, lobby)
+            end
+        end,
+        ]]
         AnimationUpdate = function(lobby, data)
             local rectAnim = player.GetAnimationData()
             if(rectAnim ~= nil)then
@@ -338,10 +472,59 @@ ArenaMessageHandler = {
                 end
             end
         end,
+        --[[
         AimUpdate = function(lobby)
             local aim = player.GetAimData()
             if(aim ~= nil)then
                 steamutils.sendData({type = "aim_update", aimData = aim}, steamutils.messageTypes.OtherPlayers, lobby)
+            end
+        end,
+        ]]
+        SyncControls = function(lobby, data)
+            local controls = player.GetControlsComponent()
+            if(controls ~= nil)then
+
+                --[[
+                    if(message.kick)then
+                        ComponentSetValue2(controlsComp, "mButtonDownKick", true)
+                        ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                    else
+                        ComponentSetValue2(controlsComp, "mButtonDownKick", false)
+                    end
+
+                    ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
+                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
+
+                ]]
+
+                local kick = ComponentGetValue2(controls, "mButtonDownKick")
+                local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
+                local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
+                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
+                local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition")
+                local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw")
+                local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev")
+                local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta")
+
+                local data = {
+                    type = "sync_controls",
+                    kick = kick,
+                    aim = {x = aim_x, y = aim_y},
+                    aimNormal = {x = aimNormal_x, y = aimNormal_y},
+                    aimNonZero = {x = aimNonZero_x, y = aimNonZero_y},
+                    mouse = {x = mouse_x, y = mouse_y},
+                    mouseRaw = {x = mouseRaw_x, y = mouseRaw_y},
+                    mouseRawPrev = {x = mouseRawPrev_x, y = mouseRawPrev_y},
+                    mouseDelta = {x = mouseDelta_x, y = mouseDelta_y},
+                }
+
+                steamutils.sendData(data, steamutils.messageTypes.OtherPlayers, lobby)
+
             end
         end,
         SendPerks = function(lobby)

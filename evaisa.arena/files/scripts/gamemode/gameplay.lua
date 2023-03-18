@@ -273,6 +273,8 @@ ArenaGameplay = {
         local arena = arena_list[data.random.range(1, #arena_list)]
         BiomeMapLoad_KeepPlayer( arena.biome_map, arena.pixel_scenes )
 
+        player.Lock()
+
         -- move player to correct position
         data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
 
@@ -372,6 +374,7 @@ ArenaGameplay = {
         return ready
     end,
     FightCountdown = function(lobby, data)
+        player.Unlock()
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
@@ -496,8 +499,11 @@ ArenaGameplay = {
         end
         if(data.players_loaded)then
             message_handler.send.WandUpdate(lobby, data)
+            message_handler.send.SwitchItem(lobby, data)
+            --message_handler.send.Kick(lobby, data)
             message_handler.send.AnimationUpdate(lobby, data)
-            message_handler.send.AimUpdate(lobby)
+            --message_handler.send.AimUpdate(lobby)
+            message_handler.send.SyncControls(lobby, data)
         end
     end,
     ValidatePlayers = function(lobby, data)

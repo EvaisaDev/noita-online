@@ -1196,6 +1196,20 @@ local function get_held_wand()
   end
 end
 
+local function get_all_wands()
+  local wands = {}
+	local player = EntityGetWithTag("player_unit")
+  if player and player[1] then
+    local items = GameGetAllInventoryItems(player[1]) or {}
+    for i, item in ipairs(items) do
+      if(entity_is_wand(item))then
+        table.insert(wands, wand:new(item))
+      end
+    end
+  end
+  return wands
+end
+
 return setmetatable({}, {
   __call = function(self, from, rng_seed_x, rng_seed_y)
     return wand:new(from, rng_seed_x, rng_seed_y)
@@ -1209,6 +1223,7 @@ return setmetatable({}, {
       RenderTooltip = render_tooltip,
       IsWand = entity_is_wand,
       GetHeldWand = get_held_wand,
+      GetAllWands = get_all_wands,
     })[key]
   end
 })

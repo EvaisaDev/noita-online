@@ -101,21 +101,91 @@ player_helper.Immortal = function( immortal )
 end
 
 player_helper.GetWandData = function()
+    --[[
     local wand = EZWand.GetHeldWand()
     if(wand == nil)then
         return nil
     end
     local wandData = wand:Serialize()
     return wandData
+    ]]
+    local wands = EZWand.GetAllWands()
+    if(wands == nil or #wands == 0)then
+        return nil
+    end
+
+    local player = player_helper.Get()
+    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+    local wandData = {}
+    for k, v in pairs(wands)do
+        local wand_entity = v.entity_id
+        local item_comp = EntityGetFirstComponentIncludingDisabled(wand_entity, "ItemComponent")
+        local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+
+        GlobalsSetValue(tostring(wand_entity).."_wand", tostring(k))
+
+        table.insert(wandData, {data = v:Serialize(true), id = k, slot_x = slot_x, slot_y = slot_y, active = (mActiveItem == wand_entity)})
+    end
+    return wandData
+end
+
+player_helper.GetWandString = function()
+    local wands = EZWand.GetAllWands()
+    if(wands == nil or #wands == 0)then
+        return nil
+    end
+    local wandDataString = ""
+    for k, v in pairs(wands)do
+        wandDataString = wandDataString .. v:Serialize()
+    end
+    return wandDataString
+end
+
+player_helper.GetControlsComponent = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+    if(controls == nil)then
+        return
+    end
+    return controls
 end
 
 player_helper.GetWandDataMana = function()
+    --[[
     local wand = EZWand.GetHeldWand()
     if(wand == nil)then
         return nil
     end
     local wandData = wand:Serialize(true)
     return wandData
+    ]]
+end
+
+player_helper.DidKick = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+    if(controls == nil)then
+        return
+    end
+    local mButtonDownKick = ComponentGetValue2(controls, "mButtonDownKick")
+    return mButtonDownKick
+end
+
+player_helper.GetActiveHeldItem = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+    return mActiveItem
 end
 
 player_helper.GetAnimationData = function()

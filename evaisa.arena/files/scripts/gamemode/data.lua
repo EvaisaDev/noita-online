@@ -16,6 +16,7 @@ function data:New()
             previous_anim = nil,
             projectile_seeds = {},
             projectile_homing = {},
+            previous_selected_item = nil,
         },
         state = "lobby",
         preparing = false,
