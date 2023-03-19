@@ -1,8 +1,25 @@
 game_id = 881100
 
 package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
+package.path = package.path .. ";./mods/evaisa.mp/lib/?/init.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.exe"
+
+local function load(modulename)
+    local errmsg = ""
+    for path in string.gmatch(package.path, "([^;]+)") do
+      local filename = string.gsub(path, "%?", modulename)
+      local file = io.open(filename, "rb")
+      if file then
+        -- Compile and return the module
+        return assert(loadstring(assert(file:read("*a")), filename))
+      end
+      errmsg = errmsg.."\n\tno file '"..filename.."' (checked with custom loader)"
+    end
+    return errmsg
+end
+
+table.insert(package.loaders, 2, load)
 
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
@@ -11,10 +28,10 @@ dofile("data/scripts/lib/coroutines.lua")
 np = require("noitapatcher")
 bitser = require("bitser")
 
-MP_VERSION = 1.10
-Version_string = "325897135236"
+MP_VERSION = 1.11
+Version_string = "3468902862396"
 
-Checksum_passed = true
+Checksum_passed = false
 Spawned = false
 
 base64 = require("base64")
@@ -22,6 +39,7 @@ base64 = require("base64")
 msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
+
 
 local application_id = 943584660334739457LL
 
@@ -37,6 +55,8 @@ pretty = require("pretty_print")
 --GamePrint("Making api call")
 
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
+
+local request = require("luajit-request")
 
 --[[
 http_get = function(url, callback)
@@ -364,6 +384,13 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 	steam.init()
 	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
+
+	local response = request.send("http://evaisa.dev/noita-online-checksum.txt")
+
+	if(response ~= nil)then
+		Checksum_passed = response.body == Version_string
+		print("Checksum passed: "..tostring(response.body))
+	end
 --[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
