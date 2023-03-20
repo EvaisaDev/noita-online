@@ -339,7 +339,7 @@ ArenaMessageHandler = {
             data.players[tostring(user)].perks = message.perks
         end,
         sync_controls = function(lobby, message, user, data)
-            if(not steamutils.IsOwner(lobby))then
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
 
@@ -641,13 +641,15 @@ ArenaMessageHandler = {
 
         local username = steam.friends.getFriendPersonaName(user)
 
+        --[[
         if(data.last_message_type ~= message.type)then
             data.last_message_type = message.type
             GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
             print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
             print(json.stringify(message))
         end
-
+        ]]
+        
         if ArenaMessageHandler.receive[message.type] then
             ArenaMessageHandler.receive[message.type](lobby, message, user, data, username)
         end
