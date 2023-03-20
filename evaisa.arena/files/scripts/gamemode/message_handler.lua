@@ -645,6 +645,7 @@ ArenaMessageHandler = {
             data.last_message_type = message.type
             GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
             print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
+            print(json.stringify(message))
         end
 
         if ArenaMessageHandler.receive[message.type] then
