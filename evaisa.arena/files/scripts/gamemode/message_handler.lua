@@ -641,6 +641,12 @@ ArenaMessageHandler = {
 
         local username = steam.friends.getFriendPersonaName(user)
 
+        if(data.last_message_type ~= message.type)then
+            data.last_message_type = message.type
+            GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
+            print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
+        end
+
         if ArenaMessageHandler.receive[message.type] then
             ArenaMessageHandler.receive[message.type](lobby, message, user, data, username)
         end
