@@ -357,11 +357,13 @@ ArenaMessageHandler = {
                     end
 
                     if(message.fire)then
+                        GamePrint("Pew pew")
                         ComponentSetValue2(controlsComp, "mButtonDownFire", true)
                         local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                         ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
                         ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
                     else
+                        GamePrint("No pew")
                         ComponentSetValue2(controlsComp, "mButtonDownFire", false)
                     end
 
@@ -649,7 +651,7 @@ ArenaMessageHandler = {
             print(json.stringify(message))
         end
         ]]
-        
+
         if ArenaMessageHandler.receive[message.type] then
             ArenaMessageHandler.receive[message.type](lobby, message, user, data, username)
         end
