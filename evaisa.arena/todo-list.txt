@@ -11,4 +11,4 @@ Todo:
 Done:
     Kicking sync
     Sync all wands
-    Test discord webhook :Tomfoolery:
+    Test discord webhook x2 :Tomfoolery:
