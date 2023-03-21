@@ -6,8 +6,9 @@ Todo:
     Wand shoot position is off somehow on clients
     Custom handler for perk and spell spawning
     Sync perks better
-    Spell/wand/healthup/other interactions break when inventory is full
+    Spell/wand/healthup/other interactions break when inventory is full (can't reproduce?)
 
 Done:
     Kicking sync
     Sync all wands
+    Test discord webhook :Tomfoolery:
