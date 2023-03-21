@@ -9,28 +9,7 @@ local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 dofile_once( "data/scripts/perks/perk_list.lua" )
 dofile_once("mods/evaisa.arena/content/data.lua")
 
-ffi = require("ffi")
 
-ffi.cdef([[
-typedef struct Entity Entity;
-
-typedef Entity* __thiscall EntityGet_f(int EntityManager, int entity_nr);
-typedef void __fastcall SetActiveHeldEntity_f(Entity* entity, Entity* item_entity, bool unknown, bool make_noise);
-]])
-
-local EntityManager = ffi.cast("int*", 0x00ff55dc)[0]
-
-local EntityGet_cfunc = ffi.cast("EntityGet_f*", 0x00527660)
-local SetActiveHeldEntity_cfunc = ffi.cast("SetActiveHeldEntity_f*", 0x009ec390)
-
-function EntityGet(entity_nr)
-    return EntityGet_cfunc(EntityManager, entity_nr)
-end
-
--- SetActiveHeldEntity(entity_id:int, item_id:int, unknown:bool, make_noise:bool)
-function SetActiveHeldEntity(entity_id, item_id, unknown, make_noise)
-    SetActiveHeldEntity_cfunc(EntityGet(entity_id), EntityGet(item_id), unknown, make_noise)
-end
 
 ArenaMessageHandler = {
     receive = {
@@ -152,8 +131,8 @@ ArenaMessageHandler = {
                 return
             end
   
-            --local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
-            --ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+            local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
+            ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
          
             data.players[tostring(user)].next_rng = message.rng
             if(message.target)then
@@ -229,16 +208,10 @@ ArenaMessageHandler = {
 
                         local x, y = EntityGetTransform(data.players[tostring(user)].entity)
 
-                        -- {data = v:Serialize(true), slot_x = slot_x, slot_y = slot_y, actual_active = (mActualActiveItem == wand_entity), active = (mActiveItem == wand_entity)}
-
                         local wand = EZWand(wandInfo.data, x, y)
                         if(wand == nil)then
                             return
                         end
-
-                        --data.players[tostring(user)].held_item = wand.entity_id
-
-                        --GamePrint("Picking up wand for " .. tostring(user) .. " (" .. tostring(wand.entity_id) .. ")")
 
                         wand:PickUp(data.players[tostring(user)].entity)
                         
@@ -248,25 +221,10 @@ ArenaMessageHandler = {
                         end
 
                         if(wandInfo.active)then
-                            SetActiveHeldEntity(data.players[tostring(user)].entity, wand.entity_id, false, false)
+                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, wand.entity_id, false, false)
                         end
 
                         GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
-
-                        -- set mActiveItem
-                        --[[
-                        local inventory2 = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
-                        if(inventory2 ~= nil)then
-                            if(wandInfo.active)then
-                                ComponentSetValue2(inventory2, "mActiveItem", wand.entity_id)
-                            end
-                            if(wandInfo.actual_active)then
-                                ComponentSetValue2(inventory2, "mActualActiveItem", wand.entity_id)
-                            end
-                            ComponentSetValue2( inventory2, "mInitialized", false );
-                            ComponentSetValue2( inventory2, "mForceRefresh", true );
-                        end
-                        ]]
                         
                     end
                 end
@@ -291,7 +249,7 @@ ArenaMessageHandler = {
                         -- check id
                         local item_id = tonumber(GlobalsGetValue(tostring(item).."_wand")) or -1
                         if(item_id == id)then
-                            SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
                             return
                         end
                     end
@@ -390,11 +348,21 @@ ArenaMessageHandler = {
 
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
+
+                    -- get cursor entity
+                    local children = EntityGetAllChildren(data.players[tostring(user)].entity)
+                    for i,child in ipairs(children) do
+                        if(EntityGetName(child) == "cursor")then
+                            EntitySetTransform(child, message.mouse.x, message.mouse.y)
+                            EntityApplyTransform(child, message.mouse.x, message.mouse.y)
+                        end
+                    end
+
+                    --[[ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
                     ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)]]
 
                 end
             end
@@ -557,7 +525,7 @@ ArenaMessageHandler = {
 
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNonZero.x, message.aimNonZero.y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
                     ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
                     ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
@@ -572,7 +540,7 @@ ArenaMessageHandler = {
                 local rightClick = ComponentGetValue2(controls, "mButtonDownRight")
                 local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
                 local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
-                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
+                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest")
                 local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition")
                 local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw")
                 local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev")
@@ -603,8 +571,8 @@ ArenaMessageHandler = {
             local perk_info = {}
             for i,perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
-                if(perks_allowed[perk_id] == nil or perks_allowed[perk_id] ~= false)then
-                    if (((( perk_data.one_off_effect == nil ) or ( perk_data.one_off_effect == false )) and perk_data.usable_by_enemies) or perks_allowed[perk_id] == true) then
+                --if(perks_allowed[perk_id] == nil or perks_allowed[perk_id] ~= false)then
+                    --if (((( perk_data.one_off_effect == nil ) or ( perk_data.one_off_effect == false )) and perk_data.usable_by_enemies) or perks_allowed[perk_id] == true) then
                         local flag_name = get_perk_picked_flag_name( perk_id )
 
                         --print("Checking flag " .. flag_name)
@@ -615,10 +583,10 @@ ArenaMessageHandler = {
 
                         if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
                             --print("Has flag: " .. perk_id)
-                            table.insert( perk_info, { perk_id, pickup_count } )
+                            table.insert( perk_info, { id = perk_id, count = pickup_count, run_on_clients = (perk_data.run_on_clients or perk_data.usable_by_enemies) or false } )
                         end
-                    end
-                end
+                   -- end
+                --end
             end
             if(#perk_info > 0)then
                 steamutils.sendData({type = "perk_info", perks = perk_info}, steamutils.messageTypes.OtherPlayers, lobby)

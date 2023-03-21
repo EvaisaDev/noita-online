@@ -285,8 +285,8 @@ function playerinfo_menu:New()
                     player_index = index
                     if(v.perks)then
                         for k, v in ipairs(v.perks)do
-                            local perk = v[1]
-                            local count = v[2]
+                            local perk = v.id
+                            local count = v.count
                     
                             local perk_sprite = perk_sprites[perk]
                             

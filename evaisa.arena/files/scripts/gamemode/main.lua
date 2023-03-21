@@ -1,7 +1,11 @@
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
+game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
+
+local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
+local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
@@ -28,6 +32,16 @@ ArenaMode = {
         steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
     end,
     start = function(lobby)
+
+        local player_entity = player.Get()
+
+        GameRemoveFlagRun("player_unloaded")
+
+        if(player_entity == nil)then
+            local player_entity = EntityLoad("data/entities/player.xml", 0, 0)
+            game_funcs.SetPlayerEntity(player_entity)
+        end
+
         data = data_holder:New()
         data.state = "lobby"
         data:DefinePlayers(lobby)
@@ -53,7 +67,10 @@ ArenaMode = {
         gameplay_handler.LateUpdate(lobby, data)
     end,
     leave = function(lobby)
-
+        local player = player.Get()
+        if(player ~= nil)then
+            EntityKill(player)
+        end
     end,
     message = function(lobby, message, user)
         message_handler.handle(lobby, message, user, data)

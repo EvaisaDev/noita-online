@@ -3,9 +3,9 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     
     -- check if would kill
 
-    local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-    if damageModelComponent ~= nil then
-        local health = ComponentGetValue2( damageModelComponent, "hp" )
+    --local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+    --if damageModelComponent ~= nil then
+        --local health = ComponentGetValue2( damageModelComponent, "hp" )
         if(GameHasFlagRun("Immortal"))then
             return 0, 0
         --else
@@ -18,7 +18,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
             end
             return 0, 0
         end]]
-    end
+    --end
 
 
     return damage, 0
@@ -30,15 +30,16 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     -- check if would kill
     GameAddFlagRun("took_damage")
 
-    local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-    if damageModelComponent ~= nil then
+    --local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+    --if damageModelComponent ~= nil then
         if(is_fatal)then
             GameAddFlagRun("player_died")
             if(entity_thats_responsible ~= nil)then
                 ModSettingSet("killer", EntityGetName(entity_thats_responsible))
             end
+            GameHasFlagRun("player_unloaded")
             -- set health so that player ends on 1
-            ComponentSetValue2( damageModelComponent, "hp", damage + 1 )
+           -- ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
         end
-    end
+    --end
 end

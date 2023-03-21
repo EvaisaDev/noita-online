@@ -1,5 +1,6 @@
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+dofile_once( "data/scripts/perks/perk_list.lua" )
 
 local player_helper = {}
 
@@ -130,6 +131,39 @@ player_helper.GetWandData = function()
     return wandData
 end
 
+player_helper.SetWandData = function(wand_data)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+
+    if(wand_data ~= nil)then
+        for k, wandInfo in ipairs(wand_data)do
+    
+            local x, y = EntityGetTransform(player)
+    
+            local wand = EZWand(wandInfo.data, x, y)
+            if(wand == nil)then
+                return
+            end
+    
+            wand:PickUp(player)
+            
+            local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
+            if(itemComp ~= nil)then
+                ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
+            end
+    
+            if(wandInfo.active)then
+                game_funcs.SetActiveHeldEntity(player, wand.entity_id, false, false)
+            end
+    
+            GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
+            
+        end
+    end
+end
+
 player_helper.GetWandString = function()
     local wands = EZWand.GetAllWands()
     if(wands == nil or #wands == 0)then
@@ -247,6 +281,199 @@ player_helper.GetHealthInfo = function()
         maxHealth = ComponentGetValue2(healthComponent, "max_hp")
     end
     return health, maxHealth
+end
+
+player_helper.GetSpells = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return {}
+    end
+
+    local spells = {}
+    --ItemActionComponent
+    local items = GameGetAllInventoryItems(player)
+    for k, v in pairs(items)do
+        local itemComp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+        if(itemComp ~= nil)then
+            local itemActionComp = EntityGetFirstComponentIncludingDisabled(v, "ItemActionComponent")
+            if(itemActionComp ~= nil)then
+                local action = ComponentGetValue2(itemActionComp, "action_id")
+                table.insert(spells, action)
+            end
+        end
+    end
+
+    return spells
+end
+
+player_helper.SetSpells = function(spells)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    if(spells == nil)then
+        return
+    end
+
+    local x, y = EntityGetTransform(player)
+
+    for k, v in ipairs(spells)do
+        local action = CreateItemActionEntity(v, x, y)
+        GamePickUpInventoryItem( player, action, false )
+    end
+end
+
+player_helper.GetPerks = function()
+    local perk_info = {}
+    for i,perk_data in ipairs(perk_list) do
+        local perk_id = perk_data.id
+        local flag_name = get_perk_picked_flag_name( perk_id )
+
+        local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+
+
+        if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+            table.insert( perk_info, { id = perk_id, count = pickup_count} )
+        end
+
+    end
+
+    return perk_info
+end
+
+player_helper.GivePerk = function( entity_who_picked, perk_id, amount )
+    -- fetch perk info ---------------------------------------------------
+
+    local pos_x, pos_y
+
+    pos_x, pos_y = EntityGetTransform( entity_who_picked )
+
+    local perk_data = get_perk_with_id( perk_list, perk_id )
+    if perk_data == nil then
+        return
+    end
+
+    local no_remove = perk_data.do_not_remove or false
+
+    -- add a game effect or two
+    if perk_data.game_effect ~= nil then
+        local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect, true )
+        if game_effect_comp ~= nil then
+            ComponentSetValue( game_effect_comp, "frames", "-1" )
+            
+            if ( no_remove == false ) then
+                ComponentAddTag( game_effect_comp, "perk_component" )
+                EntityAddTag( game_effect_entity, "perk_entity" )
+            end
+        end
+    end
+
+    if perk_data.game_effect2 ~= nil then
+        local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect2, true )
+        if game_effect_comp ~= nil then
+            ComponentSetValue( game_effect_comp, "frames", "-1" )
+            
+            if ( no_remove == false ) then
+                ComponentAddTag( game_effect_comp, "perk_component" )
+                EntityAddTag( game_effect_entity, "perk_entity" )
+            end
+        end
+    end
+
+    -- particle effect only applied once
+    if perk_data.particle_effect ~= nil and ( amount <= 1 ) then
+        local particle_id = EntityLoad( "data/entities/particles/perks/" .. perk_data.particle_effect .. ".xml" )
+        
+        if ( no_remove == false ) then
+            EntityAddTag( particle_id, "perk_entity" )
+        end
+        
+        EntityAddChild( entity_who_picked, particle_id )
+    end
+
+    local fake_perk_ent = EntityCreateNew()
+    EntitySetTransform( fake_perk_ent, pos_x, pos_y )
+
+    perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+
+    EntityKill( fake_perk_ent )
+
+    --GamePrint( "Picked up perk: " .. perk_data.name )
+end
+
+player_helper.SetPerks = function(perks)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    if(perks == nil)then
+        return
+    end
+
+    for k, v in ipairs(perks)do
+        local perk_id = v.id
+        local pickup_count = v.count
+
+        for i = 1, pickup_count do
+            entity.GivePerk(player, perk_id, i)
+        end
+    end
+end
+
+player_helper.Serialize = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local data = {
+        health = 100,
+        max_health = 100,
+        wand_data = player_helper.GetWandData(),
+        spells = player_helper.GetSpells(),
+        perks = player_helper.GetPerks(),
+    }
+    local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+    if(healthComponent ~= nil)then
+        data.health = ComponentGetValue2(healthComponent, "hp")
+        data.max_health = ComponentGetValue2(healthComponent, "max_hp")
+    end
+
+    return bitser.dumps(data)
+end
+
+player_helper.Deserialize = function(data)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    if(data == nil)then
+        return
+    end
+
+    data = bitser.loads(data)
+
+    -- kill items
+    for k, v in pairs(GameGetAllInventoryItems(player) or {})do
+        GameKillInventoryItem( player, v )
+        EntityKill(v)
+    end
+
+    if(data.wand_data ~= nil)then
+        player_helper.SetWandData(data.wand_data)
+    end
+    if(data.spells ~= nil)then
+        player_helper.SetSpells(data.spells)
+    end
+    if(data.perks ~= nil)then
+        player_helper.SetPerks(data.perks)
+    end
+    if(data.health ~= nil and data.max_health ~= nil)then
+        local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+        if(healthComponent ~= nil)then
+            ComponentSetValue2(healthComponent, "hp", data.health)
+            ComponentSetValue2(healthComponent, "max_hp", data.max_health)
+        end
+    end
 end
 
 return player_helper

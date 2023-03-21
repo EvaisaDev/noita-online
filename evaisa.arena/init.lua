@@ -14,5 +14,5 @@ if(ModIsEnabled("evaisa.mp"))then
 end
 
 function OnPlayerSpawned(player)
-
+    EntityKill(player)
 end

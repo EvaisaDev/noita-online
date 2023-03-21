@@ -4,7 +4,6 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
-local game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
 ArenaGameplay = {
@@ -56,7 +55,12 @@ ArenaGameplay = {
             data.ready_counter = nil
         end)
     end,
-
+    LoadPlayer = function(lobby, data)
+        local current_player = EntityLoad("data/entities/player.xml", 0, 0)
+        game_funcs.SetPlayerEntity(current_player)
+        player.Deserialize(data.client.serialized_player)
+        np.RegisterPlayerEntityId(current_player)
+    end,
     AllowFiring = function()
         GameRemoveFlagRun("no_shooting")
     end,
@@ -179,6 +183,12 @@ ArenaGameplay = {
         show_message = show_message or false
         first_entry = first_entry or false
 
+        local current_player = player.Get()
+
+        if(current_player == nil)then
+            ArenaGameplay.LoadPlayer(lobby, data)
+        end
+
         if(first_entry and player.Get())then
             GameDestroyInventoryItems( player.Get() )
         end
@@ -189,6 +199,7 @@ ArenaGameplay = {
         -- manage flags
         GameRemoveFlagRun("player_ready")
         GameRemoveFlagRun("ready_check")
+        GameRemoveFlagRun("player_unloaded")
         GameAddFlagRun("in_hm")
 
         -- destroy active tweens
@@ -403,11 +414,14 @@ ArenaGameplay = {
 
         if(data.players[tostring(user)].perks)then
             for k, v in ipairs(data.players[tostring(user)].perks)do
-                local perk = v[1]
-                local count = v[2]
+                local perk = v.id
+                local count = v.count
+                local run_on_clients = v.run_on_clients
                 
-                for i = 1, count do
-                    entity.GivePerk(client, perk, i)
+                if(run_on_clients)then
+                    for i = 1, count do
+                        entity.GivePerk(client, perk, i)
+                    end
                 end
             end
         end
@@ -518,6 +532,11 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
+        if((not GameHasFlagRun("player_unloaded")) and player.Get() and (GameGetFrameNum() % 30 == 0))then
+            data.client.serialized_player = player.Serialize()
+
+        end
+
         if(data.state == "lobby")then
             ArenaGameplay.LobbyUpdate(lobby, data)
         elseif(data.state == "arena")then
@@ -688,6 +707,16 @@ ArenaGameplay = {
     LateUpdate = function(lobby, data)
         if(data.state == "arena")then
             ArenaGameplay.KillCheck(lobby, data)
+        end
+        local current_player = player.Get()
+
+        if((not GameHasFlagRun("player_unloaded")) and current_player == nil)then
+            ArenaGameplay.LoadPlayer(lobby, data)
+        end
+
+        if(data.current_player ~= current_player)then
+            data.current_player = current_player
+            np.RegisterPlayerEntityId(current_player)
         end
     end,
 }

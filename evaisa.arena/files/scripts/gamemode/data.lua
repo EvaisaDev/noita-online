@@ -17,6 +17,7 @@ function data:New()
             projectile_seeds = {},
             projectile_homing = {},
             previous_selected_item = nil,
+            serialized_player = nil,
         },
         state = "lobby",
         preparing = false,

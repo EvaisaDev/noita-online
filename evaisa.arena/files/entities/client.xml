@@ -32,6 +32,20 @@
         </GameEffectComponent >
     </Entity>
 
+  <Entity name="cursor">
+    <SpriteComponent 
+        alpha="1" 
+        image_file="mods/evaisa.arena/files/sprites/entities/cursor.png" 
+        next_rect_animation="" 
+        offset_x="2.5" 
+        offset_y="2.5" 
+        emissive="1"
+        additive="1"
+        rect_animation="" 
+        z_index="1"
+    ></SpriteComponent>
+  </Entity>
+
   <CharacterDataComponent 
     platforming_type="0"
     check_collision_max_size_x="4" 
@@ -118,6 +132,7 @@
     ></ParticleEmitterComponent>
   
   </Base>
+
 
 
     <GenomeDataComponent 

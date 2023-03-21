@@ -84,10 +84,16 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount )
         EntityAddChild( entity_who_picked, particle_id )
     end
 
+    local fake_perk_ent = EntityCreateNew()
+    EntitySetTransform( fake_perk_ent, pos_x, pos_y )
 
-    if perk_data.func ~= nil then
-        perk_data.func( entity_item, entity_who_picked, perk_id, amount )
+    if perk_data.func_client ~= nil then
+        perk_data.func_client( fake_perk_ent, entity_who_picked, perk_id, amount )
+    elseif perk_data.func ~= nil then
+        perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
     end
+
+    EntityKill( fake_perk_ent )
 
     --GamePrint( "Picked up perk: " .. perk_data.name )
 end
