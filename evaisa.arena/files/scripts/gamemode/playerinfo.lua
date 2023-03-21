@@ -16,6 +16,13 @@ function playerinfo:New(user)
         target = nil,
         id = user,
         perks = {},
+        controls = {
+            kick = false,
+            fire = false,
+            fire2 = false,
+            leftClick = false,
+            rightClick = false,
+        }
     }
 
     obj.Clean = function(self, lobby)

@@ -532,6 +532,23 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
+        for k, v in ipairs(data.players)do
+            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
+                local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                if(controls_comp ~= nil)then
+                    local controls = ComponentGetValue2(controls_comp, "mControls")
+                    if(controls ~= nil)then
+                        ComponentSetValue2(controls, "mButtonDownKick", false)
+                        ComponentSetValue2(controls, "mButtonDownFire", false)
+                        ComponentSetValue2(controls, "mButtonDownFire2", false)
+                        ComponentSetValue2(controls, "mButtonDownLeftClick", false)
+                        ComponentSetValue2(controls, "mButtonDownRightClick", false)
+                    end
+                end
+            end
+        end
+
+
         if((not GameHasFlagRun("player_unloaded")) and player.Get() and (GameGetFrameNum() % 30 == 0))then
             data.client.serialized_player = player.Serialize()
 
@@ -717,6 +734,36 @@ ArenaGameplay = {
         if(data.current_player ~= current_player)then
             data.current_player = current_player
             np.RegisterPlayerEntityId(current_player)
+        end
+
+        for k, v in ipairs(data.players)do
+            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
+                local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                if(controls_comp ~= nil)then
+                    local controls = ComponentGetValue2(controls_comp, "mControls")
+                    if(controls ~= nil)then
+                        if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
+                            data.players.controls.kick = false
+                        end
+                        -- mButtonDownFire
+                        if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
+                            data.players.controls.fire = false
+                        end
+                        -- mButtonDownFire2
+                        if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
+                            data.players.controls.fire2 = false
+                        end
+                        -- mButtonDownLeft
+                        if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
+                            data.players.controls.leftClick = false
+                        end
+                        -- mButtonDownRight
+                        if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
+                            data.players.controls.rightClick = false
+                        end
+                    end
+                end
+            end
         end
     end,
 }

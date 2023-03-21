@@ -76,9 +76,17 @@ ArenaMode = {
         message_handler.handle(lobby, message, user, data)
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+       --[[ if(EntityHasTag(shooter_id, "client"))then
+            local controlsComp = EntityGetFirstComponentIncludingDisabled(shooter_id, "ControlsComponent")
+            ComponentSetValue2(controlsComp, "enabled", true)
+        end]]
         gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
     end,
     on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        --[[if(EntityHasTag(shooter_id, "client"))then
+            local controlsComp = EntityGetFirstComponentIncludingDisabled(shooter_id, "ControlsComponent")
+            ComponentSetValue2(controlsComp, "enabled", false)
+        end]]
         gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
     end
 }

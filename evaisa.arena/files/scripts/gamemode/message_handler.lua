@@ -130,10 +130,10 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-  
+            
             local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
             ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
-         
+            
             data.players[tostring(user)].next_rng = message.rng
             if(message.target)then
                 data.players[tostring(user)].target = message.target
@@ -307,49 +307,67 @@ ArenaMessageHandler = {
 
                 if(controlsComp ~= nil)then
 
+                    local controls_data = data.players[tostring(user)].controls
+
                     if(message.kick)then
                         ComponentSetValue2(controlsComp, "mButtonDownKick", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                        if(not controls_data.kick)then
+                            ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                        end
+                        controls_data.kick = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                     end
 
                     if(message.fire)then
-                        GamePrint("Pew pew")
                         ComponentSetValue2(controlsComp, "mButtonDownFire", true)
-                        local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
-                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
+                        --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
+                        if(not controls_data.fire)then
+                            ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                        end
+                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
+                        controls_data.fire = true
                     else
-                        GamePrint("No pew")
                         ComponentSetValue2(controlsComp, "mButtonDownFire", false)
                     end
 
                     if(message.fire2)then
                         ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                        if(not controls_data.fire2)then
+                            ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                        end
+                        controls_data.fire2 = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
                     end
                     
                     if(message.leftClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                        ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
+                        if(not controls_data.leftClick)then
+                            ComponentSetValue2(controlsComp, "mButtonDownLeftClick", GameGetFrameNum())
+                        end
+                        controls_data.leftClick = true
                     else
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                        ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
                     end
 
                     if(message.rightClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                        ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
+                        if(not controls_data.rightClick)then
+                            ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum())
+                        end
+                        controls_data.rightClick = true
                     else
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                        ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
                     end
 
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
                     ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
 
                     -- get cursor entity
                     local children = EntityGetAllChildren(data.players[tostring(user)].entity)
@@ -359,11 +377,6 @@ ArenaMessageHandler = {
                             EntityApplyTransform(child, message.mouse.x, message.mouse.y)
                         end
                     end
-
-                    --[[ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)]]
-
                 end
             end
         end,
@@ -536,8 +549,8 @@ ArenaMessageHandler = {
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")
-                local leftClick = ComponentGetValue2(controls, "mButtonDownLeft")
-                local rightClick = ComponentGetValue2(controls, "mButtonDownRight")
+                local leftClick = ComponentGetValue2(controls, "mButtonDownLeftClick")
+                local rightClick = ComponentGetValue2(controls, "mButtonDownRightClick")
                 local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
                 local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
                 local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest")
