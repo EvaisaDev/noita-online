@@ -23,7 +23,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.201,
+    version = 0.21,
     enter = function(lobby)
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
@@ -76,17 +76,17 @@ ArenaMode = {
         message_handler.handle(lobby, message, user, data)
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
-       --[[ if(EntityHasTag(shooter_id, "client"))then
-            local controlsComp = EntityGetFirstComponentIncludingDisabled(shooter_id, "ControlsComponent")
-            ComponentSetValue2(controlsComp, "enabled", true)
-        end]]
+        if(EntityHasTag(shooter_id, "client"))then
+            EntityAddTag(shooter_id, "player_unit")
+        end
+
         gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
     end,
     on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
-        --[[if(EntityHasTag(shooter_id, "client"))then
-            local controlsComp = EntityGetFirstComponentIncludingDisabled(shooter_id, "ControlsComponent")
-            ComponentSetValue2(controlsComp, "enabled", false)
-        end]]
+        if(EntityHasTag(shooter_id, "client"))then
+            EntityRemoveTag(shooter_id, "player_unit")
+        end
+
         gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
     end
 }

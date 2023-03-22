@@ -344,7 +344,7 @@ ArenaMessageHandler = {
                     if(message.leftClick)then
                         ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
                         if(not controls_data.leftClick)then
-                            ComponentSetValue2(controlsComp, "mButtonDownLeftClick", GameGetFrameNum())
+                            ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum())
                         end
                         controls_data.leftClick = true
                     else
