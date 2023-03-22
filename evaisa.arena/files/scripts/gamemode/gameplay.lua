@@ -200,7 +200,6 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_ready")
         GameRemoveFlagRun("ready_check")
         GameRemoveFlagRun("player_unloaded")
-        GameAddFlagRun("in_hm")
 
         -- destroy active tweens
         data.tweens = {}
@@ -275,6 +274,7 @@ ArenaGameplay = {
         data.preparing = true
         data.players_loaded = false
         data.deaths = 0
+        data.lobby_loaded = false
 
         message_handler.send.SendPerks(lobby)
 
@@ -300,7 +300,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
         
         for _, member in pairs(members)do
-            if(member.id ~= steam.user.getSteamID())then
+            if(member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil)then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
         end
@@ -733,7 +733,13 @@ ArenaGameplay = {
 
         if(data.current_player ~= current_player)then
             data.current_player = current_player
-            np.RegisterPlayerEntityId(current_player)
+            if(current_player ~= nil)then
+                np.RegisterPlayerEntityId(current_player)
+            end
+        end
+
+        if(GameHasFlagRun("in_hm") and current_player)then
+            player.Move(174, 133)
         end
 
         for k, v in ipairs(data.players)do

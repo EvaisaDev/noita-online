@@ -34,6 +34,7 @@ function spawn_spell_visualizer( x, y )
 end
 
 function spawn_hp( x, y )
+	GameAddFlagRun("in_hm")
 	EntityLoad( "data/entities/items/pickup/heart_fullhp_temple.xml", x-16, y )
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	EntityLoad( "data/entities/items/pickup/spell_refresh.xml", x+16, y )
