@@ -28,8 +28,8 @@ dofile("data/scripts/lib/coroutines.lua")
 np = require("noitapatcher")
 bitser = require("bitser")
 
-MP_VERSION = 1.11
-Version_string = "3468902862396"
+MP_VERSION = 1.13
+Version_string = "238623602936"
 
 Checksum_passed = false
 Spawned = false
@@ -102,6 +102,7 @@ bytes_sent = 0
 last_bytes_sent = 0
 bytes_received = 0
 last_bytes_received = 0
+active_members = {}
 
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
@@ -119,6 +120,25 @@ function OnWorldPreUpdate()
 
 		if(lobby_code ~= nil)then
 			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+			if(GameGetFrameNum() % 10 == 0)then
+				-- get lobby members
+				local current_members = {}
+				for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_code) do
+					local h = steam.matchmaking.getLobbyMemberByIndex(lobby_code, i - 1)
+					if(not active_members[tostring(h)])then
+						active_members[tostring(h)] = h
+					end
+					current_members[tostring(h)] = true
+				end
+				for k, v in pairs(active_members) do
+					if(not current_members[k])then
+						active_members[k] = nil
+						steam.networking.closeSession(v)
+						print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+					end
+				end
+			end
 
 			if(GameGetFrameNum() % 60 == 0)then
 				last_bytes_sent = bytes_sent
@@ -237,6 +257,13 @@ function OnWorldPostUpdate()
 end
 
 function steam.matchmaking.onLobbyEnter(data)
+
+	for k, v in pairs(active_members)do
+		active_members[k] = nil
+		steam.networking.closeSession(v)
+		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+	end
+
 	game_in_progress = false
 	if(data.response ~= 2)then
 		lobby_code = data.lobbyID
