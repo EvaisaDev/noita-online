@@ -16,6 +16,40 @@ ArenaGameplay = {
         holyMountainCount = holyMountainCount + 1
         GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
     end,
+    SendGameData = function(lobby, data)
+        steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
+        local ready_players = {}
+        for k, member in pairs(members)do
+            if(member.id ~= steam.user.getSteamID())then
+                if(data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready)then
+                    table.insert(ready_players, tostring(member.id))
+                end
+            end
+        end
+        steam.matchmaking.setLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
+    end,
+    GetGameData = function(lobby, data)
+        local mountainCount = tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount"))
+        if(mountainCount ~= nil)then
+            GlobalsSetValue("holyMountainCount", tostring(mountainCount))
+        end
+        local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
+        local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
+        if(ready_players ~= nil)then
+            for k, member in pairs(members)do
+                if(member.id ~= steam.user.getSteamID())then
+                    if(data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready)then
+                        data.players[tostring(member.id)].ready = false
+                    end
+                end
+            end
+            for k, member in pairs(ready_players)do
+                if(data.players[member] ~= nil)then
+                    data.players[member].ready = true
+                end
+            end
+        end
+    end,
     ReadyAmount = function(data, lobby)
         local amount = data.client.ready and 1 or 0
         local members = steamutils.getLobbyMembers(lobby)
@@ -740,6 +774,13 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("in_hm") and current_player)then
             player.Move(174, 133)
+        end
+
+        if(GameGetFrameNum() % 5 == 0)then
+            -- if we are host
+            if(steamutils.IsOwner(lobby))then
+                ArenaGameplay.SendGameData(lobby, data)
+            end
         end
 
         for k, v in ipairs(data.players)do

@@ -25,6 +25,7 @@ ArenaMode = {
     name = "Arena",
     version = 0.21,
     enter = function(lobby)
+        GlobalsSetValue("holyMountainCount", "0")
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
             ArenaMode.start(lobby)
@@ -56,6 +57,7 @@ ArenaMode = {
                 
         playermenu = playerinfo_menu:New()
 
+        gameplay_handler.GetGameData(lobby, data)
 
         message_handler.send.Handshake(lobby)
     end,
