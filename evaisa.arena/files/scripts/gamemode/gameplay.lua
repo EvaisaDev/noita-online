@@ -40,6 +40,11 @@ ArenaGameplay = {
             data.client.first_spawn_gold = goldCount
             print("Gold count: "..goldCount)
         end
+        local playerData = steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
+        if(playerData ~= nil and playerData ~= "")then
+            data.client.serialized_player = playerData
+            print("Player data: "..playerData)
+        end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
         local members = steamutils.getLobbyMembers(lobby)
@@ -273,7 +278,12 @@ ArenaGameplay = {
         -- Give gold
         local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
         local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
-        if(first_entry and data.client.first_spawn_gold > 0)then
+
+        --print("First spawn gold = "..tostring(data.client.first_spawn_gold))
+
+        print("First entry = "..tostring(first_entry))
+
+        if(first_entry and data.client.serialized_player == nil and data.client.first_spawn_gold > 0)then
             extra_gold = data.client.first_spawn_gold
         end
         player.GiveGold(extra_gold)
@@ -590,16 +600,15 @@ ArenaGameplay = {
     Update = function(lobby, data)
         for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
-                local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
-                if(controls_comp ~= nil)then
-                    local controls = ComponentGetValue2(controls_comp, "mControls")
-                    if(controls ~= nil)then
-                        ComponentSetValue2(controls, "mButtonDownKick", false)
-                        ComponentSetValue2(controls, "mButtonDownFire", false)
-                        ComponentSetValue2(controls, "mButtonDownFire2", false)
-                        ComponentSetValue2(controls, "mButtonDownLeftClick", false)
-                        ComponentSetValue2(controls, "mButtonDownRightClick", false)
-                    end
+                local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                if(controls)then
+ 
+                    ComponentSetValue2(controls, "mButtonDownKick", false)
+                    ComponentSetValue2(controls, "mButtonDownFire", false)
+                    ComponentSetValue2(controls, "mButtonDownFire2", false)
+                    ComponentSetValue2(controls, "mButtonDownLeftClick", false)
+                    ComponentSetValue2(controls, "mButtonDownRightClick", false)
+
                 end
             end
         end
@@ -607,7 +616,7 @@ ArenaGameplay = {
 
         if((not GameHasFlagRun("player_unloaded")) and player.Get() and (GameGetFrameNum() % 30 == 0))then
             data.client.serialized_player = player.Serialize()
-
+            steam.matchmaking.setLobbyMemberData(lobby, "player", data.client.serialized_player)
         end
 
         if(data.state == "lobby")then
@@ -808,29 +817,26 @@ ArenaGameplay = {
 
         for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
-                local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
-                if(controls_comp ~= nil)then
-                    local controls = ComponentGetValue2(controls_comp, "mControls")
-                    if(controls ~= nil)then
-                        if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
-                            data.players.controls.kick = false
-                        end
-                        -- mButtonDownFire
-                        if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
-                            data.players.controls.fire = false
-                        end
-                        -- mButtonDownFire2
-                        if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
-                            data.players.controls.fire2 = false
-                        end
-                        -- mButtonDownLeft
-                        if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
-                            data.players.controls.leftClick = false
-                        end
-                        -- mButtonDownRight
-                        if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
-                            data.players.controls.rightClick = false
-                        end
+                local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                if(controls)then
+                    if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
+                        data.players.controls.kick = false
+                    end
+                    -- mButtonDownFire
+                    if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
+                        data.players.controls.fire = false
+                    end
+                    -- mButtonDownFire2
+                    if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
+                        data.players.controls.fire2 = false
+                    end
+                    -- mButtonDownLeft
+                    if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
+                        data.players.controls.leftClick = false
+                    end
+                    -- mButtonDownRight
+                    if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
+                        data.players.controls.rightClick = false
                     end
                 end
             end

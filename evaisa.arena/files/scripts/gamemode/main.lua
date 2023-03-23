@@ -23,7 +23,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.24,
+    version = 0.25,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
@@ -47,6 +47,9 @@ ArenaMode = {
         data.state = "lobby"
         data:DefinePlayers(lobby)
 
+
+        gameplay_handler.GetGameData(lobby, data)
+
         steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
 
         gameplay_handler.LoadLobby(lobby, data, true, true)
@@ -56,8 +59,6 @@ ArenaMode = {
         end
                 
         playermenu = playerinfo_menu:New()
-
-        gameplay_handler.GetGameData(lobby, data)
 
         message_handler.send.Handshake(lobby)
     end,
