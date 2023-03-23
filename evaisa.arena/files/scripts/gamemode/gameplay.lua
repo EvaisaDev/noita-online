@@ -212,7 +212,7 @@ ArenaGameplay = {
 
             player.Lock()
             player.Immortal(true)
-            player.Move(-3000, -3000)
+            --player.Move(-3000, -3000)
 
             ArenaGameplay.WinnerCheck(lobby, data)
         end
@@ -792,6 +792,7 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("in_hm") and current_player)then
             player.Move(174, 133)
+            GameRemoveFlagRun("in_hm")
         end
 
         if(GameGetFrameNum() % 5 == 0)then

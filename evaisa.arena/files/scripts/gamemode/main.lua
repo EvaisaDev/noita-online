@@ -23,7 +23,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.22,
+    version = 0.23,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
