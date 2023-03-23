@@ -18,6 +18,7 @@ function data:New()
             projectile_homing = {},
             previous_selected_item = nil,
             serialized_player = nil,
+            first_spawn_gold = 0,
         },
         state = "lobby",
         preparing = false,

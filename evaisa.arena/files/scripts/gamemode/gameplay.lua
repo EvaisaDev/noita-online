@@ -33,6 +33,10 @@ ArenaGameplay = {
         if(mountainCount ~= nil)then
             GlobalsSetValue("holyMountainCount", tostring(mountainCount))
         end
+        local goldCount = tonumber(steam.matchmaking.getLobbyData(lobby, "goldCount"))
+        if(goldCount ~= nil)then
+            data.client.first_spawn_gold = goldCount
+        end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
         if(ready_players ~= nil)then
@@ -264,7 +268,21 @@ ArenaGameplay = {
 
         -- Give gold
         local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
-        player.GiveGold(400 + (70 * (rounds_limited * rounds_limited)))
+        local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
+        if(first_entry and data.client.first_spawn_gold > 0)then
+            extra_gold = data.client.first_spawn_gold
+        end
+        player.GiveGold(extra_gold)
+
+        -- if we are the owner of the lobby
+        if(steamutils.IsOwner(lobby))then
+            -- get the gold count from the lobby
+            local gold = steamutils.GetLobbyData(lobby, "total_gold")
+            -- add the new gold
+            gold = gold + extra_gold
+            -- set the new gold count
+            steamutils.SetLobbyData(lobby, "total_gold", gold)
+        end
 
         -- increment holy mountain count
         ArenaGameplay.AddRound()
