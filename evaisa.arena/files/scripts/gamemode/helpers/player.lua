@@ -82,6 +82,16 @@ player_helper.GiveGold = function( amount )
     ComponentSetValue2(wallet_component, "money", money + add_amount)
 end
 
+player_helper.GetGold = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+    local money = ComponentGetValue2(wallet_component, "money")
+    return money
+end
+
 player_helper.GiveStartingGear = function ()
     local player = player_helper.Get()
     if(player == nil)then
@@ -353,6 +363,26 @@ player_helper.GivePerk = function( entity_who_picked, perk_id, amount )
         return
     end
 
+	local flag_name = get_perk_picked_flag_name( perk_id )
+	
+	-- update how many times the perk has been picked up this run -----------------
+	
+	local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+	pickup_count = pickup_count + 1
+	GlobalsSetValue( flag_name .. "_PICKUP_COUNT", tostring( pickup_count ) )
+
+	-- load perk for entity_who_picked -----------------------------------
+	local add_progress_flags = not GameHasFlagRun( "no_progress_flags_perk" )
+	
+	if add_progress_flags then
+		local flag_name_persistent = string.lower( flag_name )
+		if ( not HasFlagPersistent( flag_name_persistent ) ) then
+			GameAddFlagRun( "new_" .. flag_name_persistent )
+		end
+		AddFlagPersistent( flag_name_persistent )
+	end
+	GameAddFlagRun( flag_name )
+
     local no_remove = perk_data.do_not_remove or false
 
     -- add a game effect or two
@@ -391,10 +421,38 @@ player_helper.GivePerk = function( entity_who_picked, perk_id, amount )
         EntityAddChild( entity_who_picked, particle_id )
     end
 
+    -- certain other perks may be marked as picked-up
+	if perk_data.remove_other_perks ~= nil then
+		for i,v in ipairs( perk_data.remove_other_perks ) do
+			local f = get_perk_picked_flag_name( v )
+			GameAddFlagRun( f )
+		end
+	end
+
     local fake_perk_ent = EntityCreateNew()
     EntitySetTransform( fake_perk_ent, pos_x, pos_y )
 
     perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+
+    perk_name = GameTextGetTranslatedOrNot( perk_data.ui_name )
+	perk_desc = GameTextGetTranslatedOrNot( perk_data.ui_description )
+
+	-- add ui icon etc
+	local entity_ui = EntityCreateNew( "" )
+	EntityAddComponent( entity_ui, "UIIconComponent", 
+	{ 
+		name = perk_data.ui_name,
+		description = perk_data.ui_description,
+		icon_sprite_file = perk_data.ui_icon
+	})
+	
+	if ( no_remove == false ) then
+		EntityAddTag( entity_ui, "perk_entity" )
+	end
+	
+	EntityAddChild( entity_who_picked, entity_ui )
+
+    
 
     EntityKill( fake_perk_ent )
 
@@ -431,6 +489,7 @@ player_helper.Serialize = function()
         wand_data = player_helper.GetWandData(),
         spells = player_helper.GetSpells(),
         perks = player_helper.GetPerks(),
+        gold = player_helper.GetGold(),
     }
     local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
     if(healthComponent ~= nil)then
@@ -466,6 +525,9 @@ player_helper.Deserialize = function(data)
     end
     if(data.perks ~= nil)then
         player_helper.SetPerks(data.perks)
+    end
+    if(data.gold ~= nil)then
+        player_helper.GiveGold(data.gold)
     end
     if(data.health ~= nil and data.max_health ~= nil)then
         local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")

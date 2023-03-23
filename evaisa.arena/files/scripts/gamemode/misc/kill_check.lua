@@ -37,7 +37,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             if(entity_thats_responsible ~= nil)then
                 ModSettingSet("killer", EntityGetName(entity_thats_responsible))
             end
-            GameHasFlagRun("player_unloaded")
+            GameAddFlagRun("player_unloaded")
             -- set health so that player ends on 1
            -- ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
         end

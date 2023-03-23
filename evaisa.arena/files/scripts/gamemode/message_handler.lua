@@ -60,7 +60,7 @@ ArenaMessageHandler = {
                 end
                 if(health < last_health)then
                     local damage = last_health - health
-                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_SLICE", "damage_fake", "NORMAL", 0, 0, nil)
+                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake", "NORMAL", 0, 0, nil)
                 end
 
                 local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")

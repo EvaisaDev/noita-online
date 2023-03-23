@@ -23,7 +23,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.23,
+    version = 0.24,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
@@ -52,7 +52,7 @@ ArenaMode = {
         gameplay_handler.LoadLobby(lobby, data, true, true)
 
         if(playermenu ~= nil)then
-            playermenu:Destroy()
+            playermenu:Destroy() 
         end
                 
         playermenu = playerinfo_menu:New()
