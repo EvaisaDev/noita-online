@@ -33,10 +33,12 @@ ArenaGameplay = {
         local mountainCount = tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount"))
         if(mountainCount ~= nil)then
             GlobalsSetValue("holyMountainCount", tostring(mountainCount))
+            print("Holymountain count: "..mountainCount)
         end
-        local goldCount = tonumber(steam.matchmaking.getLobbyData(lobby, "goldCount"))
+        local goldCount = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold"))
         if(goldCount ~= nil)then
             data.client.first_spawn_gold = goldCount
+            print("Gold count: "..goldCount)
         end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
@@ -586,7 +588,7 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
-        for k, v in ipairs(data.players)do
+        for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
                 local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
                 if(controls_comp ~= nil)then
@@ -804,7 +806,7 @@ ArenaGameplay = {
             end
         end
 
-        for k, v in ipairs(data.players)do
+        for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
                 local controls_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
                 if(controls_comp ~= nil)then

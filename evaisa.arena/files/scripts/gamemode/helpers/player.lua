@@ -351,8 +351,14 @@ player_helper.GetPerks = function()
     return perk_info
 end
 
-player_helper.GivePerk = function( entity_who_picked, perk_id, amount )
+player_helper.GivePerk = function( perk_id, amount )
     -- fetch perk info ---------------------------------------------------
+
+    local entity_who_picked = player_helper.Get()
+
+    if(entity_who_picked == nil)then
+        return
+    end
 
     local pos_x, pos_y
 
@@ -452,7 +458,7 @@ player_helper.GivePerk = function( entity_who_picked, perk_id, amount )
 	
 	EntityAddChild( entity_who_picked, entity_ui )
 
-    
+
 
     EntityKill( fake_perk_ent )
 
@@ -473,7 +479,8 @@ player_helper.SetPerks = function(perks)
         local pickup_count = v.count
 
         for i = 1, pickup_count do
-            entity.GivePerk(player, perk_id, i)
+            --entity.GivePerk(player, perk_id, i)
+            player_helper.GivePerk(perk_id, i)
         end
     end
 end
