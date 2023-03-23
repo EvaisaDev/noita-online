@@ -19,6 +19,7 @@ ArenaGameplay = {
     SendGameData = function(lobby, data)
         steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
+        local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members)do
             if(member.id ~= steam.user.getSteamID())then
                 if(data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready)then
@@ -39,6 +40,7 @@ ArenaGameplay = {
         end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
+        local members = steamutils.getLobbyMembers(lobby)
         if(ready_players ~= nil)then
             for k, member in pairs(members)do
                 if(member.id ~= steam.user.getSteamID())then
@@ -277,11 +279,11 @@ ArenaGameplay = {
         -- if we are the owner of the lobby
         if(steamutils.IsOwner(lobby))then
             -- get the gold count from the lobby
-            local gold = steamutils.GetLobbyData(lobby, "total_gold")
+            local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
             -- add the new gold
             gold = gold + extra_gold
             -- set the new gold count
-            steamutils.SetLobbyData(lobby, "total_gold", gold)
+            steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
         end
 
         -- increment holy mountain count
