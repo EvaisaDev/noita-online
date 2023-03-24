@@ -40,10 +40,12 @@ ArenaGameplay = {
             data.client.first_spawn_gold = goldCount
             print("Gold count: "..goldCount)
         end
-        local playerData = steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
+        local playerData = steamutils.GetLocalLobbyData(lobby, "player_data")--steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
+
+        
         if(playerData ~= nil and playerData ~= "")then
-            data.client.serialized_player = playerData
-            print("Player data: "..playerData)
+            data.client.serialized_player = bitser.dumps(playerData)
+            print("Player data: "..data.client.serialized_player)
         end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
@@ -107,6 +109,7 @@ ArenaGameplay = {
         game_funcs.SetPlayerEntity(current_player)
         player.Deserialize(data.client.serialized_player)
         np.RegisterPlayerEntityId(current_player)
+        GameRemoveFlagRun("player_unloaded")
     end,
     AllowFiring = function()
         GameRemoveFlagRun("no_shooting")
@@ -230,6 +233,10 @@ ArenaGameplay = {
         show_message = show_message or false
         first_entry = first_entry or false
 
+        if(data.client.serialized_player)then
+            first_entry = false
+        end
+
         local current_player = player.Get()
 
         if(current_player == nil)then
@@ -283,7 +290,7 @@ ArenaGameplay = {
 
         print("First entry = "..tostring(first_entry))
 
-        if(first_entry and data.client.serialized_player == nil and data.client.first_spawn_gold > 0)then
+        if(first_entry and data.client.first_spawn_gold > 0)then
             extra_gold = data.client.first_spawn_gold
         end
         player.GiveGold(extra_gold)
@@ -304,6 +311,9 @@ ArenaGameplay = {
         -- give starting gear if first entry
         if(first_entry)then
             player.GiveStartingGear()
+            if(((rounds - 1) > 0))then
+                player.GiveMaxHealth(0.4 * (rounds - 1))
+            end
         end
 
         message_handler.send.Unready(lobby, true)
@@ -616,7 +626,9 @@ ArenaGameplay = {
 
         if((not GameHasFlagRun("player_unloaded")) and player.Get() and (GameGetFrameNum() % 30 == 0))then
             data.client.serialized_player = player.Serialize()
-            steam.matchmaking.setLobbyMemberData(lobby, "player", data.client.serialized_player)
+           -- steam.matchmaking.setLobbyMemberData(lobby, "player_data", data.client.serialized_player)
+            steamutils.SetLocalLobbyData(lobby, "player_data",  player.Serialize(true))
+           -- print("Saving player data")
         end
 
         if(data.state == "lobby")then
@@ -820,23 +832,23 @@ ArenaGameplay = {
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
                 if(controls)then
                     if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
-                        data.players.controls.kick = false
+                        data.players[k].controls.kick = false
                     end
                     -- mButtonDownFire
                     if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
-                        data.players.controls.fire = false
+                        data.players[k].controls.fire = false
                     end
                     -- mButtonDownFire2
                     if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
-                        data.players.controls.fire2 = false
+                        data.players[k].controls.fire2 = false
                     end
                     -- mButtonDownLeft
                     if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
-                        data.players.controls.leftClick = false
+                        data.players[k].controls.leftClick = false
                     end
                     -- mButtonDownRight
                     if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
-                        data.players.controls.rightClick = false
+                        data.players[k].controls.rightClick = false
                     end
                 end
             end

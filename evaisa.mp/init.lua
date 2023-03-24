@@ -27,9 +27,10 @@ dofile("data/scripts/lib/coroutines.lua")
 
 np = require("noitapatcher")
 bitser = require("bitser")
+binser = require("binser")
 
-MP_VERSION = 1.14
-Version_string = "547396384634327"
+MP_VERSION = 1.15
+Version_string = "78329567239672"
 
 Checksum_passed = false
 Spawned = false
@@ -48,6 +49,7 @@ local application_id = 943584660334739457LL
 steam = require("luasteam")
 require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
+json = dofile_once("mods/evaisa.mp/lib/json.lua")
 
 pretty = require("pretty_print")
 --local pollnet = require("pollnet")
@@ -117,6 +119,10 @@ function OnWorldPreUpdate()
 		lobby_code = lobby_code or nil
 		dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
 		dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
+
+		if(GameGetFrameNum() % (60 * 10) == 0)then
+			steamutils.CheckLocalLobbyData()
+		end
 
 		if(lobby_code ~= nil)then
 			local lobby_gamemode = tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
@@ -436,7 +442,7 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
-
+	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 
 	-- replace contents of "mods/evaisa.forcerestart/filechange.txt" with a random number between 0 and 10000000

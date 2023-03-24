@@ -301,7 +301,7 @@ player_helper.GetSpells = function()
 
     local spells = {}
     --ItemActionComponent
-    local items = GameGetAllInventoryItems(player)
+    local items = GameGetAllInventoryItems(player) or {}
     for k, v in pairs(items)do
         local itemComp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
         if(itemComp ~= nil)then
@@ -485,7 +485,47 @@ player_helper.SetPerks = function(perks)
     end
 end
 
-player_helper.Serialize = function()
+player_helper.GiveHealth = function(amount)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+    if(healthComponent ~= nil)then
+        local health = ComponentGetValue2(healthComponent, "hp")
+
+        health = health + amount
+        ComponentSetValue2(healthComponent, "hp", health)
+        
+    end
+end
+
+player_helper.GiveMaxHealth = function(amount)
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+    local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+    if(healthComponent ~= nil)then
+        local max_hp = ComponentGetValue2( healthComponent, "max_hp" ) 
+        local max_hp_cap = ComponentGetValue2( healthComponent, "max_hp_cap" ) 
+        local hp = ComponentGetValue2( healthComponent, "hp" ) 
+
+        max_hp = max_hp + amount
+			
+        if ( max_hp_cap > 0 ) then
+            max_hp_cap = math.max( max_hp, max_hp_cap )
+        end
+
+        -- if( hp > max_hp ) then hp = max_hp end
+        ComponentSetValue2( healthComponent, "max_hp_cap", max_hp_cap)
+        ComponentSetValue2( healthComponent, "max_hp", max_hp)
+        ComponentSetValue2( healthComponent, "hp", max_hp)
+        
+    end
+end
+
+player_helper.Serialize = function(dont_stringify)
     local player = player_helper.Get()
     if(player == nil)then
         return
@@ -504,8 +544,9 @@ player_helper.Serialize = function()
         data.max_health = ComponentGetValue2(healthComponent, "max_hp")
     end
 
-    return bitser.dumps(data)
+    return dont_stringify and data or bitser.dumps(data)
 end
+
 
 player_helper.Deserialize = function(data)
     local player = player_helper.Get()
@@ -516,7 +557,7 @@ player_helper.Deserialize = function(data)
         return
     end
 
-    data = bitser.loads(data)
+    data = type(data) == "string" and bitser.loads(data) or data
 
     -- kill items
     for k, v in pairs(GameGetAllInventoryItems(player) or {})do

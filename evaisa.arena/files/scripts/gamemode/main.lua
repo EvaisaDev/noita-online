@@ -26,6 +26,7 @@ ArenaMode = {
     version = 0.25,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
+        GameAddFlagRun("player_unloaded")
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
             ArenaMode.start(lobby)
@@ -36,12 +37,7 @@ ArenaMode = {
 
         local player_entity = player.Get()
 
-        GameRemoveFlagRun("player_unloaded")
-
-        if(player_entity == nil)then
-            local player_entity = EntityLoad("data/entities/player.xml", 0, 0)
-            game_funcs.SetPlayerEntity(player_entity)
-        end
+        
 
         data = data_holder:New()
         data.state = "lobby"
@@ -49,6 +45,11 @@ ArenaMode = {
 
 
         gameplay_handler.GetGameData(lobby, data)
+
+        if(player_entity == nil)then
+            gameplay_handler.LoadPlayer(lobby, data)
+        end
+
 
         steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
 

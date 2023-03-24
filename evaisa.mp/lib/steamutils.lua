@@ -32,6 +32,67 @@ steam_utils.isInLobby = function(lobby_id, steam_id)
 	return false
 end
 
+steam_utils.SetLocalLobbyData = function(lobby, key, value)
+	lobby = steam.utils.compressSteamID(lobby)
+	--ModSettingRemove("lobby_data_store")
+	local data_store = ModSettingGet("lobby_data_store")
+	--print("datastore: "..tostring(data_store))
+	local lobby_data = {}
+	if(data_store)then
+		lobby_data = json.parse(data_store)--bitser.loads(data_store)
+	end
+
+	if(lobby_data == nil)then
+		lobby_data = {}
+	end
+
+	if(lobby_data[lobby] == nil)then
+		lobby_data[lobby] = {}
+	end
+
+	lobby_data[lobby][key] = value
+
+	ModSettingSet("lobby_data_store", json.stringify(lobby_data)--[[bitser.dumps(lobby_data)]])
+end
+
+steam_utils.GetLocalLobbyData = function(lobby, key)
+	lobby = steam.utils.compressSteamID(lobby)
+	--ModSettingRemove("lobby_data_store")
+	local data_store = ModSettingGet("lobby_data_store")
+	local lobby_data
+	if(data_store == nil or data_store == "")then
+		lobby_data = {}
+	else
+		lobby_data =  json.parse(data_store)
+	end
+
+	if(lobby_data[lobby] == nil)then
+		return nil
+	end
+
+	return lobby_data[lobby][key]
+end
+
+steam_utils.CheckLocalLobbyData = function()
+	-- destroy data for any lobbies which no longer exist
+	local data_store = ModSettingGet("lobby_data_store")
+	local lobby_data
+	if(data_store == nil or data_store == "")then
+		lobby_data = {}
+	else
+		lobby_data =  json.parse(data_store)
+	end
+
+	for k, v in pairs(lobby_data)do
+		local lobby_id = steam.utils.decompressSteamID(k)
+		if(not steam.matchmaking.requestLobbyData(lobby_id))then
+			lobby_data[k] = nil
+		end
+	end
+
+	ModSettingSet("lobby_data_store", json.stringify(lobby_data))
+end
+
 steam_utils.messageTypes = {
 	AllPlayers = 0,
 	OtherPlayers = 1,
