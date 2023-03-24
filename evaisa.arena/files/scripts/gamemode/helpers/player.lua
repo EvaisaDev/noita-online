@@ -52,6 +52,7 @@ player_helper.Unlock = function()
     if(controls ~= nil)then
         ComponentSetValue2(controls, "enabled", true)
     end
+    GameAddFlagRun("player_is_unlocked")
     local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
     if(characterDataComponent ~= nil)then
         EntitySetComponentIsEnabled(player, characterDataComponent, true)

@@ -130,59 +130,63 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
+
+            if(GameHasFlagRun("player_is_unlocked"))then
             
-            local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
-            ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
-            
-            data.players[tostring(user)].next_rng = message.rng
-            if(message.target)then
-                data.players[tostring(user)].target = message.target
+                local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
+                ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+                
+                data.players[tostring(user)].next_rng = message.rng
+                if(message.target)then
+                    data.players[tostring(user)].target = message.target
+                end
             end
         end,
         character_update = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
+            if(GameHasFlagRun("player_is_unlocked"))then
+                local entity = data.players[tostring(user)].entity
+                if(entity ~= nil and EntityGetIsAlive(entity))then
+                    local x, y = EntityGetTransform(entity)
+                    local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
 
-            local entity = data.players[tostring(user)].entity
-            if(entity ~= nil and EntityGetIsAlive(entity))then
-                local x, y = EntityGetTransform(entity)
-                local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
+                    --local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
-                --local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
+                    --EntitySetTransform(entity, message.x, message.y, message.r, message.w, message.h)
+                    --EntityApplyTransform(entity, message.x, message.y, message.r, message.w, message.h)
 
-                --EntitySetTransform(entity, message.x, message.y, message.r, message.w, message.h)
-                --EntityApplyTransform(entity, message.x, message.y, message.r, message.w, message.h)
+                    ComponentSetValue2(characterData, "mVelocity", message.vel_x, message.vel_y)
 
-                ComponentSetValue2(characterData, "mVelocity", message.vel_x, message.vel_y)
+                    
+                    local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 2, function(value)
+                        local newPlayerEntity = data.players[tostring(user)].entity
+                        if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
+                            EntitySetTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
+                            EntityApplyTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
+                            --GamePrint("Updating client position")
+                        end
+                    end)
+        
+                    positionTween.id = tostring(user)
 
-                
-                local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 2, function(value)
-                    local newPlayerEntity = data.players[tostring(user)].entity
-                    if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
-                        EntitySetTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
-                        EntityApplyTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
-                        --GamePrint("Updating client position")
-                    end
-                end)
-    
-                positionTween.id = tostring(user)
+                    table.insert(data.tweens, positionTween)
 
-                table.insert(data.tweens, positionTween)
+                    --[[
+                    local velocityTween = tween.vector(Vector.new(vel_x, vel_y), Vector.new(data.vel_x, data.vel_y), 2, function(value)
+                        local newPlayerEntity = data.players[tostring(user)].entity
+                        if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
+                            local newCharacterData = EntityGetFirstComponentIncludingDisabled(newPlayerEntity, "CharacterDataComponent")
+                            ComponentSetValue2(newCharacterData, "mVelocity", value.x, value.y)
+                        end
+                    end)
 
-                --[[
-                local velocityTween = tween.vector(Vector.new(vel_x, vel_y), Vector.new(data.vel_x, data.vel_y), 2, function(value)
-                    local newPlayerEntity = data.players[tostring(user)].entity
-                    if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
-                        local newCharacterData = EntityGetFirstComponentIncludingDisabled(newPlayerEntity, "CharacterDataComponent")
-                        ComponentSetValue2(newCharacterData, "mVelocity", value.x, value.y)
-                    end
-                end)
+                    velocityTween.id = tostring(user)
 
-                velocityTween.id = tostring(user)
-
-                table.insert(data.tweens, velocityTween)
-                ]]
+                    table.insert(data.tweens, velocityTween)
+                    ]]
+                end
             end
         end,
         wand_update = function(lobby, message, user, data)
@@ -300,81 +304,82 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
+            if(GameHasFlagRun("player_is_unlocked"))then
+                if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    -- set mButtonDownKick to true
+                    local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
 
-            if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
-                -- set mButtonDownKick to true
-                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+                    if(controlsComp ~= nil)then
 
-                if(controlsComp ~= nil)then
+                        local controls_data = data.players[tostring(user)].controls
 
-                    local controls_data = data.players[tostring(user)].controls
-
-                    if(message.kick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", true)
-                        if(not controls_data.kick)then
-                            ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                        if(message.kick)then
+                            ComponentSetValue2(controlsComp, "mButtonDownKick", true)
+                            if(not controls_data.kick)then
+                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                            end
+                            controls_data.kick = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                         end
-                        controls_data.kick = true
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", false)
-                    end
 
-                    if(message.fire)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", true)
-                        --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
-                        if(not controls_data.fire)then
-                            ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                        if(message.fire)then
+                            ComponentSetValue2(controlsComp, "mButtonDownFire", true)
+                            --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
+                            if(not controls_data.fire)then
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                            end
+                            ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
+                            controls_data.fire = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownFire", false)
                         end
-                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
-                        controls_data.fire = true
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", false)
-                    end
 
-                    if(message.fire2)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
-                        if(not controls_data.fire2)then
-                            ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                        if(message.fire2)then
+                            ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
+                            if(not controls_data.fire2)then
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                            end
+                            controls_data.fire2 = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
                         end
-                        controls_data.fire2 = true
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
-                    end
-                    
-                    if(message.leftClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
-                        if(not controls_data.leftClick)then
-                            ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum())
+                        
+                        if(message.leftClick)then
+                            ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
+                            if(not controls_data.leftClick)then
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum())
+                            end
+                            controls_data.leftClick = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
                         end
-                        controls_data.leftClick = true
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
-                    end
 
-                    if(message.rightClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
-                        if(not controls_data.rightClick)then
-                            ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum())
+                        if(message.rightClick)then
+                            ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
+                            if(not controls_data.rightClick)then
+                                ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum())
+                            end
+                            controls_data.rightClick = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
                         end
-                        controls_data.rightClick = true
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
-                    end
 
-                    ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
-                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
+                        ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
+                        ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
+                        ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
+                        ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
+                        ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
+                        ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
+                        ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
 
-                    -- get cursor entity
-                    local children = EntityGetAllChildren(data.players[tostring(user)].entity)
-                    for i,child in ipairs(children) do
-                        if(EntityGetName(child) == "cursor")then
-                            EntitySetTransform(child, message.mouse.x, message.mouse.y)
-                            EntityApplyTransform(child, message.mouse.x, message.mouse.y)
+                        -- get cursor entity
+                        local children = EntityGetAllChildren(data.players[tostring(user)].entity)
+                        for i,child in ipairs(children) do
+                            if(EntityGetName(child) == "cursor")then
+                                EntitySetTransform(child, message.mouse.x, message.mouse.y)
+                                EntityApplyTransform(child, message.mouse.x, message.mouse.y)
+                            end
                         end
                     end
                 end

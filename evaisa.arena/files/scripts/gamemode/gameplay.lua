@@ -273,6 +273,8 @@ ArenaGameplay = {
         player.Clean(first_entry)
         player.Unlock()
 
+        GameRemoveFlagRun("player_is_unlocked")
+
         -- grant immortality
         player.Immortal(true)
 
