@@ -16,6 +16,11 @@ ArenaGameplay = {
         holyMountainCount = holyMountainCount + 1
         GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
     end,
+    RemoveRound = function()
+        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+        holyMountainCount = holyMountainCount - 1
+        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+    end,
     SendGameData = function(lobby, data)
         steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
@@ -108,7 +113,7 @@ ArenaGameplay = {
     LoadPlayer = function(lobby, data)
         local current_player = EntityLoad("data/entities/player.xml", 0, 0)
         game_funcs.SetPlayerEntity(current_player)
-        player.Deserialize(data.client.serialized_player, data.client.player_loaded_from_data)
+        player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data))
         np.RegisterPlayerEntityId(current_player)
         GameRemoveFlagRun("player_unloaded")
     end,
@@ -285,6 +290,10 @@ ArenaGameplay = {
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds()
 
+        if(data.client.player_loaded_from_data)then
+            ArenaGameplay.RemoveRound()
+        end
+
         -- Give gold
         local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
         local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
@@ -312,7 +321,9 @@ ArenaGameplay = {
         end
 
         -- increment holy mountain count
+        
         ArenaGameplay.AddRound()
+       
 
         -- give starting gear if first entry
         if(first_entry)then
