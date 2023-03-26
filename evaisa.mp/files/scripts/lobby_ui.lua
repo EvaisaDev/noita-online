@@ -275,11 +275,13 @@ local windows = {
 					invite_menu_open = false
 				end
 
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Start Game" ) and owner == steam.user.getSteamID())then
-					gui_closed = not gui_closed
-					invite_menu_open = false
-					steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
-					steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
+				if(owner == steam.user.getSteamID())then
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Start Game" ))then
+						gui_closed = not gui_closed
+						invite_menu_open = false
+						steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
+					end
 				end
 
 				GuiText(menu_gui, 2, 0, "--------------------")
