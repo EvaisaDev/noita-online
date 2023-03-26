@@ -44,6 +44,7 @@ ArenaGameplay = {
 
         
         if(playerData ~= nil and playerData ~= "")then
+            data.client.player_loaded_from_data = true
             data.client.serialized_player = bitser.dumps(playerData)
             print("Player data: "..data.client.serialized_player)
         end
@@ -107,7 +108,7 @@ ArenaGameplay = {
     LoadPlayer = function(lobby, data)
         local current_player = EntityLoad("data/entities/player.xml", 0, 0)
         game_funcs.SetPlayerEntity(current_player)
-        player.Deserialize(data.client.serialized_player)
+        player.Deserialize(data.client.serialized_player, data.client.player_loaded_from_data)
         np.RegisterPlayerEntityId(current_player)
         GameRemoveFlagRun("player_unloaded")
     end,
@@ -264,7 +265,7 @@ ArenaGameplay = {
         data.client.previous_wand = nil
         data.client.previous_anim = nil
         data.client.projectile_seeds = {}
-        data.client.projectile_homing = {}
+        --data.client.projectile_homing = {}
 
         -- set state
         data.state = "lobby"
@@ -353,6 +354,7 @@ ArenaGameplay = {
         data.players_loaded = false
         data.deaths = 0
         data.lobby_loaded = false
+        data.client.player_loaded_from_data = false
 
         message_handler.send.SendPerks(lobby)
 
@@ -667,60 +669,15 @@ ArenaGameplay = {
                         data.client.projectile_seeds[projectile_id] = rng
                         --GamePrint("generated_rng: "..tostring(rng))
 
-                        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-                        if(homingComponents ~= nil)then
-                            -- pick a random target player
-                            local targetPlayer = ArenaGameplay.ClosestPlayer(position_x, position_y)
-
-                            --GamePrint("targetPlayer: "..tostring(targetPlayer))
-
-                            if(targetPlayer ~= nil)then
-                                local targetPlayerEntity = data.players[targetPlayer].entity
-                                for k, v in pairs(homingComponents)do
-                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
-                                    if(target_who_shot == false)then
-                                        if(targetPlayerEntity ~= nil)then
-                                            ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
-                                            ComponentSetValue2(v, "target_tag", "mortal")
-                                        end
-                                    end
-                                    --GamePrint("Setting homing target to: "..tostring(targetPlayerEntity))
-                                end
-                                data.client.projectile_homing[projectile_id] = targetPlayerEntity
-                                --steamutils.sendData({type = "player_fired_wand", rng = rng, target = targetPlayer}, steamutils.messageTypes.OtherPlayers, lobby)
-                                message_handler.send.WandFired(lobby, rng, targetPlayer)
-                            else
-                                --steamutils.sendData({type = "player_fired_wand", rng = rng}, steamutils.messageTypes.OtherPlayers, lobby)
-                                message_handler.send.WandFired(lobby, rng)
-                            end
-                            
-                        else
-                            --steamutils.sendData({type = "player_fired_wand", rng = rng}, steamutils.messageTypes.OtherPlayers, lobby)
-                            message_handler.send.WandFired(lobby, rng)
-                        end
+  
+                        message_handler.send.WandFired(lobby, rng)
+             
                     else
                         if(data.client.projectile_seeds[entity_that_shot])then
                             local new_seed = data.client.projectile_seeds[entity_that_shot] + 10
                             np.SetProjectileSpreadRNG(new_seed)
                             data.client.projectile_seeds[entity_that_shot] = data.client.projectile_seeds[entity_that_shot] + 1
                             data.client.projectile_seeds[projectile_id] = new_seed
-                        end
-                        if(data.client.projectile_homing[entity_that_shot])then
-                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-                            if(homingComponents ~= nil)then
-                                for k, v in pairs(homingComponents)do
-                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
-                                    if(target_who_shot == false)then
-                                        if(data.client.projectile_homing[entity_that_shot] ~= nil)then
-                                            ComponentSetValue2(v, "predefined_target", data.client.projectile_homing[entity_that_shot])
-                                            ComponentSetValue2(v, "target_tag", "mortal")
-                                        end
-                                    end
-                                end
-                                data.client.projectile_homing[projectile_id] = data.client.projectile_homing[entity_that_shot]
-                            end
                         end
                     end
                     return
@@ -737,47 +694,11 @@ ArenaGameplay = {
                     if(entity_that_shot == 0)then
                         np.SetProjectileSpreadRNG(data.players[EntityGetName(shooter_id)].next_rng)
                         data.client.projectile_seeds[projectile_id] = data.players[EntityGetName(shooter_id)].next_rng
-                        local target = data.players[EntityGetName(shooter_id)].target
-                        
-                        if(target)then
-                            --GamePrint("Setting homing target to: "..tostring(target))
-                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-                            if(homingComponents ~= nil and data.players[target])then
-                                local targetPlayerEntity = data.players[target].entity
-                                for k, v in pairs(homingComponents)do
-                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
-                                    if(target_who_shot == false)then
-                                        if(targetPlayerEntity ~= nil)then
-                                            ComponentSetValue2(v, "predefined_target", targetPlayerEntity)
-                                            ComponentSetValue2(v, "target_tag", "mortal")
-                                        end
-                                    end
-                                end
-                                data.client.projectile_homing[projectile_id] = targetPlayerEntity
-                            end
-                        end
                     else
                         if(data.client.projectile_seeds[entity_that_shot])then
                             local new_seed = data.client.projectile_seeds[entity_that_shot] + 10
                             np.SetProjectileSpreadRNG(new_seed)
                             data.client.projectile_seeds[entity_that_shot] = data.client.projectile_seeds[entity_that_shot] + 1
-                        end
-                        if(data.client.projectile_homing[entity_that_shot])then
-                            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-                            if(homingComponents ~= nil)then
-                                for k, v in pairs(homingComponents)do
-                                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
-                                    if(target_who_shot == false)then
-                                        if(data.client.projectile_homing[entity_that_shot] ~= nil)then
-                                            ComponentSetValue2(v, "predefined_target", data.client.projectile_homing[entity_that_shot])
-                                            ComponentSetValue2(v, "target_tag", "mortal")
-                                        end
-                                    end
-                                end
-                                data.client.projectile_homing[projectile_id] = data.client.projectile_homing[entity_that_shot]
-                            end
                         end
                     end
                 end
@@ -786,16 +707,70 @@ ArenaGameplay = {
         end
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
-        if(data.client.projectile_homing[projectile_id])then
-            local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
-            if(homingComponents ~= nil)then
-                for k, v in pairs(homingComponents)do
-                    local target_who_shot = ComponentGetValue2(v, "target_who_shot")
-                    if(target_who_shot == false)then
-                        ComponentSetValue2(v, "predefined_target", data.client.projectile_homing[projectile_id])
-                        ComponentSetValue2(v, "target_tag", "mortal")
+        local shooter_x, shooter_y = EntityGetTransform(shooter_id)
+
+        if(homingComponents ~= nil)then
+            for k, v in pairs(homingComponents)do
+                local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                if(target_who_shot == false)then
+                    if(EntityHasTag(shooter_id, "client"))then
+                        -- find closest player which isn't us
+                        local closest_player = nil
+                        local distance = 9999999
+                        local clients = EntityGetWithTag("client")
+                        -- add local player to list
+                        if(player.Get())then
+                            table.insert(clients, player.Get())
+                        end
+
+                        for k, v in pairs(clients)do
+                            if(v ~= shooter_id)then
+                                if(closest_player == nil)then
+                                    closest_player = v
+                                else
+                                    local x, y = EntityGetTransform(v)
+                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
+                                    if(dist < distance)then
+                                        distance = dist
+                                        closest_player = v
+                                    end
+                                end
+                            end
+                        end
+
+                        if(closest_player)then
+                            ComponentSetValue2(v, "predefined_target", closest_player)
+                            ComponentSetValue2(v, "target_tag", "mortal")
+                        end
+                    else
+                        local closest_player = nil
+                        local distance = 9999999
+                        local clients = EntityGetWithTag("client")
+
+                        for k, v in pairs(clients)do
+                            if(v ~= shooter_id)then
+                                if(closest_player == nil)then
+                                    closest_player = v
+                                else
+                                    local x, y = EntityGetTransform(v)
+                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
+                                    if(dist < distance)then
+                                        distance = dist
+                                        closest_player = v
+                                    end
+                                end
+                            end
+                        end
+
+                        if(closest_player)then
+                            ComponentSetValue2(v, "predefined_target", closest_player)
+                            ComponentSetValue2(v, "target_tag", "mortal")
+                        end
+
                     end
+
                 end
             end
         end

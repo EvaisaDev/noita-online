@@ -352,7 +352,7 @@ player_helper.GetPerks = function()
     return perk_info
 end
 
-player_helper.GivePerk = function( perk_id, amount )
+player_helper.GivePerk = function( perk_id, amount, skip_count )
     -- fetch perk info ---------------------------------------------------
 
     local entity_who_picked = player_helper.Get()
@@ -373,10 +373,11 @@ player_helper.GivePerk = function( perk_id, amount )
 	local flag_name = get_perk_picked_flag_name( perk_id )
 	
 	-- update how many times the perk has been picked up this run -----------------
-	
-	local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
-	pickup_count = pickup_count + 1
-	GlobalsSetValue( flag_name .. "_PICKUP_COUNT", tostring( pickup_count ) )
+	if not skip_count then
+        local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+        pickup_count = pickup_count + 1
+        GlobalsSetValue( flag_name .. "_PICKUP_COUNT", tostring( pickup_count ) )
+    end
 
 	-- load perk for entity_who_picked -----------------------------------
 	local add_progress_flags = not GameHasFlagRun( "no_progress_flags_perk" )
@@ -466,7 +467,7 @@ player_helper.GivePerk = function( perk_id, amount )
     --GamePrint( "Picked up perk: " .. perk_data.name )
 end
 
-player_helper.SetPerks = function(perks)
+player_helper.SetPerks = function(perks, skip_count)
     local player = player_helper.Get()
     if(player == nil)then
         return
@@ -481,7 +482,7 @@ player_helper.SetPerks = function(perks)
 
         for i = 1, pickup_count do
             --entity.GivePerk(player, perk_id, i)
-            player_helper.GivePerk(perk_id, i)
+            player_helper.GivePerk(perk_id, i, skip_count)
         end
     end
 end
@@ -549,7 +550,7 @@ player_helper.Serialize = function(dont_stringify)
 end
 
 
-player_helper.Deserialize = function(data)
+player_helper.Deserialize = function(data, skip_perk_count)
     local player = player_helper.Get()
     if(player == nil)then
         return
@@ -573,7 +574,7 @@ player_helper.Deserialize = function(data)
         player_helper.SetSpells(data.spells)
     end
     if(data.perks ~= nil)then
-        player_helper.SetPerks(data.perks)
+        player_helper.SetPerks(data.perks, skip_perk_count)
     end
     if(data.gold ~= nil)then
         player_helper.GiveGold(data.gold)
