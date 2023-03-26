@@ -296,6 +296,9 @@ ArenaGameplay = {
         if(first_entry and data.client.first_spawn_gold > 0)then
             extra_gold = data.client.first_spawn_gold
         end
+
+        GamePrint("You were granted " .. tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
+
         player.GiveGold(extra_gold)
 
         -- if we are the owner of the lobby
