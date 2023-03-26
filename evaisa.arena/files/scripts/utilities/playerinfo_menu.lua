@@ -88,118 +88,7 @@ function playerinfo_menu:New()
         current_x = current_x + (self.offset_x * self.current_offset_percentage)
         
         local button_id = new_id()
-        --[[
-        local player_test_list = {
-            {
-                health = 100,
-                max_health = 100,
-                name = "eba",
-                perks = {
-                    {"WORM_ATTRACTOR", 2},
-                    {"FOOD_CLOCK", 1},
-                    {"GLASS_CANNON", 5},
-                    {"HEARTS_MORE_EXTRA_HP", 2},
-                    {"VAMPIRISM", 1}
-                }
-            },
-            {
-                health = 80,
-                max_health = 100,
-                name = "noitabotti",
-            },
-            {
-                health = 60,
-                max_health = 100,
-                name = "sussus amogus",
-            },
-            {
-                health = 40,
-                max_health = 100,
-                name = "john",
-            },
-            {
-                health = 20,
-                max_health = 100,
-                name = "morbius",
-            },
-            {
-                health = 70,
-                max_health = 100,
-                name = "real player",
-            },
-            {
-                health = 50,
-                max_health = 100,
-                name = "susi",
-            },
-            {
-                health = 30,
-                max_health = 120,
-                name = "dave",
-            },
-            {
-                health = 10,
-                max_health = 100,
-                name = "jim",
-            },
-            {
-                health = 1,
-                max_health = 100,
-                name = "bob",
-            },
-            {
-                health = 100,
-                max_health = 100,
-                name = "eba",
-            },
-            {
-                health = 80,
-                max_health = 100,
-                name = "noitabotti",
-            },
-            {
-                health = 60,
-                max_health = 100,
-                name = "sussus amogus",
-            },
-            {
-                health = 40,
-                max_health = 100,
-                name = "john",
-            },
-            {
-                health = 20,
-                max_health = 100,
-                name = "morbius",
-            },
-            {
-                health = 70,
-                max_health = 100,
-                name = "real player",
-            },
-            {
-                health = 50,
-                max_health = 100,
-                name = "susi",
-            },
-            {
-                health = 30,
-                max_health = 120,
-                name = "dave",
-            },
-            {
-                health = 10,
-                max_health = 100,
-                name = "jim",
-            },
-            {
-                health = 1,
-                max_health = 100,
-                name = "bob",
-            },
-        }
 
-        ]]
         local player_count = 0
         for k, v in pairs(data.players)do
             player_count = player_count + 1
@@ -231,6 +120,12 @@ function playerinfo_menu:New()
             index = index + 1
             local playerid = gameplay_handler.FindUser(lobby, k)
             if(playerid ~= nil)then
+                if(v.health == nil)then
+                    v.health = 0
+                end
+                if(v.max_health == nil)then
+                    v.max_health = 100
+                end
 
                 local username = v.name or steam.friends.getFriendPersonaName(playerid)
                 GuiZSetForNextWidget(self.gui, 900)

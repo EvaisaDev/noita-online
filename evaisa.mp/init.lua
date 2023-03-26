@@ -30,7 +30,7 @@ bitser = require("bitser")
 binser = require("binser")
 
 MP_VERSION = 1.15
-Version_string = "23623724377434"
+Version_string = "23479867238967"
 
 Checksum_passed = false
 Spawned = false

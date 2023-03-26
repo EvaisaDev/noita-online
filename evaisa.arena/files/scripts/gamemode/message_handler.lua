@@ -131,7 +131,7 @@ ArenaMessageHandler = {
                 return
             end
 
-            if(GameHasFlagRun("player_is_unlocked"))then
+            if(GameHasFlagRun("player_is_unlocked") and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
             
                 local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
                 ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)

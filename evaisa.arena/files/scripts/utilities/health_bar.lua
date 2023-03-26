@@ -14,6 +14,12 @@ local function get_health_bar_color(health, max_health)
 end
 
 function health_bar.create(hp, max_hp, width, height)
+    if(hp == nil)then
+        hp = 100;
+    end
+    if(max_hp == nil)then
+        max_hp = 100;
+    end
     local health_gui = GuiCreate()
     GuiOptionsAdd(health_gui, GUI_OPTION.NonInteractive)
     local self = {
@@ -25,6 +31,12 @@ function health_bar.create(hp, max_hp, width, height)
         color = get_health_bar_color(hp, max_hp),
         last_changed_frame = GameGetFrameNum(),
         setHealth = function(self, hp, max_hp)
+            if(hp == nil)then
+                hp = 100;
+            end
+            if(max_hp == nil)then
+                max_hp = 100;
+            end
             self.hp = hp
             self.max_hp = max_hp
             self.color = get_health_bar_color(hp, max_hp)

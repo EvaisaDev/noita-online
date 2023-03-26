@@ -440,8 +440,9 @@ player_helper.GivePerk = function( perk_id, amount, skip_count )
     local fake_perk_ent = EntityCreateNew()
     EntitySetTransform( fake_perk_ent, pos_x, pos_y )
 
-    perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
-
+    if(perk_data.func ~= nil)then
+        perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+    end
     perk_name = GameTextGetTranslatedOrNot( perk_data.ui_name )
 	perk_desc = GameTextGetTranslatedOrNot( perk_data.ui_description )
 
