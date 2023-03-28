@@ -7,7 +7,7 @@ Todo:
     Custom handler for perk and spell spawning
 
     Spell/wand/healthup/other interactions break when inventory is full (can't reproduce?)
-
+    one time perks fix
     
 Done:
     Kicking sync

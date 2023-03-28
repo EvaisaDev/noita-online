@@ -23,7 +23,7 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.27,
+    version = 0.28,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")

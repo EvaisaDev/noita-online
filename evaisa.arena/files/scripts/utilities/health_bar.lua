@@ -21,7 +21,8 @@ function health_bar.create(hp, max_hp, width, height)
         max_hp = 100;
     end
     local health_gui = GuiCreate()
-    GuiOptionsAdd(health_gui, GUI_OPTION.NonInteractive)
+    GuiOptionsAdd(health_gui, 2)
+    GuiOptionsAdd(health_gui, 6)
     local self = {
         hp = hp,
         max_hp = max_hp,

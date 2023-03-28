@@ -3,6 +3,9 @@ local countdown = {}
 function countdown.create( table_images, frames_between_images, finish_callback )
     local gui_countdown = GuiCreate()
     
+    GuiOptionsAdd(gui_countdown, 2)
+    GuiOptionsAdd(gui_countdown, 6)
+
     local self = {
         frame = 0,
         frames_between_images = frames_between_images,

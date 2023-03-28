@@ -2,7 +2,9 @@ local ready_counter = {}
 
 function ready_counter.create( text, callback, finish_callback )
     local gui_ready_counter = GuiCreate()
-    
+    GuiOptionsAdd(gui_ready_counter, 2)
+    GuiOptionsAdd(gui_ready_counter, 6)
+
     local self = {
         text = text,
         callback = callback,

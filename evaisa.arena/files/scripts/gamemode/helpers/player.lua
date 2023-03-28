@@ -393,56 +393,60 @@ player_helper.GivePerk = function( perk_id, amount, skip_count )
 
     local no_remove = perk_data.do_not_remove or false
 
-    -- add a game effect or two
-    if perk_data.game_effect ~= nil then
-        local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect, true )
-        if game_effect_comp ~= nil then
-            ComponentSetValue( game_effect_comp, "frames", "-1" )
-            
-            if ( no_remove == false ) then
-                ComponentAddTag( game_effect_comp, "perk_component" )
-                EntityAddTag( game_effect_entity, "perk_entity" )
-            end
-        end
-    end
-
-    if perk_data.game_effect2 ~= nil then
-        local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect2, true )
-        if game_effect_comp ~= nil then
-            ComponentSetValue( game_effect_comp, "frames", "-1" )
-            
-            if ( no_remove == false ) then
-                ComponentAddTag( game_effect_comp, "perk_component" )
-                EntityAddTag( game_effect_entity, "perk_entity" )
-            end
-        end
-    end
-
-    -- particle effect only applied once
-    if perk_data.particle_effect ~= nil and ( amount <= 1 ) then
-        local particle_id = EntityLoad( "data/entities/particles/perks/" .. perk_data.particle_effect .. ".xml" )
-        
-        if ( no_remove == false ) then
-            EntityAddTag( particle_id, "perk_entity" )
-        end
-        
-        EntityAddChild( entity_who_picked, particle_id )
-    end
-
-    -- certain other perks may be marked as picked-up
-	if perk_data.remove_other_perks ~= nil then
-		for i,v in ipairs( perk_data.remove_other_perks ) do
-			local f = get_perk_picked_flag_name( v )
-			GameAddFlagRun( f )
-		end
-	end
-
     local fake_perk_ent = EntityCreateNew()
     EntitySetTransform( fake_perk_ent, pos_x, pos_y )
 
-    if(perk_data.func ~= nil)then
-        perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+    if(not perk_data.one_off_effect)then
+        -- add a game effect or two
+        if perk_data.game_effect ~= nil then
+            local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect, true )
+            if game_effect_comp ~= nil then
+                ComponentSetValue( game_effect_comp, "frames", "-1" )
+                
+                if ( no_remove == false ) then
+                    ComponentAddTag( game_effect_comp, "perk_component" )
+                    EntityAddTag( game_effect_entity, "perk_entity" )
+                end
+            end
+        end
+
+        if perk_data.game_effect2 ~= nil then
+            local game_effect_comp,game_effect_entity = GetGameEffectLoadTo( entity_who_picked, perk_data.game_effect2, true )
+            if game_effect_comp ~= nil then
+                ComponentSetValue( game_effect_comp, "frames", "-1" )
+                
+                if ( no_remove == false ) then
+                    ComponentAddTag( game_effect_comp, "perk_component" )
+                    EntityAddTag( game_effect_entity, "perk_entity" )
+                end
+            end
+        end
+
+        -- particle effect only applied once
+        if perk_data.particle_effect ~= nil and ( amount <= 1 ) then
+            local particle_id = EntityLoad( "data/entities/particles/perks/" .. perk_data.particle_effect .. ".xml" )
+            
+            if ( no_remove == false ) then
+                EntityAddTag( particle_id, "perk_entity" )
+            end
+            
+            EntityAddChild( entity_who_picked, particle_id )
+        end
+
+        -- certain other perks may be marked as picked-up
+        if perk_data.remove_other_perks ~= nil then
+            for i,v in ipairs( perk_data.remove_other_perks ) do
+                local f = get_perk_picked_flag_name( v )
+                GameAddFlagRun( f )
+            end
+        end
+
+
+        if(perk_data.func ~= nil)then
+            perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+        end
     end
+    
     perk_name = GameTextGetTranslatedOrNot( perk_data.ui_name )
 	perk_desc = GameTextGetTranslatedOrNot( perk_data.ui_description )
 
