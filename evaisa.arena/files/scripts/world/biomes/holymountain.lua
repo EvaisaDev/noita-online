@@ -35,7 +35,11 @@ end
 
 function spawn_hp( x, y )
 	GameAddFlagRun("in_hm")
-	EntityLoad( "data/entities/items/pickup/heart_fullhp_temple.xml", x-16, y )
+    if(not GameHasFlagRun("skip_health"))then
+		EntityLoad( "data/entities/items/pickup/heart_fullhp_temple.xml", x-16, y )
+	else
+		GameRemoveFlagRun("skip_health")
+	end
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	EntityLoad( "data/entities/items/pickup/spell_refresh.xml", x+16, y )
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
@@ -86,11 +90,13 @@ function spawn_all_shopitems( x, y )
 end
 
 function spawn_all_perks( x, y )
-	if(GameHasFlagRun("first_death"))then
+	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
 		a, b, c, d, e, f = GameGetDateAndTimeLocal()
 		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
 	
 		perk_spawn_many( x, y )
+	else
+		GameRemoveFlagRun("skip_perks")
 	end
 end
 

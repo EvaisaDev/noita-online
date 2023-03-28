@@ -8,12 +8,12 @@ Todo:
 
     Spell/wand/healthup/other interactions break when inventory is full (can't reproduce?)
 
-    Rejoining gives extra round????????????
-
-    Players gain extra perks after death sometimes
-
+    
 Done:
     Kicking sync
     Sync all wands
     Test discord webhook x2 :Tomfoolery:
     Sync perks better
+    Rejoining lets you repick perks and health
+    Players gain extra perks after death sometimes(? test pls)
+    Rejoining gives extra round????????????

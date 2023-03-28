@@ -188,6 +188,8 @@ ArenaGameplay = {
         if(alive == 1)then
             GamePrintImportant(steam.friends.getFriendPersonaName(winner) .. " won this round!", "Prepare for the next round in your holy mountain.")
 
+
+
             ArenaGameplay.LoadLobby(lobby, data, false)
         elseif(alive == 0)then
             GamePrintImportant("Nobody won this round!", "Prepare for the next round in your holy mountain.")
@@ -212,10 +214,10 @@ ArenaGameplay = {
                 end
             end
 
-            if(data.deaths == 0)then
+            --if(data.deaths == 0)then
                 GameAddFlagRun("first_death")
-                print("You will be compensated for your being the first one to die.")
-            end
+                GamePrint("You will be compensated for dying.")
+            --end
 
             data.deaths = data.deaths + 1
             data.client.alive = false
@@ -291,6 +293,8 @@ ArenaGameplay = {
         local rounds = ArenaGameplay.GetNumRounds()
 
         if(data.client.player_loaded_from_data)then
+            GameAddFlagRun("skip_perks")
+            GameAddFlagRun("skip_health")
             ArenaGameplay.RemoveRound()
         end
 
@@ -308,7 +312,9 @@ ArenaGameplay = {
 
         GamePrint("You were granted " .. tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
 
-        player.GiveGold(extra_gold)
+        if(not data.client.player_loaded_from_data)then
+            player.GiveGold(extra_gold)
+        end
 
         -- if we are the owner of the lobby
         if(steamutils.IsOwner(lobby))then
