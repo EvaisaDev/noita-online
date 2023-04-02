@@ -23,10 +23,25 @@ playermenu = nil
 
 ArenaMode = {
     name = "Arena",
-    version = 0.28,
+    version = 0.29,
+    settings = {
+       --[[ {
+            id = "damage_cap",
+            name = "Damage Cap",
+            type = "enum",
+            options = {{"0.25", "25% of max"}, {"0.5", "50% of max"}, {"0.75", "75% of max"}, {"disabled", "Disabled"}},
+            default = "0.25"
+        }   ]]
+    },
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
+
+        local player = player.Get()
+        if(player ~= nil)then
+            EntityKill(player)
+        end
+
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
             ArenaMode.start(lobby)

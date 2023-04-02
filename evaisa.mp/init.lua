@@ -93,6 +93,8 @@ activity = activity or nil
 
 game_in_progress = false
 
+gamemode_settings = gamemode_settings or {}
+
 dofile("mods/evaisa.mp/files/scripts/lobby_handler.lua")
 dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
@@ -105,6 +107,7 @@ last_bytes_sent = 0
 bytes_received = 0
 last_bytes_received = 0
 active_members = {}
+
 
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
@@ -369,6 +372,11 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			if handleGamemodeVersionCheck(lobby_code) then
 				if(gamemodes[lobby_gamemode])then
 					game_in_progress = false
+
+					for k, setting in ipairs(gamemodes[lobby_gamemode].settings or {})do
+						gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
+					end
+
 					if(gamemodes[lobby_gamemode].refresh)then
 						gamemodes[lobby_gamemode].refresh(lobby_code)
 					end

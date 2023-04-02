@@ -436,6 +436,9 @@ local windows = {
 	
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, "Gamemode: "..gamemodes[edit_lobby_gamemode].name))then
 						edit_lobby_gamemode = edit_lobby_gamemode + 1
+						if(#gamemodes > 1)then
+							gamemode_settings = {}
+						end
 						if(edit_lobby_gamemode > #gamemodes and owner == steam.user.getSteamID())then
 							edit_lobby_gamemode = 1
 						end
@@ -465,6 +468,36 @@ local windows = {
 					end
 					GuiLayoutEnd(menu_gui)
 
+					
+					for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+
+						--gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
+
+						if(gamemode_settings[setting.id] == nil)then
+							gamemode_settings[setting.id] = setting.default
+						end
+						if(setting.type == "enum")then
+							local selected_name = ""
+							local selected_index = nil
+
+							local selected_value = gamemode_settings[setting.id]
+							for k, v in ipairs(setting.options)do
+								if(v[1] == selected_value)then
+									selected_name = v[2]
+									selected_index = k
+								end
+							end
+
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 5, setting.name..": "..selected_name))then
+								selected_index = selected_index + 1
+								if(selected_index > #setting.options)then
+									selected_index = 1
+								end
+								gamemode_settings[setting.id] = setting.options[selected_index][1]
+							end
+						end
+					end
+
 					GuiText(menu_gui, 2, 6, "--------------------")
 
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings") and owner == steam.user.getSteamID())then
@@ -474,6 +507,9 @@ local windows = {
 						steam.matchmaking.setLobbyData(lobby_code, "gamemode_name", tostring(gamemodes[edit_lobby_gamemode].name))
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
+						for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+							steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+						end
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
 						steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
 						print("Updated limit: "..tostring(edit_lobby_max_players))
@@ -594,6 +630,13 @@ local windows = {
 					CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
 						msg.log("Created new lobby!")
 						
+						for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+							if(gamemode_settings[setting.id] == nil)then
+								gamemode_settings[setting.id] = setting.default
+								steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(setting.default))
+							end
+						end
+
 						steam.matchmaking.setLobbyData(code, "name", lobby_name)
 						steam.matchmaking.setLobbyData(code, "gamemode", tostring(lobby_gamemode))
 						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[lobby_gamemode].version))
