@@ -131,7 +131,7 @@ ArenaMessageHandler = {
                 return
             end
 
-            if(GameHasFlagRun("player_is_unlocked") and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
             
                 local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
                 ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
@@ -146,7 +146,7 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-            if(GameHasFlagRun("player_is_unlocked"))then
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
                 local entity = data.players[tostring(user)].entity
                 if(entity ~= nil and EntityGetIsAlive(entity))then
                     local x, y = EntityGetTransform(entity)
@@ -304,7 +304,7 @@ ArenaMessageHandler = {
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-            if(GameHasFlagRun("player_is_unlocked"))then
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
                 if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
                     -- set mButtonDownKick to true
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
