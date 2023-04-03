@@ -373,7 +373,7 @@ player_helper.GivePerk = function( perk_id, amount, skip_count )
 	local flag_name = get_perk_picked_flag_name( perk_id )
 	
 	-- update how many times the perk has been picked up this run -----------------
-	if not skip_count then
+	if not skip_count and not perk_data.one_off_effect then
         local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
         pickup_count = pickup_count + 1
         GlobalsSetValue( flag_name .. "_PICKUP_COUNT", tostring( pickup_count ) )
