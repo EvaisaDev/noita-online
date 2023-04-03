@@ -29,8 +29,8 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.15
-Version_string = "23479867238967"
+MP_VERSION = 1.16
+Version_string = "3457423743723"
 
 Checksum_passed = false
 Spawned = false

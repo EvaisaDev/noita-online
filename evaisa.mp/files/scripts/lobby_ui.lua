@@ -629,13 +629,13 @@ local windows = {
 				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Create lobby"))then
 					CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
 						msg.log("Created new lobby!")
-						
+						--[[
 						for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
 							if(gamemode_settings[setting.id] == nil)then
 								gamemode_settings[setting.id] = setting.default
 								steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(setting.default))
 							end
-						end
+						end]]
 
 						steam.matchmaking.setLobbyData(code, "name", lobby_name)
 						steam.matchmaking.setLobbyData(code, "gamemode", tostring(lobby_gamemode))
