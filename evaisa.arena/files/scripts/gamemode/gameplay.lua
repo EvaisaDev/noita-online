@@ -54,8 +54,10 @@ ArenaGameplay = {
             print("Player data: "..data.client.serialized_player)
         end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
-        local ready_players = ready_players_string ~= nil and bitser.loads(ready_players_string) or nil
+        local ready_players = (ready_players_string ~= nil and ready_players_string ~= "null") and bitser.loads(ready_players_string) or nil
         local members = steamutils.getLobbyMembers(lobby)
+
+        print(tostring(ready_players_string))
         if(ready_players ~= nil)then
             for k, member in pairs(members)do
                 if(member.id ~= steam.user.getSteamID())then
@@ -501,7 +503,7 @@ ArenaGameplay = {
         end)
     end,
     SpawnClientPlayer = function(lobby, user, data)
-        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", 0, 0)
+        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", -1000, -1000)
         EntitySetName(client, tostring(user))
         local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
         local name = steam.friends.getFriendPersonaName(user)

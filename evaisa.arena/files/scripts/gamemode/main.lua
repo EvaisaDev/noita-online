@@ -22,17 +22,32 @@ end
 playermenu = nil
 
 ArenaMode = {
+    id = "arena",
     name = "Arena",
-    version = 0.291,
+    version = 0.292,
     settings = {
-       --[[ {
+        {
             id = "damage_cap",
             name = "Damage Cap",
             type = "enum",
             options = {{"0.25", "25% of max"}, {"0.5", "50% of max"}, {"0.75", "75% of max"}, {"disabled", "Disabled"}},
             default = "0.25"
-        }   ]]
+        }
     },
+    default_data = {
+        total_gold = "0",
+        holyMountainCount = "0",
+        ready_players = "null",
+    },
+    refresh = function(lobby)
+        local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
+        if(damage_cap == nil)then
+            damage_cap = 0.25
+        end
+        GlobalsSetValue("damage_cap", tostring(damage_cap))
+
+        print("Lobby data refreshed")
+    end,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
@@ -41,6 +56,8 @@ ArenaMode = {
         if(player ~= nil)then
             EntityKill(player)
         end
+
+        print("WE GOOD???")
 
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
@@ -52,7 +69,11 @@ ArenaMode = {
 
         local player_entity = player.Get()
 
-        
+        local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
+        if(damage_cap == nil)then
+            damage_cap = 0.25
+        end
+        GlobalsSetValue("damage_cap", tostring(damage_cap))
 
         data = data_holder:New()
         data.state = "lobby"
@@ -79,8 +100,10 @@ ArenaMode = {
         message_handler.send.Handshake(lobby)
     end,
     update = function(lobby)
+        --print(debug.traceback())
         gameplay_handler.Update(lobby, data)
         playermenu:Update(data, lobby)
+        --print("Did something go wrong?")
     end,
     late_update = function(lobby)
         gameplay_handler.LateUpdate(lobby, data)

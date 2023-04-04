@@ -56,9 +56,11 @@ end
 
 function disconnect(data)
 	msg.log("You were disconnected from the lobby.")
-	if(lobby_gamemode and gamemodes[lobby_gamemode] and gamemodes[lobby_gamemode])then
-		gamemodes[lobby_gamemode].leave()
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+	if(active_mode)then
+		active_mode.leave()
 	end
+	gamemode_settings = {}
 	steam.matchmaking.leaveLobby(data.lobbyID)
 	invite_menu_open = false
 	menu_status = status.disconnected
@@ -95,29 +97,29 @@ end
 
 function handleGamemodeVersionCheck(lobbycode)
 	local gamemode_version = steam.matchmaking.getLobbyData(lobbycode, "gamemode_version")
-	local gamemode = steam.matchmaking.getLobbyData(lobbycode, "gamemode")
-	print("Gamemode: "..tostring(gamemode))
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobbycode, "gamemode"))
+	--local gamemode = steam.matchmaking.getLobbyData(lobbycode, "gamemode")
+	print("Gamemode: "..tostring(active_mode.id))
 	print("Version: "..tostring(gamemode_version))
-	if(gamemode ~= nil and gamemode_version ~= nil)then
-		gamemode = tonumber(gamemode)
-		if(gamemodes[gamemode] ~= nil)then
-			if(gamemodes[gamemode].version > tonumber(gamemode_version))then
+	if(active_mode ~= nil and gamemode_version ~= nil)then
+		if(active_mode ~= nil)then
+			if(active_mode.version > tonumber(gamemode_version))then
 				disconnect({
 					lobbyID = lobbycode,
-					message = "The host is using an outdated version of the gamemode: "..gamemodes[gamemode].name
+					message = "The host is using an outdated version of the gamemode: "..active_mode.name
 				})
 				return false
-			elseif(gamemodes[gamemode].version < tonumber(gamemode_version))then
+			elseif(active_mode.version < tonumber(gamemode_version))then
 				disconnect({
 					lobbyID = lobbycode,
-					message = "You are using an outdated version of the gamemode: "..gamemodes[gamemode].name
+					message = "You are using an outdated version of the gamemode: "..active_mode.name
 				})
 				return false
 			end
 		else
 			disconnect({
 				lobbyID = lobbycode,
-				message = "Gamemode missing: "..gamemodes[gamemode].name
+				message = "Gamemode missing: "..active_mode.name
 			})
 			return false
 		end
@@ -129,14 +131,14 @@ end
 function IsCorrectVersion(lobby)
 	local version = steam.matchmaking.getLobbyData(lobby, "version")
 	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
-	local gamemode = steam.matchmaking.getLobbyData(lobby, "gamemode")
+	--local gamemode = steam.matchmaking.getLobbyData(lobby, "gamemode")
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby, "gamemode"))
 	if(version ~= tostring(MP_VERSION))then
 		return false
 	end
-	if(gamemode ~= nil and gamemode_version ~= nil)then
-		gamemode = tonumber(gamemode)
-		if(gamemodes[gamemode] ~= nil)then
-			if(gamemodes[gamemode].version ~= tonumber(gamemode_version))then
+	if(active_mode ~= nil and gamemode_version ~= nil)then
+		if(active_mode ~= nil)then
+			if(active_mode.version ~= tonumber(gamemode_version))then
 				return false
 			end
 		else

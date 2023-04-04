@@ -1,0 +1,154 @@
+<Entity  tags="prop,hittable,mortal,homing_target,enemy,touchmagic_immunity,teleportable_NOT,polymorphable_NOT" >
+	<VelocityComponent gravity_y="0"/>
+    <SimplePhysicsComponent/>
+	<SpriteComponent 
+		z_index="1"
+		image_file="mods/evaisa.arena/files/entities/dummy_target/dummy_target_final_sprite.xml"
+	>
+	</SpriteComponent>
+	
+	<SpriteOffsetAnimatorComponent
+        _tags="enabled_in_world"
+        y_amount="2"
+        y_speed="2.5"
+        sprite_id="0" >
+    </SpriteOffsetAnimatorComponent>
+
+	<AnimalAIComponent 
+        attack_melee_enabled="0"
+        needs_food="0"
+        sense_creatures="0"
+        can_fly="0"
+        can_walk="0"
+    >
+	</AnimalAIComponent>
+	
+	<DamageModelComponent 
+		hp="1"
+		wait_for_kill_flag_on_death="1"
+		air_needed="1"
+		air_in_lungs="1"
+		air_in_lungs_max="1"
+		air_lack_of_damage="1" 
+		falling_damages="0" 
+		fire_damage_amount="0.1" 
+		fire_probability_of_ignition="0" 
+		blood_material="slime_green"
+		blood_spray_material="slime_green"
+		is_on_fire="0" 
+		materials_damage="1" 
+        blood_multiplier="0"
+		materials_how_much_damage="0.1" 
+		materials_that_damage="acid" 
+		ragdoll_filenames_file=""
+		ragdoll_material="meat_slime_green"
+		ragdoll_offset_y="-6"
+		ragdollify_child_entity_sprites="1"
+		blood_sprite_directional="data/particles/bloodsplatters/bloodsplatter_directional_green_$[1-3].xml"
+		blood_sprite_large="data/particles/bloodsplatters/bloodsplatter_green_$[1-3].xml"
+		>
+		<damage_multipliers
+			melee="2.0"
+			projectile="0.2"
+			explosion="0.2"
+			electricity="0"
+			fire="0" 
+			slice="1.0"
+			ice="0"
+			>
+		</damage_multipliers>
+	</DamageModelComponent>
+
+    <HitboxComponent
+		aabb_min_x="-25"
+		aabb_max_x="25"
+		aabb_min_y="-25"
+		aabb_max_y="25"
+	/>
+    <LuaComponent script_damage_received="mods/evaisa.arena/files/entities/dummy_target/custom_damage_numbers.lua"/>
+    <LuaComponent script_damage_received="mods/evaisa.arena/files/entities/dummy_target/dps_tracker.lua"/>
+    <LuaComponent script_damage_about_to_be_received="mods/evaisa.arena/files/scripts/dummy_shot.lua"/>
+    <LuaComponent script_death="mods/evaisa.arena/files/entities/dummy_target/respawn_dummy.lua"/>
+	<VariableStorageComponent name="gkbrkn_always_show_damage_numbers"/>
+	<VariableStorageComponent name="gkbrkn_no_health_bar"/>
+	<VariableStorageComponent name="gkbrkn_no_custom_damage_numbers"/>
+	
+	<GenomeDataComponent 
+		herd_id="orcs"
+		food_chain_rank="9"
+		is_predator="1" >
+	</GenomeDataComponent>
+    <SpriteAnimatorComponent/>
+	<StatusEffectDataComponent/>
+	<Entity serialize="0" >
+		<InheritTransformComponent only_position="1"/>
+		<SpriteComponent 
+			_tags="enabled_in_world,evaisa.arena_custom_damage_number,ui,no_hitbox"
+			image_file="mods/evaisa.arena/files/font/font_small_numbers_damage.xml"
+			emissive="1"
+			is_text_sprite="1"
+			offset_x="0"
+			offset_y="0"
+			update_transform="1" 
+			update_transform_rotation="0"
+			text=""
+			has_special_scale="1"
+			special_scale_x="0.6667"
+			special_scale_y="0.6667"
+			z_index="-9000"
+			never_ragdollify_on_death="1"
+		/>
+		<LuaComponent execute_every_n_frame="1" script_source_file="mods/evaisa.arena/files/entities/dummy_target/custom_damage_numbers_text.lua" />
+	</Entity>
+	<Entity serialize="0" >
+		<InheritTransformComponent only_position="1"></InheritTransformComponent>
+		<SpriteComponent 
+			_tags="enabled_in_world,evaisa.arena_dps_tracker"
+			image_file="mods/evaisa.arena/files/font/font_small_numbers.xml"
+			emissive="1"
+			is_text_sprite="1"
+			offset_x="0"
+			offset_y="0"
+			update_transform="1" 
+			update_transform_rotation="0"
+			text=""
+			z_index="-9000"
+			never_ragdollify_on_death="1"
+		></SpriteComponent>
+		<SpriteComponent 
+			_tags="enabled_in_world,evaisa.arena_dps_tracker_highest"
+			image_file="mods/evaisa.arena/files/font/font_small_numbers_grey.xml"
+			emissive="1"
+			is_text_sprite="1"
+			offset_x="0"
+			offset_y="0"
+			update_transform="1" 
+			update_transform_rotation="0"
+			text=""
+			has_special_scale="1"
+			special_scale_x="0.6667"
+			special_scale_y="0.6667"
+			z_index="-9000"
+			never_ragdollify_on_death="1"
+		></SpriteComponent>
+		<SpriteComponent 
+			_tags="enabled_in_world,evaisa.arena_dps_tracker_true"
+			image_file="mods/evaisa.arena/files/font/font_small_numbers_true_damage.xml"
+			emissive="1"
+			is_text_sprite="1"
+			offset_x="0"
+			offset_y="0"
+			update_transform="1" 
+			update_transform_rotation="0"
+			text=""
+			has_special_scale="1"
+			special_scale_x="0.6667"
+			special_scale_y="0.6667"
+			z_index="-9000"
+			never_ragdollify_on_death="1"
+		></SpriteComponent>
+		<LuaComponent execute_every_n_frame="1" script_source_file="mods/evaisa.arena/files/entities/dummy_target/dps_tracker_text.lua" ></LuaComponent>
+		<LuaComponent execute_every_n_frame="1" script_source_file="mods/evaisa.arena/files/entities/dummy_target/dps_tracker_text_true.lua" ></LuaComponent>
+		<LuaComponent execute_every_n_frame="1" script_source_file="mods/evaisa.arena/files/entities/dummy_target/dps_tracker_text_highest.lua" ></LuaComponent>
+	</Entity>
+</Entity>

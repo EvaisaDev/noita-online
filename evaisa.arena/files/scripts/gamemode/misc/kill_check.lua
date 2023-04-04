@@ -20,8 +20,18 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         end]]
     --end
 
+    local damage_cap_percentage = tonumber(GlobalsGetValue("damage_cap", "0.25") or 0.25)
 
-    return damage, 0
+    local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+    if damageModelComponent ~= nil then
+        local max_hp = ComponentGetValue2( damageModelComponent, "max_hp" )
+        local damage_cap = max_hp * damage_cap_percentage
+        if damage > damage_cap then
+            damage = damage_cap
+        end
+    end
+
+    return damage, critical_hit_chance
 end
 
 function damage_received( damage, message, entity_thats_responsible, is_fatal, projectile_thats_responsible )

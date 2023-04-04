@@ -1,0 +1,64 @@
+<Sprite 
+  filename="mods/evaisa.arena/files/font/small_font_orange.png" 
+  offset_x="5.5" 
+  offset_y="6" >
+
+  <RectAnimation name=" " pos_x="0" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="0" pos_x="11" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="1" pos_x="22" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="2" pos_x="33" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="3" pos_x="44" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="4" pos_x="55" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="5" pos_x="66" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="6" pos_x="77" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="7" pos_x="88" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="8" pos_x="99" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="9" pos_x="110" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="." pos_x="121" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="$" pos_x="132" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="," pos_x="143" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="A" pos_x="154" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="B" pos_x="165" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="C" pos_x="176" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="D" pos_x="187" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="E" pos_x="198" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="F" pos_x="209" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="G" pos_x="220" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="H" pos_x="231" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="I" pos_x="242" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="J" pos_x="253" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="K" pos_x="264" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="L" pos_x="275" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="M" pos_x="286" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="N" pos_x="297" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="O" pos_x="308" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="P" pos_x="319" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="Q" pos_x="330" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="R" pos_x="341" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="S" pos_x="352" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="T" pos_x="363" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="U" pos_x="374" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="V" pos_x="385" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="W" pos_x="396" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="X" pos_x="407" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="Y" pos_x="418" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="Z" pos_x="429" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="!" pos_x="440" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="-" pos_x="451" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="+" pos_x="462" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="_" pos_x="473" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="(" pos_x="484" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name=")" pos_x="495" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="[" pos_x="506" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="]" pos_x="517" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="#" pos_x="528" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="/" pos_x="539" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="\" pos_x="550" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="%" pos_x="561" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="'" pos_x="572" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name="~" pos_x="583" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name=":" pos_x="594" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+  <RectAnimation name=";" pos_x="615" pos_y="0" frame_count="1" frame_width="11" frame_height="12" frame_wait="1" frames_per_row="1" shrink_by_one_pixel="0"/>
+
+</Sprite>
+

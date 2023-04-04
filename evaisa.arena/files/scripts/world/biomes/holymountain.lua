@@ -15,6 +15,7 @@ RegisterSpawnFunction( 0xff10822d, "spawn_workshop" )
 RegisterSpawnFunction( 0xff5a822d, "spawn_workshop_extra" )
 RegisterSpawnFunction( 0xffb66ccd, "spawn_ready_point" )
 RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
+RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
 
 function spawn_workshop( x, y )
 	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )
@@ -104,6 +105,10 @@ function spawn_perk_reroll( x, y )
 	if(GameHasFlagRun("first_death"))then
 		EntityLoad( "data/entities/items/pickup/perk_reroll.xml", x, y )
 	end
+end
+
+function spawn_target_dummy( x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y )
 end
 
 -- GameHasFlagRun("first_death")

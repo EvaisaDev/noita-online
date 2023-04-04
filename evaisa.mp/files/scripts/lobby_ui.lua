@@ -99,7 +99,7 @@ local windows = {
 				if(#lobbies.friend > 0)then
 					for k, v in ipairs(lobbies.friend)do
 						if(steam.matchmaking.requestLobbyData(v))then
-							local lobby_gamemode = steam.matchmaking.getLobbyData(v, "gamemode")
+							local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 							local lobby_name = steam.matchmaking.getLobbyData(v, "name")
 
 							local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
@@ -113,7 +113,7 @@ local windows = {
 									end)
 								end
 							else
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 									steam.matchmaking.leaveLobby(v)
 									steam.matchmaking.joinLobby(v, function(e)
 									end)
@@ -131,11 +131,8 @@ local windows = {
 				GuiText(menu_gui, 2, 0, "----- Public Lobbies -----")
 				if(#lobbies.public > 0)then
 					for k, v in ipairs(lobbies.public)do
-						local lobby_gamemode = steam.matchmaking.getLobbyData(v, "gamemode")
+						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 						local lobby_name = steam.matchmaking.getLobbyData(v, "name")
-						local lobby_gamemode_name = steam.matchmaking.getLobbyData(v, "gamemode_name")
-						local lobby_gamemode_version = steam.matchmaking.getLobbyData(v, "gamemode_version")
-						local lobby_version = steam.matchmaking.getLobbyData(v, "version")
 
 						local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 						local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
@@ -149,7 +146,7 @@ local windows = {
 								end)
 							end
 						else
-							if(GuiButton(menu_gui, NewID(), 0, 0, "("..gamemodes[tonumber(lobby_gamemode)].name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+							if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 								steam.matchmaking.leaveLobby(v)
 								steam.matchmaking.joinLobby(v, function(e)
 								end)
@@ -251,9 +248,11 @@ local windows = {
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Leave lobby"))then
-					if(gamemodes[lobby_gamemode] and gamemodes[lobby_gamemode])then
-						gamemodes[lobby_gamemode].leave()
+					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+					if(active_mode)then
+						active_mode.leave()
 					end
+					gamemode_settings = {}
 					steam.matchmaking.leaveLobby(lobby_code)
 					initial_refreshes = 10
 					invite_menu_open = false
@@ -411,18 +410,19 @@ local windows = {
 				local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
 
 
-				edit_lobby_type = edit_lobby_type or 1
-				edit_lobby_gamemode = edit_lobby_gamemode or tonumber(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+				edit_lobby_type = owner == steam.user.getSteamID() and (edit_lobby_type or 1) or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]
+
+				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 	
 				local true_max = 32
 	
 				local default_max_players = 8
 	
-				edit_lobby_max_players = edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)
+				edit_lobby_max_players = steam.user.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
 
-				edit_lobby_name = edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name")
+				edit_lobby_name = owner == steam.user.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
 
-				edit_lobby_seed = edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")
+				edit_lobby_seed = owner == steam.user.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
 
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, "Lobby Settings", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -434,7 +434,9 @@ local windows = {
 						end
 					end
 	
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, "Gamemode: "..gamemodes[edit_lobby_gamemode].name))then
+					--print(tostring(edit_lobby_gamemode))
+
+					--[[if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, "Gamemode: "..gamemodes[edit_lobby_gamemode].name))then
 						edit_lobby_gamemode = edit_lobby_gamemode + 1
 						if(#gamemodes > 1)then
 							gamemode_settings = {}
@@ -442,7 +444,10 @@ local windows = {
 						if(edit_lobby_gamemode > #gamemodes and owner == steam.user.getSteamID())then
 							edit_lobby_gamemode = 1
 						end
-					end
+					end]]
+					
+					GuiText(menu_gui, 2, 1, "Gamemode: "..active_mode.name)
+					GuiTooltip(menu_gui, "Can not change gamemode while in a lobby", "")
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, "Lobby name: ")
@@ -469,9 +474,11 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 
 					
-					for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+					for k, setting in ipairs(active_mode.settings or {})do
 
-						--gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
+						if(owner ~= steam.user.getSteamID())then
+							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
+						end
 
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
@@ -502,18 +509,15 @@ local windows = {
 
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings") and owner == steam.user.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
-						steam.matchmaking.setLobbyData(lobby_code, "gamemode", tostring(edit_lobby_gamemode))
-						steam.matchmaking.setLobbyData(lobby_code, "gamemode_version", tostring(gamemodes[edit_lobby_gamemode].version))
-						steam.matchmaking.setLobbyData(lobby_code, "gamemode_name", tostring(gamemodes[edit_lobby_gamemode].name))
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
-						for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+						for k, setting in ipairs(active_mode.settings or {})do
 							steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+							print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 						end
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
 						steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
 						print("Updated limit: "..tostring(edit_lobby_max_players))
-						print("Updated gamemode: "..tostring(edit_lobby_gamemode))
 						print("Updated name: "..tostring(edit_lobby_name))
 						print("Updated type: "..tostring(internal_types[edit_lobby_type]))
 					end
@@ -525,7 +529,7 @@ local windows = {
 
 					GuiLayoutEnd(menu_gui)
 				end)	
-		
+			
 			end
 		end
 	},
@@ -540,7 +544,7 @@ local windows = {
 			local window_text = "Create lobby"
 
 			lobby_type = lobby_type or 1
-			lobby_gamemode = lobby_gamemode or 1
+			gamemode_index = gamemode_index or 1
 
 			local true_max = 32
 
@@ -593,10 +597,10 @@ local windows = {
 				end
 
 
-				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, "Gamemode: "..gamemodes[lobby_gamemode].name))then
-					lobby_gamemode = lobby_gamemode + 1
-					if(lobby_gamemode > #gamemodes)then
-						lobby_gamemode = 1
+				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, "Gamemode: "..gamemodes[gamemode_index].name))then
+					gamemode_index = gamemode_index + 1
+					if(gamemode_index > #gamemodes)then
+						gamemode_index = 1
 					end
 				end
 
@@ -629,20 +633,26 @@ local windows = {
 				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Create lobby"))then
 					CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
 						msg.log("Created new lobby!")
-						--[[
-						for k, setting in ipairs(gamemodes[edit_lobby_gamemode].settings or {})do
+						
+						for k, setting in ipairs(gamemodes[gamemode_index].settings or {})do
 							if(gamemode_settings[setting.id] == nil)then
 								gamemode_settings[setting.id] = setting.default
-								steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(setting.default))
+
+								steam.matchmaking.setLobbyData(code, "setting_"..setting.id, tostring(setting.default))
 							end
-						end]]
+						end
+
+						for k, data in pairs(gamemodes[gamemode_index].default_data or {})do
+							steam.matchmaking.setLobbyData(code, k, data)
+						end
 
 						steam.matchmaking.setLobbyData(code, "name", lobby_name)
-						steam.matchmaking.setLobbyData(code, "gamemode", tostring(lobby_gamemode))
-						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[lobby_gamemode].version))
-						steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[lobby_gamemode].name))
+						steam.matchmaking.setLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
+						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
+						steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
 						steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 						steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
+						steam.matchmaking.setLobbyData(code, "in_progress", "false")
 
 						steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
 
