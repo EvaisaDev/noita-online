@@ -7,7 +7,3 @@ arena_list = {
         },
     }
 }
-
-perks_allowed = {
-    ["PERSONAL_LASER"] = true
-}

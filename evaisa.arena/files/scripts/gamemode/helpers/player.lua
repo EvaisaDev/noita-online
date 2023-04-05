@@ -442,7 +442,7 @@ player_helper.GivePerk = function( perk_id, amount, skip_count )
         end
 
 
-        if(perk_data.func ~= nil)then
+        if(perk_data.func ~= nil and not perk_data.skip_functions_on_load)then
             perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
         end
     end

@@ -40,8 +40,8 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     -- check if would kill
     GameAddFlagRun("took_damage")
 
-    --local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-    --if damageModelComponent ~= nil then
+    local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+    if damageModelComponent ~= nil then
         if(is_fatal)then
             GameAddFlagRun("player_died")
             if(entity_thats_responsible ~= nil)then
@@ -49,7 +49,20 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             end
             GameAddFlagRun("player_unloaded")
             -- set health so that player ends on 1
-           -- ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
+            
+            local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
+            if(respawn_count > 0)then
+                respawn_count = respawn_count - 1
+                GlobalsSetValue( "RESPAWN_COUNT", tostring(respawn_count) )
+                ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
+            else
+                if(GameHasFlagRun( "saving_grace" ))then
+                    local hp = ComponentGetValue2( damageModelComponent, "hp" )
+                    if(hp * 25 > 1)then
+                        ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
+                    end
+                end
+            end
         end
-    --end
+    end
 end

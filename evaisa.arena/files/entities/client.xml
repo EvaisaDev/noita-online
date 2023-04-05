@@ -1,4 +1,4 @@
-<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy">
 
   <VelocityComponent
     updates_velocity="0"
