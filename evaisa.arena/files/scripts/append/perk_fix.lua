@@ -40,6 +40,9 @@ local remove_list = {
     LUKKI_MINION = true,
     GENOME_MORE_HATRED = true,
     GENOME_MORE_LOVE = true,
+    ANGRY_GHOST = true,
+    HUNGRY_GHOST = true,
+    DEATH_GHOST = true,
 }
 
 local allow_on_clients = {
