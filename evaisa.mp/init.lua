@@ -46,7 +46,7 @@ local ffi = require "ffi"
 
 local application_id = 943584660334739457LL
 
-np.EnableGameSimulatePausing(false)
+--np.EnableGameSimulatePausing(false)
 
 --GameSDK = require("game_sdk")
 
