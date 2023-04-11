@@ -29,8 +29,8 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.18
-Version_string = "239867236236823096"
+MP_VERSION = 1.19
+Version_string = "872390678230962"
 
 Checksum_passed = false
 Spawned = false
@@ -45,6 +45,8 @@ local ffi = require "ffi"
 
 
 local application_id = 943584660334739457LL
+
+np.EnableGameSimulatePausing(false)
 
 --GameSDK = require("game_sdk")
 
