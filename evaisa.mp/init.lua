@@ -46,7 +46,7 @@ local ffi = require "ffi"
 
 local application_id = 943584660334739457LL
 
---np.EnableGameSimulatePausing(false)
+np.EnableGameSimulatePausing(false)
 
 --GameSDK = require("game_sdk")
 
@@ -69,6 +69,39 @@ print = function(...)
 	if not disable_print then
 		old_print(...)
 	end
+end
+
+function OnPausedChanged(paused, is_wand_pickup)
+	local players = EntityGetWithTag("player_unit") or {}
+
+	if(players[1])then
+		np.RegisterPlayerEntityId(players[1])
+		local inventory_gui = EntityGetFirstComponentIncludingDisabled(players[1], "InventoryGuiComponent")
+		local controls_component = EntityGetFirstComponentIncludingDisabled(players[1], "ControlsComponent")
+		if(paused)then
+			--EntitySetComponentIsEnabled(players[1], inventory_gui, false)
+			np.EnableInventoryGuiUpdate(false)
+			np.EnablePlayerItemPickUpper(false)
+			ComponentSetValue2(controls_component, "enabled", false)
+		else
+			--EntitySetComponentIsEnabled(players[1], inventory_gui, true)
+			np.EnableInventoryGuiUpdate(true)
+			np.EnablePlayerItemPickUpper(true)
+			ComponentSetValue2(controls_component, "enabled", true)
+		end
+	end
+
+	if(paused)then
+		GameAddFlagRun("game_paused")
+		GamePrint("paused")
+	else
+		GameRemoveFlagRun("game_paused")
+		GamePrint("unpaused")
+	end
+end
+
+function IsPaused()
+	return GameHasFlagRun("game_paused")
 end
 
 --[[
@@ -140,9 +173,11 @@ function OnWorldPreUpdate()
 	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
-		dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
-		dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
-
+		
+		if(not IsPaused())then
+			dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
+			dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
+		end
 		if(GameGetFrameNum() % (60 * 10) == 0)then
 			steamutils.CheckLocalLobbyData()
 		end

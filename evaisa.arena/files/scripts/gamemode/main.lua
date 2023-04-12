@@ -102,7 +102,9 @@ ArenaMode = {
     update = function(lobby)
         --print(debug.traceback())
         gameplay_handler.Update(lobby, data)
-        playermenu:Update(data, lobby)
+        if(not IsPaused())then
+            playermenu:Update(data, lobby)
+        end
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)

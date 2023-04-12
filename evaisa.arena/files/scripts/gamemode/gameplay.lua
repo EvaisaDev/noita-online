@@ -435,6 +435,13 @@ ArenaGameplay = {
     LobbyUpdate = function(lobby, data)
         -- update ready counter
         if(data.ready_counter ~= nil)then
+            if(not IsPaused())then
+                data.ready_counter:appy_offset(9, 28)
+            else
+                data.ready_counter:appy_offset(9, 9)
+            end
+
+
             data.ready_counter:update()
         end
 
@@ -588,9 +595,11 @@ ArenaGameplay = {
                 table.insert(player_entities, v.entity)
             end
         end
-        game_funcs.RenderOffScreenMarkers(player_entities)
-        game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
-        ArenaGameplay.UpdateHealthbars(data)
+        if(not IsPaused())then
+            game_funcs.RenderOffScreenMarkers(player_entities)
+            game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
+            ArenaGameplay.UpdateHealthbars(data)
+        end
         if(steamutils.IsOwner(lobby))then
             if(not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))then
                 data.players_loaded = true
