@@ -1,31 +1,32 @@
 dofile("data/scripts/lib/utilities.lua")
 dofile("mods/evaisa.mp/files/scripts/gui_utils.lua")
-ffi = require("ffi")
-
-ffi.cdef([[
-typedef struct Entity Entity;
-typedef Entity* __thiscall EntityGet_f(int EntityManager, int entity_nr);
-]])
-
-local EntityManager = ffi.cast("int*", 0x00ff55dc)[0]
+--ffi = require("ffi")
 --
-local EntityGet_cfunc = ffi.cast("EntityGet_f*", 0x00527660)
+--ffi.cdef([[
+--typedef struct Entity Entity;
+--
+--typedef Entity* __thiscall EntityGet_f(int EntityManager, int entity_nr);
+--typedef void __fastcall SetActiveHeldEntity_f(Entity* entity, Entity* item_entity, bool unknown, bool make_noise);
+--]])
+--
+--local EntityManager = ffi.cast("int*", 0x00ff55dc)[0]
+----
+--local EntityGet_cfunc = ffi.cast("EntityGet_f*", 0x00527660)
 --local SetActiveHeldEntity_cfunc = ffi.cast("SetActiveHeldEntity_f*", 0x009ec390)
 
 
 
-function EntityGet(entity_nr)
-    return EntityGet_cfunc(EntityManager, entity_nr)
-end
+--function EntityGet(entity_nr)
+--    return EntityGet_cfunc(EntityManager, entity_nr)
+--end
 
 
 game_funcs = {
 	SetPlayerEntity = function (entity_id)
-		--local entity = EntityGet(entity_id)
-		--local vector = ffi.cast("void****", 0x00ff5604)[0][22]
-		--vector[0] = entity
+		--[[local entity = EntityGet(entity_id)
+		local vector = ffi.cast("void****", 0x00ff5604)[0][22]
+		vector[0] = entity]]
 		np.SetPlayerEntity(entity_id)
-		--np.RegisterPlayerEntityId(entity_id)
 	end,
 	SetActiveHeldEntity = function (entity_id, item_id, unknown, make_noise)
 		--SetActiveHeldEntity_cfunc(EntityGet(entity_id), EntityGet(item_id), unknown, make_noise)
