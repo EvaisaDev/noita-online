@@ -13,7 +13,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         local max_hp = ComponentGetValue2( damageModelComponent, "max_hp" )
         local damage_cap = max_hp * damage_cap_percentage
         if damage > damage_cap then
-            GamePrint("Damage cap exceeded: " .. math.floor(damage * 25) .. " > " .. math.floor(damage_cap * 25)  .. " (" .. (damage_cap_percentage * 100) .. "% of max HP)")
+            --GamePrint("Damage cap exceeded: " .. math.floor(damage * 25) .. " > " .. math.floor(damage_cap * 25)  .. " (" .. (damage_cap_percentage * 100) .. "% of max HP)")
             damage = damage_cap
         end
     end

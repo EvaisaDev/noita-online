@@ -6,6 +6,8 @@ local tween = dofile("mods/evaisa.arena/lib/tween.lua")
 local Vector = dofile("mods/evaisa.arena/lib/vector.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
+local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 dofile_once( "data/scripts/perks/perk_list.lua" )
 dofile_once("mods/evaisa.arena/content/data.lua")
 
@@ -95,7 +97,7 @@ ArenaMessageHandler = {
         end,
         unlock = function(lobby, message, user, data)
             player.Immortal(false)
-            gameplay_handler.AllowFiring()
+            gameplay_handler.AllowFiring(data)
         end,
         death = function(lobby, message, user, data, username)
             
@@ -133,12 +135,59 @@ ArenaMessageHandler = {
 
             if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
             
-                local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
-                ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
-                
-                data.players[tostring(user)].next_rng = message.rng
-                if(message.target)then
-                    data.players[tostring(user)].target = message.target
+                data.players[tostring(user)].can_fire = true
+
+                --local platformShooterPlayerComponent = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "PlatformShooterPlayerComponent")
+                --ComponentSetValue2(platformShooterPlayerComponent, "mForceFireOnNextUpdate", true)
+
+                --print("special seed received: "..tostring(message.special_seed))
+
+                --GamePrint("1: shooter_rng_"..tostring(user))
+                GlobalsSetValue("shooter_rng_"..tostring(user), tostring(message.special_seed))
+
+                --[[if(message.cast_state ~= nil)then
+                    GlobalsSetValue("shooter_cast_state_"..tostring(user), tostring(message.cast_state))
+                end]]
+
+                data.players[tostring(user)].projectile_rng_stack = message.rng
+
+                --data.players[tostring(user)].projectile_fire_data = message.fire_data
+    
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
+                if(controlsComp ~= nil)then
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+                    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+
+                    local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                    local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
+
+                    local wand_x, wand_y = EntityGetTransform(mActiveItem)
+
+                    local x = wand_x + (aimNormal_x * 2)
+                    local y = wand_y + (aimNormal_y * 2)
+                    y = y - 1
+
+                    local target_x = x + aim_x
+                    local target_y = y + aim_y
+
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
+
+                    --GamePrint("client is shooting.")
+
+                    local wand_data = message.wand_data
+
+                    EntitySetTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
+                    EntityApplyTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
+
+                    EntityAddTag(data.players[tostring(user)].entity, "player_unit")
+                    np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
+                    EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                    --[[if(message.target)then
+                        data.players[tostring(user)].target = message.target
+                    end]]
                 end
             end
         end,
@@ -159,12 +208,18 @@ ArenaMessageHandler = {
 
                     ComponentSetValue2(characterData, "mVelocity", message.vel_x, message.vel_y)
 
-                    
-                    local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 2, function(value)
+                    --[[if(entity ~= nil and EntityGetIsAlive(entity))then
+                        EntitySetTransform(entity, message.x, message.y)
+                        EntityApplyTransform(entity, message.x, message.y)
+        
+                    end]]
+
+
+                    local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 1, function(value)
                         local newPlayerEntity = data.players[tostring(user)].entity
                         if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
-                            EntitySetTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
-                            EntityApplyTransform(newPlayerEntity, value.x, value.y, message.r, message.w, message.h)
+                            EntitySetTransform(newPlayerEntity, value.x, value.y)
+                            EntityApplyTransform(newPlayerEntity, value.x, value.y)
                             --GamePrint("Updating client position")
                         end
                     end)
@@ -277,7 +332,13 @@ ArenaMessageHandler = {
                             return
                         end
 
-                        GamePlayAnimation( entity, message.rectAnim, 1 )
+                        --print(tostring(message.rectAnim))
+
+                        --if(message.rectAnim == "stand")then
+                        --    ComponentSetValue2(spriteComp, "rect_animation", "stand")
+                        --else
+                            GamePlayAnimation( entity, message.rectAnim, 1 )
+                        --end
                         --GamePrint("Animation set to " .. message.rectAnim)
                     end
                 end
@@ -385,6 +446,44 @@ ArenaMessageHandler = {
                 end
             end
         end,
+        sync_wand_stats = function(lobby, message, user, data)
+            --[[
+                steamutils.sendData({type = "sync_wand_stats", 
+                    mana = mana, 
+                    mCastDelayStartFrame = GameGetFrameNum() - cast_delay_start_frame,
+                    mReloadFramesLeft = reload_frames_left,
+                    mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
+                    mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                }, steamutils.messageTypes.OtherPlayers, lobby)
+            ]]
+
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
+                return
+            end
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+                    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+                
+                    if(mActiveItem ~= nil)then
+                        local mana = message.mana
+                        local mCastDelayStartFrame = GameGetFrameNum() - message.mCastDelayStartFrame
+                        local mReloadFramesLeft = message.mReloadFramesLeft
+                        local mReloadNextFrameUsable = message.mReloadNextFrameUsable + GameGetFrameNum()
+                        local mNextChargeFrame = message.mNextChargeFrame + GameGetFrameNum()
+
+                        local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
+                        if(abilityComp ~= nil)then
+                            ComponentSetValue2(abilityComp, "mana", mana)
+                            ComponentSetValue2(abilityComp, "mCastDelayStartFrame", mCastDelayStartFrame)
+                            ComponentSetValue2(abilityComp, "mReloadFramesLeft", mReloadFramesLeft)
+                            ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
+                            ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
+                        end
+                    end
+                end
+            end
+        end,
     },
     send = {
         Handshake = function(lobby)
@@ -421,16 +520,28 @@ ArenaMessageHandler = {
         Death = function(lobby, killer)
             steamutils.sendData({type = "death", killer = killer}, steamutils.messageTypes.OtherPlayers, lobby)
         end,
-        WandFired = function(lobby, rng, target)
-            steamutils.sendData({type = "wand_fired", rng = rng, target = target}, steamutils.messageTypes.OtherPlayers, lobby)
+        WandFired = function(lobby, rng, special_seed, cast_state)
+            local player = player.Get()
+            if(player)then
+                local wand = EntityHelper.GetHeldItem(player)
+
+                if(wand ~= nil)then
+                    --[[if(cast_state ~= nil)then
+                        cast_state = smallfolk.loadsies(cast_state)
+                    end]]
+
+                    local x, y, r, w, h = EntityGetTransform(wand)
+                    steamutils.sendData({type = "wand_fired", rng = rng, special_seed = special_seed, wand_data = {x = x, y = y, r = r, w = w, h = h}, cast_state = cast_state}, steamutils.messageTypes.OtherPlayers, lobby)
+                end
+            end
         end,
-        CharacterUpdate = function(lobby)
+        CharacterUpdate = function(lobby, data)
             local player = player.Get()
             if(player)then
                 local x, y, r, w, h = EntityGetTransform(player)
                 local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
-                
+ 
                 steamutils.sendData({type = "character_update", x = x, y = y, r = r, w = w, h = h, vel_x = vel_x, vel_y = vel_y}, steamutils.messageTypes.OtherPlayers, lobby)
             end
         end,
@@ -610,9 +721,88 @@ ArenaMessageHandler = {
                 steamutils.sendData({type = "perk_info", perks = perk_info}, steamutils.messageTypes.OtherPlayers, lobby)
             end
         end,
-        UpdateHp = function(lobby)
+        UpdateHp = function(lobby, data)
             local health, max_health = player.GetHealthInfo()
-            steamutils.sendData({type = "update_hp", health = health, max_health = max_health}, steamutils.messageTypes.OtherPlayers, lobby)
+
+            if(data.client.previous_max_hp ~= max_health or data.client.previous_hp ~= health)then
+                steamutils.sendData({type = "update_hp", health = health, max_health = max_health}, steamutils.messageTypes.OtherPlayers, lobby)
+                data.client.previous_max_hp = max_health
+                data.client.previous_hp = health
+            end
+        end,
+        SyncWandStats = function(lobby, data)
+            local held_item = player.GetActiveHeldItem()
+            if(held_item ~= nil)then
+                -- if has ability component
+                local abilityComp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                if(abilityComp)then
+                    --[[
+                    -- get current mana
+                    local mana = ComponentGetValue2(abilityComp, "mana")
+                    -- mCastDelayStartFrame
+                    local cast_delay_start_frame = ComponentGetValue2(abilityComp, "mCastDelayStartFrame")
+                    -- mReloadFramesLeft
+                    local reload_frames_left = ComponentGetValue2(abilityComp, "mReloadFramesLeft")
+                    -- mReloadNextFrameUsable
+                    local reload_next_frame_usable = ComponentGetValue2(abilityComp, "mReloadNextFrameUsable")
+                    -- mNextChargeFramemNextChargeFrame
+                    local next_charge_frame = ComponentGetValue2(abilityComp, "mNextChargeFrame")
+
+                    steamutils.sendData({type = "sync_wand_stats", 
+                        mana = mana, 
+                        mCastDelayStartFrame = GameGetFrameNum() - cast_delay_start_frame,
+                        mReloadFramesLeft = reload_frames_left,
+                        mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
+                        mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                    }, steamutils.messageTypes.OtherPlayers, lobby)
+                    ]]
+
+                    --[[
+                        previous_wand_stats = {
+                            mana = nil, 
+                            mCastDelayStartFrame = nil, 
+                            mReloadFramesLeft = nil, 
+                            mReloadNextFrameUsable = nil, 
+                            mNextChargeFrame = nil, 
+                        },
+                    ]]
+                    
+                    -- check if any stats changed from previous, if they did send them
+                    -- get current mana
+                    local mana = ComponentGetValue2(abilityComp, "mana")
+                    -- mCastDelayStartFrame
+                    local cast_delay_start_frame = ComponentGetValue2(abilityComp, "mCastDelayStartFrame")
+                    -- mReloadFramesLeft
+                    local reload_frames_left = ComponentGetValue2(abilityComp, "mReloadFramesLeft")
+                    -- mReloadNextFrameUsable
+                    local reload_next_frame_usable = ComponentGetValue2(abilityComp, "mReloadNextFrameUsable")
+                    -- mNextChargeFramemNextChargeFrame
+                    local next_charge_frame = ComponentGetValue2(abilityComp, "mNextChargeFrame")
+
+                    if( data.client.previous_wand_stats.mana ~= mana or
+                        data.client.previous_wand_stats.mCastDelayStartFrame ~= cast_delay_start_frame or
+                        data.client.previous_wand_stats.mReloadFramesLeft ~= reload_frames_left or
+                        data.client.previous_wand_stats.mReloadNextFrameUsable ~= reload_next_frame_usable or
+                        data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame)then
+                            
+                        data.client.previous_wand_stats.mana = mana
+                        data.client.previous_wand_stats.mCastDelayStartFrame = cast_delay_start_frame
+                        data.client.previous_wand_stats.mReloadFramesLeft = reload_frames_left
+                        data.client.previous_wand_stats.mReloadNextFrameUsable = reload_next_frame_usable
+                        data.client.previous_wand_stats.mNextChargeFrame = next_charge_frame
+
+                        steamutils.sendData({type = "sync_wand_stats", 
+                            mana = mana, 
+                            mCastDelayStartFrame = GameGetFrameNum() - cast_delay_start_frame,
+                            mReloadFramesLeft = reload_frames_left,
+                            mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
+                            mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                        }, steamutils.messageTypes.OtherPlayers, lobby)
+                    end
+
+                    
+                end
+            end
         end,
     },
     handle = function(lobby, message, user, data)
@@ -629,14 +819,15 @@ ArenaMessageHandler = {
 
         local username = steam.friends.getFriendPersonaName(user)
 
-        --[[
-        if(data.last_message_type ~= message.type)then
+        --GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
+        --print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
+        --[[if(data.last_message_type ~= message.type)then
             data.last_message_type = message.type
             GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
             print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
             print(json.stringify(message))
-        end
-        ]]
+        end]]
+        
 
         if ArenaMessageHandler.receive[message.type] then
             ArenaMessageHandler.receive[message.type](lobby, message, user, data, username)

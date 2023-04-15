@@ -33,6 +33,7 @@ function dump_type:table(nmemo, memo, acc)
 	end
 	for k, v in pairs(self) do
 		if type(k) ~= 'number' or floor(k) ~= k or k < 1 or k > nself then
+			--print(tostring(k))
 			nmemo = dump_object(k, nmemo, memo, acc)
 			acc[#acc + 1] = ':'
 			nmemo = dump_object(v, nmemo, memo, acc)

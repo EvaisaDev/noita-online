@@ -654,6 +654,11 @@ local windows = {
 						steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
 						steam.matchmaking.setLobbyData(code, "in_progress", "false")
 
+						if(dev_mode)then
+							steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
+						end
+
+
 						steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
 
 						lobby_code = code

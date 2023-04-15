@@ -29,13 +29,15 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.20
-Version_string = "872390678230962"
+MP_VERSION = 1.21
+Version_string = "260082349063"
 
 Checksum_passed = false
 Spawned = false
 
 disable_print = false
+
+dev_mode = false
 
 base64 = require("base64")
 

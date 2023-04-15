@@ -12,6 +12,11 @@ Todo:
     player is not destroyed properly on leave or kick
     sometimes players still do not get round gold
     when hotrejoining before you pick your perks or health, you miss those.
+    Hotjoining while in the arena will make the other clients think someone is still alive
+    You can steal shop items
+    Sync shuffle
+    sync world maybe?????? 
+
     
 Done:
     Kicking sync

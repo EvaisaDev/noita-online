@@ -98,4 +98,38 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount )
     --GamePrint( "Picked up perk: " .. perk_data.name )
 end
 
+entity.BlockFiring = function(ent, do_block)
+    local now = GameGetFrameNum();
+    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
+    if(inventory2Comp ~= nil)then
+        local held_wand = ComponentGetValue2(inventory2Comp, "mActiveItem")
+        if held_wand ~= 0 then
+            local ability = EntityGetFirstComponentIncludingDisabled( held_wand, "AbilityComponent" );
+            if ability then
+                if(do_block)then
+                    ComponentSetValue2( ability, "mReloadFramesLeft", 2 );
+                    ComponentSetValue2( ability, "mNextFrameUsable", now + 2 );
+                    ComponentSetValue2( ability, "mReloadNextFrameUsable", now + 2 );
+                else
+                    ComponentSetValue2( ability, "mReloadFramesLeft", 0 );
+                    ComponentSetValue2( ability, "mNextFrameUsable", now );
+                    ComponentSetValue2( ability, "mReloadNextFrameUsable", now );
+                end
+            end
+        end
+    end
+end
+
+entity.GetHeldItem = function(ent)
+    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
+    if(inventory2Comp ~= nil)then
+        local held_wand = ComponentGetValue2(inventory2Comp, "mActiveItem")
+        if held_wand ~= 0 then
+            return held_wand
+        end
+    end
+    return nil
+end
+
+
 return entity

@@ -91,7 +91,7 @@
     fly_speed_max_down="85"
     fly_speed_mult="20"
     fly_speed_change_spd="0.25"
-    mouse_look="0" 
+    mouse_look="1" 
     keyboard_look="0"
     mouse_look_buffer="1" 
     pixel_gravity="350" 
@@ -195,6 +195,11 @@
 
     <LuaComponent
       script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+      >
+  </LuaComponent>
+
+  <LuaComponent
+      script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua"
       >
   </LuaComponent>
 

@@ -220,7 +220,14 @@ function refreshLobbies()
 			
 	--steam.matchmaking.addRequestLobbyListStringFilter("LobbyType", "Public", "Equal")
 	steam.matchmaking.addRequestLobbyListDistanceFilter(distance.worldwide)
-	steam.matchmaking.addRequestLobbyListStringFilter("NewSystem", "True", "Equal")
+
+	local activeSystem = "NoitaOnline"
+
+	if(dev_mode)then
+		activeSystem = "NoitaOnlineDev"
+	end
+
+	steam.matchmaking.addRequestLobbyListStringFilter("System", activeSystem, "Equal")
 
 
 	for _, lobby in ipairs(getFriendLobbies())do
@@ -228,10 +235,13 @@ function refreshLobbies()
 			if(indexed_lobby[lobby] == nil)then
 				if(steam.matchmaking.requestLobbyData(lobby))then
 					local lobby_type = steam.matchmaking.getLobbyData(lobby, "LobbyType")
-					local banned = steam.matchmaking.getLobbyData(lobby, "banned_"..tostring(steam.user.getSteamID()))
-					if((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true")then
-						table.insert(lobbies.friend, lobby)
-						indexed_lobby[lobby] = true
+
+					if(steam.matchmaking.getLobbyData(lobby, "System") ~= nil and steam.matchmaking.getLobbyData(lobby, "System") == activeSystem)then
+						local banned = steam.matchmaking.getLobbyData(lobby, "banned_"..tostring(steam.user.getSteamID()))
+						if((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true")then
+							table.insert(lobbies.friend, lobby)
+							indexed_lobby[lobby] = true
+						end
 					end
 				end
 			end
@@ -246,11 +256,14 @@ function refreshLobbies()
 				local lobby = steam.matchmaking.getLobbyByIndex(i)
 				if(lobby.lobbyID ~= nil)then
 					local lobby_type = steam.matchmaking.getLobbyData(lobby.lobbyID, "LobbyType")
-					local banned = steam.matchmaking.getLobbyData(lobby.lobbyID, "banned_"..tostring(steam.user.getSteamID()))
-					if((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true")then
-						if(indexed_lobby[lobby.lobbyID] == nil)then
-							--indexed_lobby[lobby.lobbyID] = true
-							table.insert(lobbies.public, lobby.lobbyID)
+
+					if(steam.matchmaking.getLobbyData(lobby.lobbyID, "System") ~= nil and steam.matchmaking.getLobbyData(lobby.lobbyID, "System") == activeSystem)then
+						local banned = steam.matchmaking.getLobbyData(lobby.lobbyID, "banned_"..tostring(steam.user.getSteamID()))
+						if((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true")then
+							if(indexed_lobby[lobby.lobbyID] == nil)then
+								--indexed_lobby[lobby.lobbyID] = true
+								table.insert(lobbies.public, lobby.lobbyID)
+							end
 						end
 					end
 				end

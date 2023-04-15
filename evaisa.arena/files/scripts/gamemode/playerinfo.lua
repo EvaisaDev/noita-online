@@ -12,8 +12,9 @@ function playerinfo:New(user)
         ready = false,
         alive = true,
         loaded = false,
-        next_rng = nil,
+        projectile_rng_stack = {},
         target = nil,
+        can_fire = false,
         id = user,
         perks = {},
         controls = {

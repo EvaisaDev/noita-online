@@ -19,12 +19,12 @@
       execute_every_n_frame = "0"
       >
   </LuaComponent>
-
+-->
     <LuaComponent
-      script_wand_fired = "mods/evaisa.arena/files/scripts/on_fire.lua"
+      script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
       >
   </LuaComponent>
--->
+
     <LuaComponent
       script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
       script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
