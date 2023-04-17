@@ -20,10 +20,12 @@ GuiOptionsAdd( menu_gui, GUI_OPTION.NoPositionTween )
 
 gui_closed = gui_closed or false
 invite_menu_open = invite_menu_open or false
+mod_list_open = mod_list_open or false
 lobby_settings_open = lobby_settings_open or false
 
-
 local is_in_lobby = lobby_code ~= nil and true or false
+
+selected_player = selected_player or nil
 
 menu_status = menu_status or status.main_menu
 
@@ -306,11 +308,46 @@ local windows = {
 					
 					if(v.id == owner)then
 						GuiImage(menu_gui, NewID("Lobby"), 2, -3, "mods/evaisa.mp/files/gfx/ui/crown.png", 1, 1, 1, 0)
-	
-						GuiText(menu_gui, -5, 0, tostring(v.name))
+						--selected_player
+						if(selected_player == v.id)then
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, 1 )
+						else
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
+						end
+						if(GuiButton(menu_gui, NewID("Lobby"), -5, 0, tostring(v.name)))then
+							if(selected_player == v.id)then
+								selected_player = nil
+							else
+								selected_player = v.id
+							end
+						end
 					else
-						GuiText(menu_gui, 2, 0, tostring(v.name))
+						if(selected_player == v.id)then
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, 1 )
+						else
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
+						end
+
+						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, tostring(v.name)))then
+							if(selected_player == v.id)then
+								selected_player = nil
+							else
+								selected_player = v.id
+							end
+						end
 					end
+
+					--[[
+					local player_mod_data = getLobbyUserData(lobby_code, v.id) or {}
+
+					CustomTooltip(menu_gui, function() 
+						for k, v in pairs(player_mod_data) do
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
+							GuiZSetForNextWidget(menu_gui, -5110)
+							GuiText(menu_gui, 0, 0, v.name .. " ( "..v.id.." )")
+						end
+					end, -5100, 0, 0)
+					]]
 	
 					GuiLayoutEnd(menu_gui)
 					GuiText(menu_gui, 0, -6, " ")
@@ -396,6 +433,44 @@ local windows = {
 				end)	
 		
 			end
+
+			if(selected_player ~= nil)then
+				local selected_player_name = steam.friends.getFriendPersonaName(selected_player)
+
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, "Mods ("..selected_player_name..")", true, function()
+					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
+					
+					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
+
+					local mod_count = 0
+
+
+					for k, v in pairs(player_mod_data) do
+						GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
+						GuiZSetForNextWidget(menu_gui, -5510)
+						--GamePrint(tostring(v.workshop_item_id))
+						if(v.workshop_item_id ~= 0 and v.workshop_item_id ~= "0")then
+							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. " ( "..v.id.." )"))then
+								--steam.utils.openWorkshopItem(v.workshop_item_id)
+								os.execute("start steam://openurl/https://steamcommunity.com/sharedfiles/filedetails/?id="..v.workshop_item_id)
+							end
+						else
+							GuiText(menu_gui, 0, 0, v.name .. " ( "..v.id.." )")
+						end
+						mod_count = mod_count + 1
+					end
+					
+
+					for i = 1, 50 - mod_count do
+						GuiText(menu_gui, 2, 0, " ")
+					end
+		
+					GuiLayoutEnd(menu_gui)
+				end)	
+		
+			end
+
+
 			if(lobby_settings_open)then
 				local lobby_types = {
 					"Public",

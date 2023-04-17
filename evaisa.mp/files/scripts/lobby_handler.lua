@@ -148,6 +148,76 @@ function IsCorrectVersion(lobby)
 	return true
 end
 
+function ModData()
+    local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
+	local bitser = dofile("mods/evaisa.mp/lib/bitser.lua")
+    local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "").."\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
+
+	local things = {}
+
+	for k, v in ipairs(ModGetActiveModIDs())do
+		things[v] = true
+	end
+
+    local file,err = io.open(save_folder,'rb')
+    if file then
+        local content = file:read("*all")
+
+        local data = {}
+
+        local parsedModData = nxml.parse(content)
+        for elem in parsedModData:each_child() do
+            if(elem.name == "Mod")then
+                local modID = elem.attr.name
+                local steamID = elem.attr.workshop_item_id
+    
+				if(things[modID])then
+
+					local infoFile = "mods/"..modID.."/mod.xml"
+					if(steamID ~= "0")then
+						infoFile = "../../workshop/content/881100/"..steamID.."/mod.xml"
+					end
+
+					local file2,err = io.open(infoFile,'rb')
+					if file2 then
+						local content2 = file2:read("*all")
+						local parsedModInfo = nxml.parse(content2)
+
+						if(elem.attr.enabled == "1")then
+
+							table.insert(data, {workshop_item_id = steamID, id = modID, name = parsedModInfo.attr.name, description = parsedModInfo.attr.description, settings_fold_open = (elem.attr.settings_fold_open == "1" and true or false), enabled = (elem.attr.enabled == "1" and true or false)})
+						end
+					end
+
+				end
+            end
+        end
+
+        file:close()
+
+		return data
+    end
+	return nil
+end
+
+function defineLobbyUserData(lobby)
+	if(mod_data ~= nil)then
+		--print("Setting mod data: "..mod_data)
+		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", json.stringify(mod_data))
+	end
+end
+
+function getLobbyUserData(lobby, userid)
+	local player_mod_data = steam.matchmaking.getLobbyMemberData(lobby, userid, "mod_data")
+	if(player_mod_data ~= nil)then
+		--print("Getting mod data: "..player_mod_data)
+		local data_received = json.parse(player_mod_data)
+		print(player_mod_data)
+		return data_received
+	end
+	return nil
+end
+
 
 function handleChatMessage(data)
 	--[[ 

@@ -861,11 +861,11 @@ ArenaGameplay = {
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
 
-        local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
+        --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
         if(projectileComp ~= nil)then
             local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")
-            GamePrint("who_shot: "..tostring(who_shot))
-        end
+            --GamePrint("who_shot: "..tostring(who_shot))
+        end]]
 
 
         local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")

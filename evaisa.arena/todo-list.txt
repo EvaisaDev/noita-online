@@ -16,6 +16,7 @@ Todo:
     You can steal shop items
     Sync shuffle
     sync world maybe?????? 
+    forfeit button
 
     
 Done:

@@ -38,7 +38,7 @@ order_deck = function()
 
         local shooter = EntityGetRootEntity(GetUpdatedEntityID())
 
-        GamePrint(EntityGetName(shooter))
+        --GamePrint(EntityGetName(shooter))
 
         oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
 

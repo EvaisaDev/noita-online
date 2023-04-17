@@ -29,8 +29,8 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.21
-Version_string = "260082349063"
+MP_VERSION = 1.23
+Version_string = "274280982362"
 
 Checksum_passed = false
 Spawned = false
@@ -367,6 +367,9 @@ function steam.matchmaking.onLobbyEnter(data)
 						gui_closed = true
 					end
 					lobby_gamemode.enter(lobby_code)
+
+
+					defineLobbyUserData(lobby_code)
 				end
 			end
 		end
@@ -505,6 +508,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 	steam.init()
 	steam.friends.setRichPresence( "status", "Noita Online - Menu" )
+	mod_data = ModData()
 
 	local response = request.send("http://evaisa.dev/noita-online-checksum.txt")
 

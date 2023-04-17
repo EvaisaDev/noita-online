@@ -24,7 +24,7 @@ playermenu = nil
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.31,
+    version = 0.32,
     settings = {
         {
             id = "damage_cap",
@@ -57,7 +57,7 @@ ArenaMode = {
             EntityKill(player)
         end
 
-        print("WE GOOD???")
+        --print("WE GOOD???")
 
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
@@ -119,6 +119,7 @@ ArenaMode = {
             playermenu:Update(data, lobby)
         end
 
+        --[[
         local player_ent = player.Get()
 
         if(player_ent ~= nil)then
@@ -149,6 +150,7 @@ ArenaMode = {
                 end
             end
         end
+        ]]
 
         --print("Did something go wrong?")
     end,
