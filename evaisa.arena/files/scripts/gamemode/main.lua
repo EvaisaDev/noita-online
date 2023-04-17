@@ -24,7 +24,7 @@ playermenu = nil
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.33,
+    version = 0.34,
     settings = {
         {
             id = "damage_cap",
