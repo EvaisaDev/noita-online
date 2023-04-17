@@ -24,7 +24,7 @@ playermenu = nil
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.32,
+    version = 0.33,
     settings = {
         {
             id = "damage_cap",
@@ -58,6 +58,8 @@ ArenaMode = {
         end
 
         --print("WE GOOD???")
+
+        GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
 
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then

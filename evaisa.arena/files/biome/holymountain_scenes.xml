@@ -6,15 +6,15 @@
     -->
     <mBufferedPixelScenes>
 
-        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz" pos_x="0" pos_y="0" skip_biome_checks="1" >
+        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz" pos_x="-174" pos_y="-133" skip_biome_checks="1" >
 
         </PixelScene>
 
-        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz" pos_x="512" pos_y="0" skip_biome_checks="1" >
+        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz" pos_x="338" pos_y="-133" skip_biome_checks="1" >
 
         </PixelScene>
 
-        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz" pos_x="1024" pos_y="0" skip_biome_checks="1" >
+        <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz" pos_x="850" pos_y="-133" skip_biome_checks="1" >
 
         </PixelScene>
 

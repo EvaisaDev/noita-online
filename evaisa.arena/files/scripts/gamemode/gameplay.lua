@@ -46,8 +46,10 @@ ArenaGameplay = {
             print("Gold count: "..goldCount)
         end
         local playerData = steamutils.GetLocalLobbyData(lobby, "player_data")--steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
-
+        local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
         
+        GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", tostring(rerollCount) )
+
         if(playerData ~= nil and playerData ~= "")then
             data.client.player_loaded_from_data = true
             data.client.serialized_player = bitser.dumps(playerData)
@@ -180,6 +182,17 @@ ArenaGameplay = {
             end
         end
     end,
+    IsInBounds = function(x, y, max_distance)
+        local players = EntityGetWithTag("player_unit") or {}
+        for k, v in pairs(players)do
+            local x2, y2 = EntityGetTransform(v)
+            local distance = math.sqrt((x2 - x) ^ 2 + (y2 - y) ^ 2)
+            if(distance > max_distance)then
+                return false
+            end
+        end
+        return true
+    end,
     DamageZoneCheck = function(x, y, max_distance, distance_cap)
         local players = EntityGetWithTag("player_unit") or {}
         for k, v in pairs(players)do
@@ -309,7 +322,7 @@ ArenaGameplay = {
         player.Immortal(true)
 
         -- move player to correct position
-        player.Move(174, 133)
+        player.Move(0, 0)
 
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds()
@@ -618,16 +631,33 @@ ArenaGameplay = {
                 local spawn_point = spawn_points[Random(1, #spawn_points)]
                 local x, y = EntityGetTransform(spawn_point)
 
-                data.preparing = false
+                local spawn_loaded = DoesWorldExistAt( x-100, y-100, x+100, y+100 )
+
                 player.Move(x, y)
 
-                GamePrint("Spawned!!")
-                
-                if(not steamutils.IsOwner(lobby))then
-                    message_handler.send.Loaded(lobby)
-                end
+                print("Arena loaded? "..tostring(spawn_loaded))
 
-                message_handler.send.Health(lobby)
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, 400)
+
+                if(not in_bounds)then
+                    print("Game tried to spawn player out of bounds, retrying...")
+                    GamePrint("Game attempted to spawn you out of bounds, retrying...")
+                end
+                
+                if(spawn_loaded and in_bounds)then
+                    
+
+                    data.preparing = false
+                    
+
+                    GamePrint("Spawned!!")
+                    
+                    if(not steamutils.IsOwner(lobby))then
+                        message_handler.send.Loaded(lobby)
+                    end
+
+                    message_handler.send.Health(lobby)
+                end
             else
                 player.Move(data.spawn_point.x, data.spawn_point.y)
             end
@@ -638,7 +668,7 @@ ArenaGameplay = {
                 table.insert(player_entities, v.entity)
             end
         end
-        if(not IsPaused())then
+        if(not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
             game_funcs.RenderOffScreenMarkers(player_entities)
             game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
             ArenaGameplay.UpdateHealthbars(data)
@@ -708,6 +738,9 @@ ArenaGameplay = {
             data.client.serialized_player = player.Serialize()
            -- steam.matchmaking.setLobbyMemberData(lobby, "player_data", data.client.serialized_player)
             steamutils.SetLocalLobbyData(lobby, "player_data",  player.Serialize(true))
+            local rerollCount = GlobalsGetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
+            steamutils.SetLocalLobbyData(lobby, "reroll_count",  rerollCount)
+
            -- print("Saving player data")
         end
 
@@ -975,7 +1008,7 @@ ArenaGameplay = {
         end
 
         if(GameHasFlagRun("in_hm") and current_player)then
-            player.Move(174, 133)
+            player.Move(0, 0)
             GameRemoveFlagRun("in_hm")
         end
 
