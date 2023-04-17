@@ -37,7 +37,7 @@ Spawned = false
 
 disable_print = false
 
-dev_mode = true
+dev_mode = false
 
 base64 = require("base64")
 
