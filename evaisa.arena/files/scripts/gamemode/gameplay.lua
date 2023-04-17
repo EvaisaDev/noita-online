@@ -6,6 +6,12 @@ local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdo
 local json = dofile("mods/evaisa.arena/lib/json.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
+local playerRunQueue = {}
+
+function RunWhenPlayerExists(func)
+    table.insert(playerRunQueue, func)
+end
+
 ArenaGameplay = {
     GetNumRounds = function()
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -272,23 +278,42 @@ ArenaGameplay = {
             ArenaGameplay.WinnerCheck(lobby, data)
         end
     end,
+    ClearWorld = function()
+        local all_entities = EntityGetInRadius(0, 0, math.huge)
+        for k, v in pairs(all_entities)do
+            if(v ~= GameGetWorldStateEntity()--[[ and v ~= GameGetPlayerStatsEntity()]])then
+                if(EntityHasTag(v, "player_unit"))then
+                    EntityRemoveTag(v, "player_unit")
+                end
+                EntityKill(v)
+            end
+        end
+    end,
     LoadLobby = function(lobby, data, show_message, first_entry)
         show_message = show_message or false
         first_entry = first_entry or false
+
+        if(not first_entry)then
+            ArenaGameplay.ClearWorld()
+        end
 
         if(data.client.serialized_player)then
             first_entry = false
         end
 
+        --[[
         local current_player = player.Get()
 
         if(current_player == nil)then
             ArenaGameplay.LoadPlayer(lobby, data)
         end
+        ]]
 
-        if(first_entry and player.Get())then
-            GameDestroyInventoryItems( player.Get() )
-        end
+        RunWhenPlayerExists(function()
+            if(first_entry and player.Get())then
+                GameDestroyInventoryItems( player.Get() )
+            end
+        end)
 
         -- clean other player's data
         ArenaGameplay.CleanMembers(lobby, data)
@@ -347,32 +372,42 @@ ArenaGameplay = {
 
         GamePrint("You were granted " .. tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
 
-        if(not data.client.player_loaded_from_data)then
-            player.GiveGold(extra_gold)
-        end
+        print("Loaded from data: "..tostring(player_loaded_from_data))
 
-        -- if we are the owner of the lobby
-        if(steamutils.IsOwner(lobby))then
-            -- get the gold count from the lobby
-            local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
-            -- add the new gold
-            gold = gold + extra_gold
-            -- set the new gold count
-            steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
-        end
+        RunWhenPlayerExists(function()
+            if(not data.client.player_loaded_from_data)then
+                print("Giving gold: "..tostring(extra_gold))
+                player.GiveGold(extra_gold)
+            end
+        end)
+
+
+        RunWhenPlayerExists(function()
+            -- if we are the owner of the lobby
+            if(steamutils.IsOwner(lobby))then
+                -- get the gold count from the lobby
+                local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
+                -- add the new gold
+                gold = gold + extra_gold
+                -- set the new gold count
+                steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+            end
+        end)
 
         -- increment holy mountain count
         
         ArenaGameplay.AddRound()
        
 
-        -- give starting gear if first entry
-        if(first_entry)then
-            player.GiveStartingGear()
-            if(((rounds - 1) > 0))then
-                player.GiveMaxHealth(0.4 * (rounds - 1))
+        RunWhenPlayerExists(function()
+            -- give starting gear if first entry
+            if(first_entry)then
+                player.GiveStartingGear()
+                if(((rounds - 1) > 0))then
+                    player.GiveMaxHealth(0.4 * (rounds - 1))
+                end
             end
-        end
+        end)
 
         message_handler.send.Unready(lobby, true)
 
@@ -397,7 +432,17 @@ ArenaGameplay = {
     LoadArena = function(lobby, data, show_message)
         show_message = show_message or false
 
+        ArenaGameplay.ClearWorld()
+
         playermenu:Close()
+        
+        --[[
+        local current_player = player.Get()
+
+        if(current_player == nil)then
+            ArenaGameplay.LoadPlayer(lobby, data)
+        end
+        ]]
 
         -- manage flags
         GameRemoveFlagRun("ready_check")
@@ -419,14 +464,16 @@ ArenaGameplay = {
         local arena = arena_list[data.random.range(1, #arena_list)]
         BiomeMapLoad_KeepPlayer( arena.biome_map, arena.pixel_scenes )
 
-        player.Lock()
+        RunWhenPlayerExists(function()
+            player.Lock()
 
-        -- move player to correct position
-        data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
+            -- move player to correct position
+            data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
 
-        ArenaGameplay.LoadClientPlayers(lobby, data)
+            ArenaGameplay.LoadClientPlayers(lobby, data)
 
-        GamePrint("Loading arena")
+            GamePrint("Loading arena")
+        end)
     end,
     ReadyCheck = function(lobby, data)
         return ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby)
@@ -718,6 +765,9 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
+
+
+
         for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
@@ -757,6 +807,99 @@ ArenaGameplay = {
         ArenaGameplay.UpdateTweens(lobby, data)
         if(GameGetFrameNum() % 60 == 0)then
             ArenaGameplay.ValidatePlayers(lobby, data)
+        end
+    end,
+    LateUpdate = function(lobby, data)
+        if(data.state == "arena")then
+            ArenaGameplay.KillCheck(lobby, data)
+            
+            if(data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0)then
+                local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
+                --local cast_state = GlobalsGetValue("player_cast_state") or nil
+
+                --print(tostring(cast_state))
+
+                local cast_state = nil
+
+                --GamePrint("Sending special seed:"..tostring(special_seed))
+                message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
+                data.client.projectiles_fired = 0
+                data.client.projectile_rng_stack = {}
+            end
+        
+
+            GlobalsSetValue( "wand_fire_count", "0" )
+            --
+        else
+            data.client.projectile_rng_stack = {}
+            data.client.projectiles_fired = 0
+        end
+        local current_player = player.Get()
+
+
+        if((not GameHasFlagRun("player_unloaded")) and current_player == nil)then
+            ArenaGameplay.LoadPlayer(lobby, data)
+            print("Player is missing, spawning player.")
+        end
+
+
+        if(data.current_player ~= current_player)then
+            data.current_player = current_player
+            if(current_player ~= nil)then
+                np.RegisterPlayerEntityId(current_player)
+            end
+        end
+
+        if(GameHasFlagRun("in_hm") and current_player)then
+            player.Move(0, 0)
+            GameRemoveFlagRun("in_hm")
+        end
+
+        if(GameGetFrameNum() % 5 == 0)then
+            -- if we are host
+            if(steamutils.IsOwner(lobby))then
+                ArenaGameplay.SendGameData(lobby, data)
+            end
+        end
+
+        for k, v in pairs(data.players)do
+            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
+                local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                if(controls)then
+                    if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
+                        data.players[k].controls.kick = false
+                    end
+                    -- mButtonDownFire
+                    if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
+                        data.players[k].controls.fire = false
+                    end
+                    -- mButtonDownFire2
+                    if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
+                        data.players[k].controls.fire2 = false
+                    end
+                    -- mButtonDownLeft
+                    if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
+                        data.players[k].controls.leftClick = false
+                    end
+                    -- mButtonDownRight
+                    if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
+                        data.players[k].controls.rightClick = false
+                    end
+                end
+            end
+        end
+
+        local current_player = player.Get()
+
+        if((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player))then
+            --print("Running player function queue")
+            -- run playerRunQueue
+            for i = #playerRunQueue, 1, -1 do
+                local func = playerRunQueue[#playerRunQueue]
+                print("Ran item #" .. i .. " in playerRunQueue")
+                func()
+                table.remove(playerRunQueue, #playerRunQueue)
+            end
         end
     end,
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
@@ -965,83 +1108,6 @@ ArenaGameplay = {
 
                     end
 
-                end
-            end
-        end
-    end,
-    LateUpdate = function(lobby, data)
-        if(data.state == "arena")then
-            ArenaGameplay.KillCheck(lobby, data)
-            
-            if(data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0)then
-                local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
-                --local cast_state = GlobalsGetValue("player_cast_state") or nil
-
-                --print(tostring(cast_state))
-
-                local cast_state = nil
-
-                --GamePrint("Sending special seed:"..tostring(special_seed))
-                message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
-                data.client.projectiles_fired = 0
-                data.client.projectile_rng_stack = {}
-            end
-        
-
-            GlobalsSetValue( "wand_fire_count", "0" )
-            --
-        else
-            data.client.projectile_rng_stack = {}
-            data.client.projectiles_fired = 0
-        end
-        local current_player = player.Get()
-
-        if((not GameHasFlagRun("player_unloaded")) and current_player == nil)then
-            ArenaGameplay.LoadPlayer(lobby, data)
-        end
-
-        if(data.current_player ~= current_player)then
-            data.current_player = current_player
-            if(current_player ~= nil)then
-                np.RegisterPlayerEntityId(current_player)
-            end
-        end
-
-        if(GameHasFlagRun("in_hm") and current_player)then
-            player.Move(0, 0)
-            GameRemoveFlagRun("in_hm")
-        end
-
-        if(GameGetFrameNum() % 5 == 0)then
-            -- if we are host
-            if(steamutils.IsOwner(lobby))then
-                ArenaGameplay.SendGameData(lobby, data)
-            end
-        end
-
-        for k, v in pairs(data.players)do
-            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
-                local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
-                if(controls)then
-                    if(ComponentGetValue2(controls, "mButtonDownKick") == false)then
-                        data.players[k].controls.kick = false
-                    end
-                    -- mButtonDownFire
-                    if(ComponentGetValue2(controls, "mButtonDownFire") == false)then
-                        data.players[k].controls.fire = false
-                    end
-                    -- mButtonDownFire2
-                    if(ComponentGetValue2(controls, "mButtonDownFire2") == false)then
-                        data.players[k].controls.fire2 = false
-                    end
-                    -- mButtonDownLeft
-                    if(ComponentGetValue2(controls, "mButtonDownLeftClick") == false)then
-                        data.players[k].controls.leftClick = false
-                    end
-                    -- mButtonDownRight
-                    if(ComponentGetValue2(controls, "mButtonDownRightClick") == false)then
-                        data.players[k].controls.rightClick = false
-                    end
                 end
             end
         end

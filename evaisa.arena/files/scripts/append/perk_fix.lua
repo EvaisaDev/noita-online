@@ -15,6 +15,7 @@ local remove_list = {
     MEGA_BEAM_STONE = true,
     GOLD_IS_FOREVER = true,
     EXPLODING_GOLD = true,
+	EXTRA_MONEY_TRICK_KILL = true,
     TRICK_BLOOD_MONEY = true,
     EXPLODING_CORPSES = true,
     INVISIBILITY = true,
@@ -47,7 +48,6 @@ local remove_list = {
 
 local allow_on_clients = {
     PERSONAL_LASER = true,
-    EXTRA_MONEY_TRICK_KILL = true,
     HOVER_BOOST = true,
     FASTER_LEVITATION = true,
     STRONG_KICK = true,

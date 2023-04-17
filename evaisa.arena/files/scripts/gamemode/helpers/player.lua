@@ -5,10 +5,23 @@ dofile_once( "data/scripts/perks/perk_list.lua" )
 local player_helper = {}
 
 player_helper.Get = function()
-    local player = EntityGetWithTag("player_unit") or {}
-    if(player == nil or #player == 0)then
+
+    local player = EntityGetWithTag("player_unit")
+
+    if(player == nil)then
         return
     end
+
+    if(#player > 1)then
+        print("Found more than one player, issue??")
+    end
+
+    if(player[1] ~= last_player_entity)then
+        print("Player changed from "..tostring(last_player_entity).." to "..tostring(player[1]))
+    end
+
+    last_player_entity = player[1]
+
     return player[1]
 end
 
@@ -75,12 +88,14 @@ end
 player_helper.GiveGold = function( amount )
     local player = player_helper.Get()
     if(player == nil)then
+        print("Player not found!")
         return
     end
     local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
     local money = ComponentGetValue2(wallet_component, "money")
     local add_amount = amount
     ComponentSetValue2(wallet_component, "money", money + add_amount)
+    print("Gave " .. add_amount .. " gold to player.")
 end
 
 player_helper.GetGold = function()
@@ -100,7 +115,7 @@ player_helper.GiveStartingGear = function ()
     end
     local x, y = EntityGetTransform(player)
     local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
-    print("Starting gear granted.")
+    print("Starting gear granted to player entity: " .. tostring(player) )
     GamePickUpInventoryItem(player, wand, false)
 end
 

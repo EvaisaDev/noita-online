@@ -4,6 +4,8 @@ game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
 
+last_player_entity = nil
+
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
