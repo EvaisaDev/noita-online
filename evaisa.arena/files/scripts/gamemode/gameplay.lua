@@ -217,6 +217,155 @@ ArenaGameplay = {
             end
         end
     end,
+    ResetDamageZone = function(lobby, data)
+        GuiDestroy(data.zone_gui)
+        data.zone_gui = nil
+        data.zone_size = nil
+        data.last_step_frame = nil
+        data.ready_for_zone = false
+        data.zone_spawned = false
+    end,
+    DamageZoneHandler = function(lobby, data, can_shrink)
+        if(data.current_arena)then
+            local default_size = data.current_arena.zone_size
+            
+            --{{"disabled", "Disabled"}, {"static", "Static"}, {"shrinking_Linear", "Linear Shrinking"}, {"shrinking_step", "Stepped Shrinking"}},
+            local zone_type = GlobalsGetValue("zone_shrink", "static")
+            local zone_speed = tonumber(GlobalsGetValue("zone_speed", "30")) -- pixels per step or pixels per minute (frames * 60 * 60)
+            local zone_step_interval = tonumber(GlobalsGetValue("zone_step_interval", "30")) * 60 -- seconds between steps
+
+            local step_time = zone_step_interval / 2
+
+            if(zone_type ~= "disabled")then
+                if(data.ready_for_zone and not data.zone_spawned)then
+                    EntityLoad("mods/evaisa.arena/files/entities/area_indicator.xml", 0, 0)
+                    data.zone_size = default_size
+                    data.ready_for_zone = false
+                    data.zone_spawned = true
+
+                    GlobalsSetValue("arena_area_size", tostring(data.zone_size))
+                    GlobalsGetValue("arena_area_size_cap", tostring(data.zone_size + 200))
+                end
+
+
+
+                if(data.zone_size ~= nil and can_shrink)then
+
+                    local last_zone_size = data.zone_size
+
+                    if(data.last_step_frame == nil)then
+                        data.last_step_frame = GameGetFrameNum()
+                    end
+
+                    if(zone_type == "shrinking_Linear")then
+
+                        if(data.zone_gui == nil)then
+                            data.zone_gui = GuiCreate()
+                        end
+
+                        GuiStartFrame(data.zone_gui)
+
+                        local step_size = zone_speed / 60 / 60
+
+                        --GamePrint("step_size: " .. step_size)
+                        
+                        data.zone_size = data.zone_size - step_size
+
+                        if(data.zone_size < 0)then
+                            data.zone_size = 0
+                        end
+
+                        GlobalsSetValue("arena_area_size", tostring(data.zone_size))
+                        GlobalsGetValue("arena_area_size_cap", tostring(data.zone_size + 200))
+
+                        
+
+                        if(not IsPaused())then
+
+                            local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
+
+                            local text = "Zone is shrinking (" .. math.ceil(data.zone_size) .. "/" .. default_size ..")"
+
+                            local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
+
+                            GuiBeginAutoBox(data.zone_gui)
+                            -- draw at bottom center of screen
+                            GuiZSetForNextWidget(data.zone_gui, -200)
+                            GuiText(data.zone_gui, (screen_width / 2) - (text_width / 2), screen_height - 12, text)
+                            GuiZSetForNextWidget(data.zone_gui, -150)
+                            GuiEndAutoBoxNinePiece(data.zone_gui, 2)
+                        end
+
+                    elseif(zone_type == "shrinking_step")then
+
+                        if(data.zone_gui == nil)then
+                            data.zone_gui = GuiCreate()
+                        end
+
+                        GuiStartFrame(data.zone_gui)
+                        -- every step should take step_time seconds to complete
+                        if(GameGetFrameNum() - data.last_step_frame > zone_step_interval)then
+                            local step_size = zone_speed / step_time
+                            data.zone_size = data.zone_size - step_size
+
+                            if(data.zone_size < 0)then
+                                data.zone_size = 0
+                            end
+
+                            if(GameGetFrameNum() - data.last_step_frame > zone_step_interval + step_time)then
+                                data.last_step_frame = GameGetFrameNum()
+                            end
+
+                            GlobalsSetValue("arena_area_size", tostring(data.zone_size))
+                            GlobalsGetValue("arena_area_size_cap", tostring(data.zone_size + 200))
+
+                            if(not IsPaused())then
+
+                                local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
+
+                                local text = "Zone is shrinking (" .. math.ceil(data.zone_size) .. "/" .. default_size ..")"
+
+                                local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
+
+                                
+                                GuiBeginAutoBox(data.zone_gui)
+                                -- draw at bottom center of screen
+                                GuiZSetForNextWidget(data.zone_gui, -200)
+                                GuiText(data.zone_gui, (screen_width / 2) - (text_width / 2), screen_height - 14, text)
+                                GuiZSetForNextWidget(data.zone_gui, -150)
+                                GuiEndAutoBoxNinePiece(data.zone_gui, 2)
+                            end
+
+                        else
+                            if(not IsPaused())then
+                                local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
+
+                                local text = "Zone will shrink in " .. math.ceil((zone_step_interval - (GameGetFrameNum() - data.last_step_frame)) / 60) .. " seconds"
+
+                                local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
+
+                                GuiBeginAutoBox(data.zone_gui)
+                                -- draw at bottom center of screen
+                                GuiZSetForNextWidget(data.zone_gui, -200)
+                                GuiText(data.zone_gui, (screen_width / 2) - (text_width / 2), screen_height - 14, text)
+                                GuiZSetForNextWidget(data.zone_gui, -150)
+                                GuiEndAutoBoxNinePiece(data.zone_gui, 2)
+                            end
+                        end
+                    end
+
+                   -- GamePrint("Zone size: " .. data.zone_size .. " (" .. last_zone_size .. " -> " .. data.zone_size .. ")")
+                end
+
+
+                if(GameGetFrameNum() % 60 == 0)then
+                    ArenaGameplay.DamageZoneCheck(0, 0, data.zone_size, data.zone_size + 200)
+                end
+
+
+            end
+        end
+    end,
     WinnerCheck = function(lobby, data)
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
@@ -332,22 +481,26 @@ ArenaGameplay = {
         data.client.previous_wand = nil
         data.client.previous_anim = nil
         data.projectile_seeds = {}
+        data.current_arena = nil
+        ArenaGameplay.ResetDamageZone(lobby, data)
         --data.client.projectile_homing = {}
 
         -- set state
         data.state = "lobby"
 
-        -- clean and unlock player entity
-        player.Clean(first_entry)
-        player.Unlock()
+        RunWhenPlayerExists(function()
+            -- clean and unlock player entity
+            player.Clean(first_entry)
+            player.Unlock()
 
-        GameRemoveFlagRun("player_is_unlocked")
+            GameRemoveFlagRun("player_is_unlocked")
 
-        -- grant immortality
-        player.Immortal(true)
+            -- grant immortality
+            player.Immortal(true)
 
-        -- move player to correct position
-        player.Move(0, 0)
+            -- move player to correct position
+            player.Move(0, 0)
+        end)
 
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds()
@@ -426,6 +579,7 @@ ArenaGameplay = {
         -- set ready counter
         ArenaGameplay.ReadyCounter(lobby, data)
 
+
         -- print member data
         --print(json.stringify(data))
     end,
@@ -462,6 +616,9 @@ ArenaGameplay = {
 
         -- load map
         local arena = arena_list[data.random.range(1, #arena_list)]
+
+        data.current_arena = arena
+
         BiomeMapLoad_KeepPlayer( arena.biome_map, arena.pixel_scenes )
 
         RunWhenPlayerExists(function()
@@ -675,6 +832,9 @@ ArenaGameplay = {
         if(data.preparing)then
             local spawn_points = EntityGetWithTag("spawn_point") or {}
             if(spawn_points ~= nil and #spawn_points > 0)then
+
+                data.ready_for_zone = true
+
                 local spawn_point = spawn_points[Random(1, #spawn_points)]
                 local x, y = EntityGetTransform(spawn_point)
 
@@ -720,6 +880,13 @@ ArenaGameplay = {
             game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
             ArenaGameplay.UpdateHealthbars(data)
         end
+
+        if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+            ArenaGameplay.DamageZoneHandler(lobby, data, true)
+        else
+            ArenaGameplay.DamageZoneHandler(lobby, data, false)
+        end
+
         if(steamutils.IsOwner(lobby))then
             if(not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))then
                 data.players_loaded = true
@@ -734,10 +901,7 @@ ArenaGameplay = {
         --if(GameGetFrameNum() % 2 == 0)then
             message_handler.send.CharacterUpdate(lobby)
         --end
-        if(GameGetFrameNum() % 60 == 0)then
-            steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
-            ArenaGameplay.DamageZoneCheck(0, 0, 600, 800)
-        end
+
         if(GameHasFlagRun("took_damage"))then
             GameRemoveFlagRun("took_damage")
             message_handler.send.Health(lobby)
@@ -766,6 +930,16 @@ ArenaGameplay = {
     end,
     Update = function(lobby, data)
 
+        if(GameGetFrameNum() % 60 == 0)then
+            message_handler.send.Handshake(lobby)
+        end
+
+        --[[local chunk_loaders = EntityGetWithTag("chunk_loader") or {}
+        for k, v in pairs(chunk_loaders)do
+            local chunk_loader_x, chunk_loader_y = EntityGetTransform(v)
+            game_funcs.LoadRegion(chunk_loader_x, chunk_loader_y, 1000, 1000)
+        end]]
+        
 
 
         for k, v in pairs(data.players)do
@@ -894,12 +1068,12 @@ ArenaGameplay = {
         if((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player))then
             --print("Running player function queue")
             -- run playerRunQueue
-            for i = #playerRunQueue, 1, -1 do
-                local func = playerRunQueue[#playerRunQueue]
+            for i = 1, #playerRunQueue do
+                local func = playerRunQueue[i]
                 print("Ran item #" .. i .. " in playerRunQueue")
                 func()
-                table.remove(playerRunQueue, #playerRunQueue)
             end
+            playerRunQueue = {}
         end
     end,
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)

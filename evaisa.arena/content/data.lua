@@ -5,5 +5,6 @@ arena_list = {
         spawn_points = {
             {x = 0, y = 0}
         },
+        zone_size = 600,
     }
 }

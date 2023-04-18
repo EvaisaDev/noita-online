@@ -1,0 +1,61 @@
+<Entity name="Area Indicator">
+    <StreamingKeepAliveComponent/>
+    <ParticleEmitterComponent
+		_tags="area_indicator_circle"
+		emitted_material_name="spark_red"
+		gravity.y="0.0"
+		lifetime_min="0.1"
+		lifetime_max="0.5"
+		count_min="300"
+		count_max="400"
+		render_on_grid="0"
+		fade_based_on_lifetime="1"
+		area_circle_radius.min="16"
+		area_circle_radius.max="16"
+		cosmetic_force_create="0"
+		render_ultrabright="1"
+		airflow_force="0.3"
+		airflow_time="0.01"
+		airflow_scale="0.05"
+		emission_interval_min_frames="0"
+		emission_interval_max_frames="0"
+		emit_cosmetic_particles="1"
+		is_emitting="1" >
+	</ParticleEmitterComponent>
+
+<!--
+    <ParticleEmitterComponent
+		_tags="area_indicator_outer"
+		emitted_material_name="spark_red_bright"
+		gravity.y="0.0"
+		lifetime_min="7"
+		lifetime_max="12"
+		count_min="800"
+		count_max="1000"
+		render_ultrabright="1"
+		render_on_grid="0"
+		fade_based_on_lifetime="1"
+		area_circle_radius.min="16"
+		area_circle_radius.max="16"
+		cosmetic_force_create="0"
+		airflow_force="0.3"
+		airflow_time="0.03"
+		airflow_scale="0.07"
+		emission_interval_min_frames="0"
+		emission_interval_max_frames="0"
+		emit_cosmetic_particles="1"
+		is_emitting="1" >
+	</ParticleEmitterComponent>
+-->
+    <LuaComponent
+        script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/area_indicator.lua"
+        execute_on_added = "1"
+        execute_every_n_frame = "1"
+    />
+
+	<Entity name="chunk_loader">  
+		<Base file="mods/evaisa.arena/files/entities/chunk_loader.xml">
+		</Base>  
+	</Entity>
+
+</Entity>

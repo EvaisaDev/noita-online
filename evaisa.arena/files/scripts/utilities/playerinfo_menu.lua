@@ -130,6 +130,13 @@ function playerinfo_menu:New()
                 local username = v.name or steam.friends.getFriendPersonaName(playerid)
                 GuiZSetForNextWidget(self.gui, 900)
                 GuiText(self.gui, 0, 0, username)
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+                GuiText(self.gui, 0, 0, "Ping: "..tostring(v.ping).."ms")
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+                GuiText(self.gui, 0, 0, "Delay: "..tostring(v.delay_frames).." frames")
+                
                 if(index == 1)then
                     local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
                     scroll_offset = scroll_y - self.offset_y - 2
@@ -197,6 +204,7 @@ function playerinfo_menu:New()
                 perk_draw_x = draw_x
                 perk_draw_y = draw_y
                 GuiLayoutEnd(self.gui)
+
                 if(index ~= player_count)then
                     GuiText(self.gui, 0, -15, " ")
                 end

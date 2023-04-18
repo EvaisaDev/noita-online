@@ -20,8 +20,24 @@ dofile("mods/evaisa.mp/files/scripts/gui_utils.lua")
 --    return EntityGet_cfunc(EntityManager, entity_nr)
 --end
 
-
 game_funcs = {
+	GetUnixTimestamp = function()
+		return steam.utils.getUnixTimeStamp()
+	end,
+	GetUnixTimeElapsed = function(time1, time2)
+		return steam.utils.getUnixTimeElapsed(time1, time2)
+	end,
+	UintToString = function(uint)
+		return steam.utils.uintToString(uint)
+	end,
+	StringToUint = function(str)
+		return steam.utils.stringToUint(str)
+	end,
+	--[[LoadRegion = function(start_x, start_y, width, height)
+		local region = ffi.new("world_region", {start_x, start_y, width, height})
+		--GamePrint("Loading region: "..tostring(start_x)..","..tostring(start_y)..","..tostring(width)..","..tostring(height))
+		LoadRegion_cfunc(region)
+	end,]]
 	SetPlayerEntity = function (entity_id)
 		--[[local entity = EntityGet(entity_id)
 		local vector = ffi.cast("void****", 0x00ff5604)[0][22]

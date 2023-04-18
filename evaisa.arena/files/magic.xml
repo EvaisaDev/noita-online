@@ -3,5 +3,7 @@
   DESIGN_PLAYER_START_POS_X = "0"
   DESIGN_PLAYER_START_POS_Y = "0"
   BIOME_MAP = "mods/evaisa.arena/files/scripts/world/map_arena.lua"
+  STREAMING_CHUNK_TARGET="32"
+  
   > 
 </MagicNumbers>

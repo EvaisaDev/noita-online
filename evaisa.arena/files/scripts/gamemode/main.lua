@@ -26,15 +26,48 @@ playermenu = nil
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.34,
+    version = 0.353,
     settings = {
         {
             id = "damage_cap",
             name = "Damage Cap",
+            description = "One shot protection, how much damage can be dealt to a player at once.",
             type = "enum",
             options = {{"0.25", "25% of max"}, {"0.5", "50% of max"}, {"0.75", "75% of max"}, {"disabled", "Disabled"}},
             default = "0.25"
-        }
+        },
+        {
+            id = "zone_shrink",
+            name = "Zone Mode",
+            description = "How the damage zone shrinks over time.",
+            type = "enum",
+            options = {{"disabled", "Disabled"}, {"static", "Static"}, {"shrinking_Linear", "Linear Shrinking"}, {"shrinking_step", "Stepped Shrinking"}},
+            default = "static"
+        },
+        {
+            id = "zone_speed",
+            name = "Zone Speed",
+            description = "How fast the damage zone shrinks over time. \nPixels per step or pixels per minute.",
+            type = "slider",
+            min = 1,
+            max = 100,
+            default = 30,
+            display_multiplier = 1,
+            formatting_string = " $0",
+            width = 100
+        },
+        {
+            id = "zone_step_interval",
+            name = "Zone Interval",
+            description = "Seconds between zone shrinks. \n(Only used in Stepped Shrinking mode)",
+            type = "slider",
+            min = 1,
+            max = 90,
+            default = 30,
+            display_multiplier = 1,
+            formatting_string = " $0s",
+            width = 100
+        },
     },
     default_data = {
         total_gold = "0",
@@ -47,6 +80,24 @@ ArenaMode = {
             damage_cap = 0.25
         end
         GlobalsSetValue("damage_cap", tostring(damage_cap))
+
+        local zone_shrink = steam.matchmaking.getLobbyData(lobby, "setting_zone_shrink")
+        if(zone_shrink == nil)then
+            zone_shrink = "static"
+        end
+        GlobalsSetValue("zone_shrink", tostring(zone_shrink))
+
+        local zone_speed = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_speed"))
+        if(zone_speed == nil)then
+            zone_speed = 30
+        end
+        GlobalsSetValue("zone_speed", tostring(zone_speed))
+
+        local zone_step_interval = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_step_interval"))
+        if(zone_step_interval == nil)then
+            zone_step_interval = 30
+        end
+        GlobalsSetValue("zone_step_interval", tostring(zone_step_interval))
 
         print("Lobby data refreshed")
     end,
@@ -67,7 +118,7 @@ ArenaMode = {
         if(game_in_progress)then
             ArenaMode.start(lobby)
         end
-        steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
+        message_handler.send.Handshake(lobby)
     end,
     start = function(lobby)
 
@@ -77,11 +128,7 @@ ArenaMode = {
 
         local player_entity = player.Get()
 
-        local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
-        if(damage_cap == nil)then
-            damage_cap = 0.25
-        end
-        GlobalsSetValue("damage_cap", tostring(damage_cap))
+        ArenaMode.refresh(lobby)
 
         data = data_holder:New()
         data.state = "lobby"
@@ -93,9 +140,6 @@ ArenaMode = {
         if(player_entity == nil)then
             gameplay_handler.LoadPlayer(lobby, data)
         end
-
-
-        steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
 
         gameplay_handler.LoadLobby(lobby, data, true, true)
 

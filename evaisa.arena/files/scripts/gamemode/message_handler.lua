@@ -215,18 +215,30 @@ ArenaMessageHandler = {
                     end]]
 
 
-                    local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 1, function(value)
+                    --local positionTween = tween.vector(Vector.new(x, y), Vector.new(message.x, message.y), 1, function(value)
                         local newPlayerEntity = data.players[tostring(user)].entity
                         if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
-                            EntitySetTransform(newPlayerEntity, value.x, value.y)
-                            EntityApplyTransform(newPlayerEntity, value.x, value.y)
+
+                            local x, y = message.x, message.y
+
+                            if((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true)then
+                                local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
+                                local vel_x, vel_y = message.vel_x / 60, message.vel_y / 60
+                                local new_x = x + (vel_x * delay)
+                                local new_y = y + (vel_y * delay)
+                                EntitySetTransform(newPlayerEntity, new_x, new_y)
+                                EntityApplyTransform(newPlayerEntity, new_x, new_y)
+                            else
+                                EntitySetTransform(newPlayerEntity, x, y)
+                                EntityApplyTransform(newPlayerEntity, x, y)
+                            end
                             --GamePrint("Updating client position")
                         end
-                    end)
+                   -- end)
         
-                    positionTween.id = tostring(user)
+                    --positionTween.id = tostring(user)
 
-                    table.insert(data.tweens, positionTween)
+                    --table.insert(data.tweens, positionTween)
 
                     --[[
                     local velocityTween = tween.vector(Vector.new(vel_x, vel_y), Vector.new(data.vel_x, data.vel_y), 2, function(value)
@@ -484,10 +496,20 @@ ArenaMessageHandler = {
                 end
             end
         end,
+        handshake = function(lobby, message, user, data)
+            steamutils.sendDataToPlayer({type = "handshake_confirmed", frame_sent = message.frame_sent, time_sent = message.time_sent--[[, time_received = (game_funcs.UintToString(game_funcs.GetUnixTimestamp()))]]}, user)
+        end,
+        handshake_confirmed = function(lobby, message, user, data)
+            if(data.players[tostring(user)] ~= nil)then
+
+                data.players[tostring(user)].ping = game_funcs.GetUnixTimeElapsed(game_funcs.StringToUint(message.time_sent), game_funcs.GetUnixTimestamp())
+                data.players[tostring(user)].delay_frames = GameGetFrameNum() - message.frame_sent
+            end
+        end,
     },
     send = {
         Handshake = function(lobby)
-            steamutils.sendData({type = "handshake"}, steamutils.messageTypes.OtherPlayers, lobby)
+            steamutils.sendData({type = "handshake", frame_sent = GameGetFrameNum(), time_sent = (game_funcs.UintToString(game_funcs.GetUnixTimestamp())) }, steamutils.messageTypes.OtherPlayers, lobby)
         end,
         Ready = function(lobby)
             if(steamutils.IsOwner(lobby))then

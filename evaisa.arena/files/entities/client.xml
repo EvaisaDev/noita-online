@@ -32,6 +32,12 @@
         </GameEffectComponent >
     </Entity>
 
+  <Entity name="chunk_loader">  
+      <Base file="mods/evaisa.arena/files/entities/chunk_loader.xml">
+      </Base>  
+  </Entity>
+
+
   <Entity name="cursor">
     <SpriteComponent 
         alpha="1" 

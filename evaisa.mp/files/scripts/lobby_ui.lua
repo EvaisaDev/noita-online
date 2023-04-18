@@ -548,6 +548,7 @@ local windows = {
 					end
 					GuiLayoutEnd(menu_gui)
 
+					local previous_type = "text_input"
 					
 					for k, setting in ipairs(active_mode.settings or {})do
 
@@ -570,13 +571,41 @@ local windows = {
 								end
 							end
 
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 5, setting.name..": "..selected_name))then
+							local offset = 1
+
+							if(previous_type == "text_input")then
+								offset = 5
+							end
+
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, setting.name..": "..selected_name))then
 								selected_index = selected_index + 1
 								if(selected_index > #setting.options)then
 									selected_index = 1
 								end
 								gamemode_settings[setting.id] = setting.options[selected_index][1]
 							end
+							GuiTooltip(menu_gui, "", setting.description)
+
+							previous_type = "enum"
+							
+						elseif(setting.type == "bool")then
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, setting.name..": "..(gamemode_settings[setting.id] and "Enabled" or "Disabled")))then
+								gamemode_settings[setting.id] = not gamemode_settings[setting.id]
+							end
+							GuiTooltip(menu_gui, "", setting.description)
+
+							previous_type = "bool"
+						elseif(setting.type == "slider")then
+							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+							GuiText(menu_gui, 2, 3, setting.name..": ")
+							GuiTooltip(menu_gui, "", setting.description)
+							local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, setting.width or 120)
+							if(slider_value ~= gamemode_settings[setting.id])then
+								gamemode_settings[setting.id] = slider_value
+							end
+							GuiLayoutEnd(menu_gui)
+
+							previous_type = "slider"
 						end
 					end
 

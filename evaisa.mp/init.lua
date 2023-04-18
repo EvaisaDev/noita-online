@@ -29,7 +29,7 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.23
+MP_VERSION = 1.245
 Version_string = "274280982362"
 
 Checksum_passed = false
@@ -271,13 +271,17 @@ function OnWorldPreUpdate()
 				
 				--print("h")
 
-				local messages = steam.networking.pollMessages() or {}
-				for k, v in ipairs(messages)do
-					bytes_received = bytes_received + v.msg_size
-					if(lobby_gamemode.message)then
-						lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
+				--local artificial_lag = math.floor((ModSettingGet("evaisa.mp.artificial_lag") or 1) + 0.5)
+
+				--if(GameGetFrameNum() % artificial_lag == 0)then
+					local messages = steam.networking.pollMessages() or {}
+					for k, v in ipairs(messages)do
+						bytes_received = bytes_received + v.msg_size
+						if(lobby_gamemode.message)then
+							lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
+						end
 					end
-				end
+				--end
 
 				--print("i")
 			end
@@ -332,6 +336,7 @@ function OnWorldPostUpdate()
 			if(game_in_progress)then
 				lobby_gamemode.late_update(lobby_code)
 				
+				--[[
 				local messages = steam.networking.pollMessages() or {}
 				for k, v in ipairs(messages)do
 					bytes_received = bytes_received + v.msg_size
@@ -339,6 +344,7 @@ function OnWorldPostUpdate()
 						lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
 					end
 				end
+				]]
 			end
 		end
 	end

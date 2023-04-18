@@ -42,6 +42,9 @@ function data:New()
         players_loaded = false,
         deaths = 0,
         spawn_point = {x = 0, y = 0},
+        zone_size = nil,
+        current_arena = nil,
+        ready_for_zone = false,
         random = rng.new((os.time() + GameGetFrameNum() + os.clock()) / 2),
         DefinePlayer = function(self, lobby, user)
             self.players[tostring(user)] = playerinfo:New(user)
