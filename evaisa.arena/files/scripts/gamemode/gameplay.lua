@@ -439,7 +439,7 @@ ArenaGameplay = {
         end
     end,
     SavePlayerData = function(lobby, data)
-        if((not GameHasFlagRun("player_unloaded")) and player.Get() and data.save_player)then
+        if((not GameHasFlagRun("player_unloaded")) and player.Get())then
             data.client.serialized_player = player.Serialize()
             steamutils.SetLocalLobbyData(lobby, "player_data",  player.Serialize(true))
             local rerollCount = GlobalsGetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
@@ -448,6 +448,7 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
         ArenaGameplay.SavePlayerData(lobby, data)
+
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -593,9 +594,9 @@ ArenaGameplay = {
         --print(json.stringify(data))
     end,
     LoadArena = function(lobby, data, show_message)
-        show_message = show_message or false
-
         ArenaGameplay.SavePlayerData(lobby, data)
+
+        show_message = show_message or false
 
         ArenaGameplay.ClearWorld()
 
