@@ -15,8 +15,6 @@ function playerinfo:New(user)
         projectile_rng_stack = {},
         target = nil,
         can_fire = false,
-        ping_out = 0,
-        ping_in = 0,
         ping = 0,
         id = user,
         perks = {},

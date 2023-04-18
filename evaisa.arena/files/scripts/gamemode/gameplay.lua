@@ -931,7 +931,7 @@ ArenaGameplay = {
     Update = function(lobby, data)
 
         if(GameGetFrameNum() % 60 == 0)then
-            message_handler.send.Handshake(lobby)
+            --message_handler.send.Handshake(lobby)
         end
 
         --[[local chunk_loaders = EntityGetWithTag("chunk_loader") or {}
