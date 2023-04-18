@@ -438,7 +438,16 @@ ArenaGameplay = {
             end
         end
     end,
+    SavePlayerData = function(lobby, data)
+        if((not GameHasFlagRun("player_unloaded")) and player.Get() and data.save_player)then
+            data.client.serialized_player = player.Serialize()
+            steamutils.SetLocalLobbyData(lobby, "player_data",  player.Serialize(true))
+            local rerollCount = GlobalsGetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
+            steamutils.SetLocalLobbyData(lobby, "reroll_count",  rerollCount)
+        end
+    end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        ArenaGameplay.SavePlayerData(lobby, data)
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -585,6 +594,8 @@ ArenaGameplay = {
     end,
     LoadArena = function(lobby, data, show_message)
         show_message = show_message or false
+
+        ArenaGameplay.SavePlayerData(lobby, data)
 
         ArenaGameplay.ClearWorld()
 
@@ -931,7 +942,7 @@ ArenaGameplay = {
     Update = function(lobby, data)
 
         if(GameGetFrameNum() % 60 == 0)then
-            --message_handler.send.Handshake(lobby)
+            message_handler.send.Handshake(lobby)
         end
 
         --[[local chunk_loaders = EntityGetWithTag("chunk_loader") or {}
@@ -955,17 +966,6 @@ ArenaGameplay = {
 
                 end
             end
-        end
-
-
-        if((not GameHasFlagRun("player_unloaded")) and player.Get() and (GameGetFrameNum() % 30 == 0))then
-            data.client.serialized_player = player.Serialize()
-           -- steam.matchmaking.setLobbyMemberData(lobby, "player_data", data.client.serialized_player)
-            steamutils.SetLocalLobbyData(lobby, "player_data",  player.Serialize(true))
-            local rerollCount = GlobalsGetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
-            steamutils.SetLocalLobbyData(lobby, "reroll_count",  rerollCount)
-
-           -- print("Saving player data")
         end
 
         if(data.state == "lobby")then
