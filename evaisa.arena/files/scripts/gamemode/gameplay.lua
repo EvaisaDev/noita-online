@@ -447,7 +447,6 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-        ArenaGameplay.SavePlayerData(lobby, data)
 
         show_message = show_message or false
         first_entry = first_entry or false
