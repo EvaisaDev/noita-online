@@ -31,6 +31,43 @@ if(#chat_log > 50)then
 	table.remove(chat_log, 1)
 end
 
+
+local GetPlayer = function()
+
+    local player = EntityGetWithTag("player_unit")
+
+    if(player == nil)then
+        return
+    end
+
+    return player[1]
+end
+
+local LockPlayer = function()
+    local player = GetPlayer()
+    if(player == nil)then
+        return
+    end
+    local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+    if(controls ~= nil)then
+        ComponentSetValue2(controls, "enabled", false)
+    end
+end
+
+local UnlockPlayer = function()
+    local player = GetPlayer()
+    if(player == nil)then
+        return
+    end
+
+	if(not GameHasFlagRun("player_locked"))then
+		local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+		if(controls ~= nil)then
+			ComponentSetValue2(controls, "enabled", true)
+		end
+	end
+end
+
 if(lobby_code ~= nil)then
 	local pressed, shift_held = hack_update_keys()
 
@@ -75,6 +112,12 @@ if(lobby_code ~= nil)then
 
 		if(initial_text ~= input_text)then
 			initial_text = input_text
+		end
+
+		if(not was_input_hovered and input_hovered)then
+			LockPlayer()
+		elseif(was_input_hovered and not input_hovered)then
+			UnlockPlayer()
 		end
 
 		if(hit_enter)then

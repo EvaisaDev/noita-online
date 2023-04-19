@@ -239,13 +239,13 @@ ArenaMessageHandler = {
                                     end
                                 end
 
-                                last_position_x = last_position_x / #data.players[tostring(user)].previous_positions
-                                last_position_y = last_position_y / #data.players[tostring(user)].previous_positions
-
-
                                 local new_x, new_y = x, y
 
                                 if(last_position_x ~= nil and last_position_y ~= nil)then
+
+                                    last_position_x = last_position_x / #data.players[tostring(user)].previous_positions
+                                    last_position_y = last_position_y / #data.players[tostring(user)].previous_positions
+    
 
                                     -- calculate movement since last update
                                     local additional_movement_x = x - last_position_x

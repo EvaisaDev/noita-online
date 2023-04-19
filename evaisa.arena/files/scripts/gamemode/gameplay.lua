@@ -452,6 +452,7 @@ ArenaGameplay = {
         first_entry = first_entry or false
 
         if(not first_entry)then
+            ArenaGameplay.SavePlayerData(lobby, data)
             ArenaGameplay.ClearWorld()
         end
 
