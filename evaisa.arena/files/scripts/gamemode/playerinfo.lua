@@ -15,6 +15,8 @@ function playerinfo:New(user)
         projectile_rng_stack = {},
         target = nil,
         can_fire = false,
+        last_position_x = nil,
+        last_position_y = nil,
         ping = 0,
         id = user,
         perks = {},
@@ -42,6 +44,8 @@ function playerinfo:New(user)
         end
         self.ready = false
         self.alive = true
+        self.last_position_x = nil
+        self.last_position_y = nil
 
         
         --[[if(steamutils.IsOwner(lobby))then

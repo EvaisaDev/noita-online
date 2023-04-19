@@ -223,9 +223,40 @@ ArenaMessageHandler = {
 
                             if((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true)then
                                 local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
-                                local vel_x, vel_y = message.vel_x / 60, message.vel_y / 60
-                                local new_x = x + (vel_x * delay)
-                                local new_y = y + (vel_y * delay)
+
+                                local last_position_x, last_position_y = data.players[tostring(user)].last_position_x, data.players[tostring(user)].last_position_y
+
+                                local new_x, new_y = x, y
+
+                                if(last_position_x ~= nil and last_position_y ~= nil)then
+
+                                    -- calculate movement since last update
+                                    local additional_movement_x = x - last_position_x
+                                    local additional_movement_y = y - last_position_y
+
+                                    -- predict likely movement using delay
+                                    local predicted_movement_x = additional_movement_x * delay
+                                    local predicted_movement_y = additional_movement_y * delay
+
+                                    -- add predicted movement to current position
+                                    new_x = x + predicted_movement_x
+                                    new_y = y + predicted_movement_y
+
+                                    local hit, hit_x, hit_y = RaytracePlatforms(x, y, new_x, new_y)
+
+                                    if(hit)then
+                                        new_x = hit_x
+                                        new_y = hit_y
+                                    end
+
+                                end
+
+                                data.players[tostring(user)].last_position_x = x
+                                data.players[tostring(user)].last_position_y = y
+
+                                --GamePrint("additional_movement_x: "..tostring(additional_movement_x))
+                               -- GamePrint("additional_movement_y: "..tostring(additional_movement_y))
+
                                 EntitySetTransform(newPlayerEntity, new_x, new_y)
                                 EntityApplyTransform(newPlayerEntity, new_x, new_y)
                             else
