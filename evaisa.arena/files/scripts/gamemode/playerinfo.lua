@@ -15,8 +15,9 @@ function playerinfo:New(user)
         projectile_rng_stack = {},
         target = nil,
         can_fire = false,
-        last_position_x = nil,
-        last_position_y = nil,
+        --[[last_position_x = nil,
+        last_position_y = nil,]]
+        previous_positions = {},
         ping = 0,
         id = user,
         perks = {},
@@ -44,9 +45,9 @@ function playerinfo:New(user)
         end
         self.ready = false
         self.alive = true
-        self.last_position_x = nil
-        self.last_position_y = nil
-
+        --[[self.last_position_x = nil
+        self.last_position_y = nil]]
+        self.previous_positions = {}
         
         --[[if(steamutils.IsOwner(lobby))then
             steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_loaded", "false")

@@ -224,7 +224,24 @@ ArenaMessageHandler = {
                             if((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true)then
                                 local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
 
-                                local last_position_x, last_position_y = data.players[tostring(user)].last_position_x, data.players[tostring(user)].last_position_y
+                                local last_position_x, last_position_y = nil, nil
+
+                                for k, v in ipairs(data.players[tostring(user)].previous_positions)do
+                                    if(last_position_x == nil)then
+                                        last_position_x = x
+                                    else
+                                        last_position_x = last_position_x + v.x
+                                    end
+                                    if(last_position_y == nil)then
+                                        last_position_y = y
+                                    else
+                                        last_position_y = last_position_y + v.y
+                                    end
+                                end
+
+                                last_position_x = last_position_x / #data.players[tostring(user)].previous_positions
+                                last_position_y = last_position_y / #data.players[tostring(user)].previous_positions
+
 
                                 local new_x, new_y = x, y
 
@@ -251,8 +268,15 @@ ArenaMessageHandler = {
 
                                 end
 
+                                --[[
                                 data.players[tostring(user)].last_position_x = x
                                 data.players[tostring(user)].last_position_y = y
+                                ]]
+
+                                if(#data.players[tostring(user)].previous_positions >= 5)then
+                                    table.remove(data.players[tostring(user)].previous_positions, 1)
+                                end
+                                table.insert(data.players[tostring(user)].previous_positions, {x = x, y = y} )
 
                                 --GamePrint("additional_movement_x: "..tostring(additional_movement_x))
                                -- GamePrint("additional_movement_y: "..tostring(additional_movement_y))
