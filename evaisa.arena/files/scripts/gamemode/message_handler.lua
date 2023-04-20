@@ -98,6 +98,8 @@ ArenaMessageHandler = {
         unlock = function(lobby, message, user, data)
             player.Immortal(false)
             gameplay_handler.AllowFiring(data)
+            message_handler.send.RequestWandUpdate(lobby, data)
+            data.countdown = nil
         end,
         death = function(lobby, message, user, data, username)
             
@@ -354,10 +356,12 @@ ArenaMessageHandler = {
                         
                     end
                 end
+
+                --[[
                 if(DebugGetIsDevBuild())then
                     EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
                 end
-            
+            ]]
             end
         end,
         switch_item = function(lobby, message, user, data)
@@ -561,8 +565,22 @@ ArenaMessageHandler = {
                 data.players[tostring(user)].delay_frames = GameGetFrameNum() - message.frame_sent
             end
         end,
+        request_wand_update = function(lobby, message, user, data)
+            data.client.previous_wand = nil
+            message_handler.send.WandUpdate(lobby, data, user)
+        end,
+        zone_update = function(lobby, message, user, data)
+            GlobalsSetValue("arena_area_size", tostring(message.zone_size))
+            GlobalsSetValue("arena_area_size_cap", tostring(message.zone_size + 200))
+            data.zone_size = message.zone_size
+            data.shrink_time = message.shrink_time
+            GamePrint("Zone size: "..message.zone_size.."; Shrink time: "..message.shrink_time)
+        end,
     },
     send = {
+        ZoneUpdate = function(lobby, zone_size, shrink_time)
+            steamutils.sendData({type = "zone_update", zone_size = zone_size, shrink_time = shrink_time}, steamutils.messageTypes.OtherPlayers, lobby)
+        end,
         Handshake = function(lobby)
             steamutils.sendData({type = "handshake", frame_sent = GameGetFrameNum(), time_sent = (game_funcs.UintToString(game_funcs.GetUnixTimestamp())) }, steamutils.messageTypes.OtherPlayers, lobby)
         end,
@@ -577,6 +595,9 @@ ArenaMessageHandler = {
                 steam.matchmaking.setLobbyData(lobby, tostring(steam.user.getSteamID()).."_ready", "false")
             end
             steamutils.sendData({type = "unready", no_message = no_message}, steamutils.messageTypes.OtherPlayers, lobby)
+        end,
+        RequestWandUpdate = function(lobby)
+            steamutils.sendData({type = "request_wand_update"}, steamutils.messageTypes.OtherPlayers, lobby)
         end,
         EnterArena = function(lobby)
             steamutils.sendData({type = "enter_arena"}, steamutils.messageTypes.OtherPlayers, lobby)
@@ -622,7 +643,7 @@ ArenaMessageHandler = {
                 steamutils.sendData({type = "character_update", x = x, y = y, r = r, w = w, h = h, vel_x = vel_x, vel_y = vel_y}, steamutils.messageTypes.OtherPlayers, lobby)
             end
         end,
-        WandUpdate = function(lobby, data)
+        WandUpdate = function(lobby, data, user)
             --[[
             local wandData = player.GetWandData()
             if(wandData ~= nil)then
@@ -638,13 +659,22 @@ ArenaMessageHandler = {
                 if(wandString ~= data.client.previous_wand)then
                     local wandData = player.GetWandData()
                     if(wandData ~= nil)then
-                        steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
+                        if(user ~= nil)then
+                            steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
+                        else
+                            steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
+                        end
                     end
                     data.client.previous_wand = wandString
                 end
             else
                 if(data.client.previous_wand ~= nil)then
-                    steamutils.sendData({type = "wand_update"}, steamutils.messageTypes.OtherPlayers, lobby) 
+                    
+                    if(user ~= nil)then
+                        steamutils.sendDataToPlayer({type = "wand_update"}, user)
+                    else
+                        steamutils.sendData({type = "wand_update"}, steamutils.messageTypes.OtherPlayers, lobby) 
+                    end
                     data.client.previous_wand = nil
                 end
             end

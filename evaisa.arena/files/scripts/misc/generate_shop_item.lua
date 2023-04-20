@@ -64,7 +64,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		level = 7
 	end
 
-	item = GetRandomAction( x + Random(-10000, 10000), y + Random(-10000, 10000), level, 0 )
+	item = GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
 
 	biomeid = biomeid * biomeid
 
@@ -227,7 +227,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	local item = "data/entities/items/"
 
-	local r = Random(0,100)
+	local r = math.random(0,100)
 	if( r <= 50 ) then 
 		item = item .. "wand_level_0"
 	else
@@ -239,7 +239,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	
 	-- Note( Petri ): Testing how much squaring the biomeid for prices affects things
 	biomeid = (0.5 * biomeid) + ( 0.5 * biomeid * biomeid )
-	local wandcost = ( 50 + biomeid * 210 ) + ( Random( -15, 15 ) * 10 )
+	local wandcost = ( 50 + biomeid * 210 ) + ( math.random( -15, 15 ) * 10 )
 
 	if( cheap_item ) then
 		wandcost = 0.5 * wandcost
@@ -267,7 +267,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	-- local x, y = EntityGetTransform( entity_id )
 	-- SetRandomSeed( x, y )
-	local eid = EntityLoad( item, x + Random(-1000, 1000), y + Random(-1000, 1000))
+	local eid = EntityLoad( item, x + math.random(-1000, 1000), y + math.random(-1000, 1000))
 
 	EntityAddComponent( eid, "SpriteComponent", { 
 		_tags="shop_cost,enabled_in_world",

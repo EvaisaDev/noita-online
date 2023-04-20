@@ -29,7 +29,7 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 
-MP_VERSION = 1.247
+MP_VERSION = 1.25
 Version_string = "63479623967237"
 
 Checksum_passed = false
@@ -522,6 +522,10 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		Checksum_passed = response.body == Version_string
 		print("Checksum passed: "..tostring(response.body))
 	end
+
+
+	ModSettingRemove("lobby_data_store")
+
 --[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		

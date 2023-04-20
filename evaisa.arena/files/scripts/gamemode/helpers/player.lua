@@ -184,8 +184,11 @@ player_helper.SetWandData = function(wand_data)
             if(itemComp ~= nil)then
                 ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
             end
+
+            --print("Deserialized wand #"..tostring(k).." - Active? "..tostring(wandInfo.active))
     
             if(wandInfo.active)then
+                
                 game_funcs.SetActiveHeldEntity(player, wand.entity_id, false, false)
             end
     
@@ -557,6 +560,10 @@ player_helper.Serialize = function(dont_stringify)
     if(player == nil)then
         return
     end
+
+    --GamePrint("Serializing player...")
+    --print("Serializing player...")
+
     local data = {
         health = 100,
         max_health = 100,
@@ -571,7 +578,10 @@ player_helper.Serialize = function(dont_stringify)
         data.max_health = ComponentGetValue2(healthComponent, "max_hp")
     end
 
-    return dont_stringify and data or bitser.dumps(data)
+    local data_out = dont_stringify and data or bitser.dumps(data)
+
+
+    return data_out
 end
 
 

@@ -72,9 +72,9 @@ function spawn_all_shopitems( x, y )
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count
-	local sale_item_i = Random( 1, count )
+	local sale_item_i = math.random( 1, count )
 
-	if( Random( 0, 100 ) <= 50 ) then
+	if( math.random( 0, 100 ) <= 50 ) then
 		for i=1,count do
 			if( i == sale_item_i ) then
 				generate_shop_item( x + (i-1)*item_width, y, true, round, true )

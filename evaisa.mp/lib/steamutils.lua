@@ -32,47 +32,96 @@ steam_utils.isInLobby = function(lobby_id, steam_id)
 	return false
 end
 
+local data_store = dofile("mods/evaisa.mp/lib/data_store.lua")
+
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
-	lobby = steam.utils.compressSteamID(lobby)
-	--ModSettingRemove("lobby_data_store")
-	local data_store = ModSettingGet("lobby_data_store")
-	--print("datastore: "..tostring(data_store))
-	local lobby_data = {}
-	if(data_store)then
-		lobby_data = json.parse(data_store)--bitser.loads(data_store)
-	end
+	
+    -- Compress the lobby ID
+    lobby = steam.utils.compressSteamID(lobby)
 
-	if(lobby_data == nil)then
-		lobby_data = {}
-	end
+    -- Create a key to store the data in data_store
+    local data_key = tostring(lobby).."_"..key
 
-	if(lobby_data[lobby] == nil)then
-		lobby_data[lobby] = {}
-	end
+    -- Store the value with the data_key in data_store
+    data_store.Set(data_key, value)
+    
+    -- Get the saved list of "all_keys" from data_store
+	local key_string = data_store.Get("all_keys")
+    local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
 
-	lobby_data[lobby][key] = value
+    -- Check if there's not an entry for the lobby in keys table
+    if(keys[tostring(lobby)] == nil) then
+        -- Create an entry for lobby in keys table and set the key as true
+        keys[tostring(lobby)] = {
+            [key] = true
+        }
+    else
+        -- If the lobby already exists in keys, set the key as true
+        keys[tostring(lobby)][key] = true
+        
+    end
 
-	ModSettingSet("lobby_data_store", json.stringify(lobby_data)--[[bitser.dumps(lobby_data)]])
+    -- Store the updated keys in data_store with key "all_keys"
+
+	print(json.stringify(keys))
+
+	local key_string = bitser.dumps(keys)
+
+	--print("key_string: "..tostring(key_string))
+
+    data_store.Set("all_keys", key_string)
 end
 
 steam_utils.GetLocalLobbyData = function(lobby, key)
-	lobby = steam.utils.compressSteamID(lobby)
-	--ModSettingRemove("lobby_data_store")
-	local data_store = ModSettingGet("lobby_data_store")
-	local lobby_data
-	if(data_store == nil or data_store == "")then
-		lobby_data = {}
-	else
-		lobby_data =  json.parse(data_store)
-	end
+    -- Compress the lobby ID
+    lobby = steam.utils.compressSteamID(lobby)
 
-	if(lobby_data[lobby] == nil)then
-		return nil
-	end
+    -- Create a key to get the data from data_store
+    local data_key = tostring(lobby).."_"..key
 
-	return lobby_data[lobby][key]
+    -- Retrieve the value for the data_key
+    local value = data_store.Get(data_key)
+
+    -- Return the value
+    return value
 end
 
+steam_utils.CheckLocalLobbyData = function()
+    -- destroy data for any lobbies which no longer exist
+
+    -- Get the saved list of "all_keys" from data_store
+	local key_string = data_store.Get("all_keys")
+    local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
+    -- Iterate through the lobby keys
+    for lob, lobby_keys in pairs(keys) do
+        -- Check if the lobby no longer exists
+		local decompressed_id = steam.utils.decompressSteamID(lob)
+
+		local lobby_exists = steam.matchmaking.doesLobbyExist(decompressed_id)
+
+		print("Check lobby: ("..tostring(decompressed_id).."): "..tostring(lobby_exists))
+
+		if(not lobby_exists)then
+
+			print("Attempting to delete lobby data for lobby: "..tostring(lob))
+
+			
+
+            -- Iterate through the keys for the current lobby
+            for key, _ in pairs(lobby_keys) do
+                -- Remove each key-value pair for the current lobby
+                data_store.Remove(tostring(lob).."_"..key)
+            end
+            -- Remove the current lobby from the "all_keys" list
+            keys[lob] = nil
+        end
+    end
+
+    -- Store the updated keys in data_store
+    data_store.Set("all_keys", bitser.dumps(keys))
+end
+
+--[[
 steam_utils.CheckLocalLobbyData = function()
 	-- destroy data for any lobbies which no longer exist
 	local data_store = ModSettingGet("lobby_data_store")
@@ -92,6 +141,7 @@ steam_utils.CheckLocalLobbyData = function()
 
 	ModSettingSet("lobby_data_store", json.stringify(lobby_data))
 end
+]]
 
 steam_utils.messageTypes = {
 	AllPlayers = 0,
@@ -99,8 +149,6 @@ steam_utils.messageTypes = {
 	Clients = 2,
 	Host = 3,
 }
-
-local json = dofile("mods/evaisa.mp/lib/json.lua")
 
 message_handlers = {
 	[steam_utils.messageTypes.AllPlayers] = function (data, lobby) 

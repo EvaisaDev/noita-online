@@ -1,5 +1,6 @@
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
+profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
@@ -26,7 +27,7 @@ playermenu = nil
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.355,
+    version = 0.36,
     settings = {
         {
             id = "damage_cap",
@@ -122,6 +123,7 @@ ArenaMode = {
     end,
     start = function(lobby)
 
+
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
         SetWorldSeed( seed )
@@ -133,6 +135,11 @@ ArenaMode = {
         data = data_holder:New()
         data.state = "lobby"
         data:DefinePlayers(lobby)
+
+        
+        local local_seed = data.random.range(100, 10000000)
+
+        GlobalsSetValue("local_seed", tostring(local_seed))
 
 
         gameplay_handler.GetGameData(lobby, data)
