@@ -99,7 +99,7 @@ steam_utils.CheckLocalLobbyData = function()
 
 		local lobby_exists = steam.matchmaking.doesLobbyExist(decompressed_id)
 
-		print("Check lobby: ("..tostring(decompressed_id).."): "..tostring(lobby_exists))
+		--print("Check lobby: ("..tostring(decompressed_id).."): "..tostring(lobby_exists))
 
 		if(not lobby_exists)then
 

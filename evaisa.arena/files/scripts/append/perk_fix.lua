@@ -33,7 +33,7 @@ local remove_list = {
     REVENGE_RATS = true,
     ATTACK_FOOT = true,
     LEGGY_FEET = true,
-    PLAGUE_RATS = true,
+    PLAGUE_RATS = true,  
     VOMIT_RATS = true,
     MOLD = true,
     WORM_SMALLER_HOLES = true,
@@ -183,9 +183,13 @@ local rewrites = {
 		stackable = STACKABLE_YES,
 		stackable_is_rare = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
-            local extra_gold_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
-            extra_gold_count = extra_gold_count + 1
-            GlobalsSetValue( "RESPAWN_COUNT", tostring( extra_gold_count ) )
+            local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
+            respawn_count = respawn_count + 1
+
+			GamePrint("Respawn count set to "..tostring(respawn_count)..".")
+			print("Respawn count set to "..tostring(respawn_count)..".")
+
+            GlobalsSetValue( "RESPAWN_COUNT", tostring( respawn_count ) )
 		end,
 	},
 }
