@@ -43,6 +43,9 @@ function countdown.create( table_images, frames_between_images, finish_callback 
             GuiImage(gui_countdown, new_id(), x, y, image, 1, 1, 1, 0)
 
             return false
+        end,
+        cleanup = function(self)
+            GuiDestroy(gui_countdown)
         end
     }
 

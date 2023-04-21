@@ -32,6 +32,29 @@ steam_utils.isInLobby = function(lobby_id, steam_id)
 	return false
 end
 
+steam_utils.doesLobbyExist = function(lobby_id, callback)
+	steam.matchmaking.addRequestLobbyListDistanceFilter(distance.worldwide)
+
+	steam.matchmaking.requestLobbyList(function(data)
+		lobby_count = data.count
+		if(lobby_count > 0)then
+			for i = 0, lobby_count-1 do
+
+				local lobby = steam.matchmaking.getLobbyByIndex(i)
+				if(lobby.lobbyID ~= nil)then
+					if(lobby.lobbyID == lobby_id)then
+						callback(true)
+						return
+					end
+				end
+			end
+		end
+		callback(false)
+
+	end)
+end
+
+
 local data_store = dofile("mods/evaisa.mp/lib/data_store.lua")
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
@@ -63,7 +86,7 @@ steam_utils.SetLocalLobbyData = function(lobby, key, value)
 
     -- Store the updated keys in data_store with key "all_keys"
 
-	print(json.stringify(keys))
+	--print(json.stringify(keys))
 
 	local key_string = bitser.dumps(keys)
 
@@ -97,28 +120,33 @@ steam_utils.CheckLocalLobbyData = function()
         -- Check if the lobby no longer exists
 		local decompressed_id = steam.utils.decompressSteamID(lob)
 
-		local lobby_exists = steam.matchmaking.doesLobbyExist(decompressed_id)
+		steam_utils.doesLobbyExist(decompressed_id, function(exists)
+			if(not exists)then
+					
+				print("Attempting to delete lobby data for lobby: "..tostring(lob))
 
-		--print("Check lobby: ("..tostring(decompressed_id).."): "..tostring(lobby_exists))
+				
 
-		if(not lobby_exists)then
+				-- Iterate through the keys for the current lobby
+				for key, _ in pairs(lobby_keys) do
+					-- Remove each key-value pair for the current lobby
+					data_store.Remove(tostring(lob).."_"..key)
+				end
+				-- Remove the current lobby from the "all_keys" list
+				keys[lob] = nil
 
-			print("Attempting to delete lobby data for lobby: "..tostring(lob))
+				--print("keys: "..json.stringify(keys))
 
+				-- Store the updated keys in data_store
+				data_store.Set("all_keys", bitser.dumps(keys))
+			end
 			
+			--print("Does lobby exist?: ("..tostring(decompressed_id).."): "..tostring(exists))
+		end)
 
-            -- Iterate through the keys for the current lobby
-            for key, _ in pairs(lobby_keys) do
-                -- Remove each key-value pair for the current lobby
-                data_store.Remove(tostring(lob).."_"..key)
-            end
-            -- Remove the current lobby from the "all_keys" list
-            keys[lob] = nil
-        end
     end
 
-    -- Store the updated keys in data_store
-    data_store.Set("all_keys", bitser.dumps(keys))
+
 end
 
 --[[

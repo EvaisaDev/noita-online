@@ -935,11 +935,13 @@ function wand:SetSprite(item_file, offset_x, offset_y, tip_x, tip_y)
 	end
 end
 
+--[[
 wand_data = {}
 
 for k, v in ipairs(wands)do
   wand_data[v.file] = v
 end
+]]
 
 function wand:GetSprite()
   local sprite_file, offset_x, offset_y, tip_x, tip_y = "", 0, 0, 0, 0
@@ -961,6 +963,7 @@ function wand:GetSprite()
     tip_x, tip_y = ComponentGetValue2(hotspot_comp, "offset")
   end
 
+  --[[
   if(wand_data[sprite_file] ~= nil)then
     local data_wand = wand_data[sprite_file]
     offset_x = data_wand.grip_x
@@ -968,6 +971,7 @@ function wand:GetSprite()
     tip_x = data_wand.tip_x
     tip_y = data_wand.tip_y
   end
+  ]]
 
   return sprite_file, offset_x, offset_y, tip_x, tip_y
 end

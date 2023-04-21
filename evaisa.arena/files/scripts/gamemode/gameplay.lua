@@ -59,8 +59,11 @@ ArenaGameplay = {
         GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", tostring(rerollCount) )
 
         if(playerData ~= nil and playerData ~= "")then
+
+            data.client.serialized_player = playerData
+
             data.client.player_loaded_from_data = true
-            data.client.serialized_player = bitser.dumps(playerData)
+            --data.client.serialized_player = bitser.dumps(playerData)
             print("Player data: "..data.client.serialized_player)
         end
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
@@ -517,6 +520,7 @@ ArenaGameplay = {
             if(serialized_player_data ~= data.client.serialized_player)then
                 steamutils.SetLocalLobbyData(lobby, "player_data",  serialized_player_data)
 
+                print("Backing up Player Data: \n"..serialized_player_data)
                         
                 data.client.serialized_player = serialized_player_data
             end
@@ -537,7 +541,7 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-
+        GameRemoveFlagRun("can_save_player")
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -660,6 +664,8 @@ ArenaGameplay = {
                     player.GiveMaxHealth(0.4 * (rounds - 1))
                 end
             end
+
+            GameAddFlagRun("can_save_player")
         end)
 
         message_handler.send.Unready(lobby, true)
@@ -685,6 +691,8 @@ ArenaGameplay = {
     end,
     LoadArena = function(lobby, data, show_message)
         --ArenaGameplay.SavePlayerData(lobby, data)
+
+        GameRemoveFlagRun("can_save_player")
 
         show_message = show_message or false
 
@@ -732,6 +740,8 @@ ArenaGameplay = {
             ArenaGameplay.LoadClientPlayers(lobby, data)
 
             GamePrint("Loading arena")
+
+            GameAddFlagRun("can_save_player")
         end)
     end,
     ReadyCheck = function(lobby, data)
@@ -869,6 +879,7 @@ ArenaGameplay = {
             player.Immortal(false)
             ArenaGameplay.AllowFiring(data)
             message_handler.send.RequestWandUpdate(lobby, data)
+            data.countdown:cleanup()
             data.countdown = nil
         end)
     end,
@@ -1109,7 +1120,7 @@ ArenaGameplay = {
             ArenaGameplay.LoadPlayer(lobby, data)
             print("Player is missing, spawning player.")
         else
-            if(GameGetFrameNum() % 60 == 0)then
+            if(GameGetFrameNum() % 30 == 0 and GameHasFlagRun("can_save_player"))then
                 ArenaGameplay.SavePlayerData(lobby, data)
             end
         end

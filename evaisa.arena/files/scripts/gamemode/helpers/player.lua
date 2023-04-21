@@ -14,6 +14,10 @@ player_helper.Get = function()
 
     if(#player > 1)then
         print("Found more than one player, issue??")
+        -- print all the player entities
+        for k, v in pairs(player)do
+            print("Player "..k..": "..tostring(v))
+        end
     end
 
     if(player[1] ~= last_player_entity)then

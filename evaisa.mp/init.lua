@@ -28,8 +28,9 @@ dofile("data/scripts/lib/coroutines.lua")
 np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
+profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.25
+MP_VERSION = 1.261
 Version_string = "63479623967237"
 
 Checksum_passed = false
@@ -37,7 +38,7 @@ Spawned = false
 
 disable_print = false
 
-dev_mode = false
+dev_mode = true
 
 base64 = require("base64")
 

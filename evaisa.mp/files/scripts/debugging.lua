@@ -1,3 +1,6 @@
+print("debugging.lua loaded.")
+
+--[[
 local OldModSettingSet = ModSettingSet
 ModSettingSet = function(a, b)
     local source = debug.getinfo(2).short_src
@@ -27,7 +30,7 @@ GameKillInventoryItem = function(a, b)
         print("GameKillInventoryItem: " .. source .. ":" .. line .. " failed")
     end
 end
---[[
+
 local oldGuiImage = GuiImage
 
 GuiImage = function(...)

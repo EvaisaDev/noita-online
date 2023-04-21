@@ -5,7 +5,6 @@ local healthbar = dofile("mods/evaisa.arena/files/scripts/utilities/health_bar.l
 local tween = dofile("mods/evaisa.arena/lib/tween.lua")
 local Vector = dofile("mods/evaisa.arena/lib/vector.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
-local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 dofile_once( "data/scripts/perks/perk_list.lua" )
@@ -99,6 +98,7 @@ ArenaMessageHandler = {
             player.Immortal(false)
             gameplay_handler.AllowFiring(data)
             message_handler.send.RequestWandUpdate(lobby, data)
+            data.countdown:cleanup()
             data.countdown = nil
         end,
         death = function(lobby, message, user, data, username)
@@ -159,37 +159,49 @@ ArenaMessageHandler = {
 
                 if(controlsComp ~= nil)then
                     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+                    
+                    if(inventory2Comp == nil)then
+                        return
+                    end
+                    
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
-                    local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
-                    local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
+                    if(mActiveItem ~= nil)then
+                            
+                        
 
-                    local wand_x, wand_y = EntityGetTransform(mActiveItem)
+                        local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                        local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
 
-                    local x = wand_x + (aimNormal_x * 2)
-                    local y = wand_y + (aimNormal_y * 2)
-                    y = y - 1
+                        local wand_x, wand_y = EntityGetTransform(mActiveItem)
 
-                    local target_x = x + aim_x
-                    local target_y = y + aim_y
+                        local x = wand_x + (aimNormal_x * 2)
+                        local y = wand_y + (aimNormal_y * 2)
+                        y = y - 1
 
-                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
+                        local target_x = x + aim_x
+                        local target_y = y + aim_y
 
-                    --GamePrint("client is shooting.")
+                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
 
-                    local wand_data = message.wand_data
+                        --GamePrint("client is shooting.")
 
-                    EntitySetTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
-                    EntityApplyTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
+                        local wand_data = message.wand_data
 
-                    EntityAddTag(data.players[tostring(user)].entity, "player_unit")
-                    np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
-                    EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+                        EntitySetTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
+                        EntityApplyTransform(mActiveItem, wand_data.x, wand_data.y, wand_data.r, wand_data.w, wand_data.h)
 
-                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
-                    --[[if(message.target)then
-                        data.players[tostring(user)].target = message.target
-                    end]]
+                        EntityAddTag(data.players[tostring(user)].entity, "player_unit")
+                        np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
+                        EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+
+                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                        --[[if(message.target)then
+                            data.players[tostring(user)].target = message.target
+                        end]]
+
+
+                    end
                 end
             end
         end,
@@ -574,7 +586,7 @@ ArenaMessageHandler = {
             GlobalsSetValue("arena_area_size_cap", tostring(message.zone_size + 200))
             data.zone_size = message.zone_size
             data.shrink_time = message.shrink_time
-            GamePrint("Zone size: "..message.zone_size.."; Shrink time: "..message.shrink_time)
+           -- GamePrint("Zone size: "..message.zone_size.."; Shrink time: "..message.shrink_time)
         end,
     },
     send = {
@@ -659,6 +671,7 @@ ArenaMessageHandler = {
                 if(wandString ~= data.client.previous_wand)then
                     local wandData = player.GetWandData()
                     if(wandData ~= nil)then
+                        GamePrint("Sending wand data to player")
                         if(user ~= nil)then
                             steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
                         else

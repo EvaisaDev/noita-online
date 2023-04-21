@@ -101,6 +101,7 @@ local windows = {
 				if(#lobbies.friend > 0)then
 					for k, v in ipairs(lobbies.friend)do
 						if(steam.matchmaking.requestLobbyData(v))then
+							local lobby_mode_id = steam.matchmaking.getLobbyData(v, "gamemode")
 							local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 							local lobby_name = steam.matchmaking.getLobbyData(v, "name")
 
@@ -115,10 +116,18 @@ local windows = {
 									end)
 								end
 							else
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-									steam.matchmaking.leaveLobby(v)
-									steam.matchmaking.joinLobby(v, function(e)
-									end)
+								if(active_mode ~= nil)then
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+										steam.matchmaking.leaveLobby(v)
+										steam.matchmaking.joinLobby(v, function(e)
+										end)
+									end
+								else
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id.."[Missing])("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+										steam.matchmaking.leaveLobby(v)
+										steam.matchmaking.joinLobby(v, function(e)
+										end)
+									end
 								end
 							end
 
@@ -133,6 +142,7 @@ local windows = {
 				GuiText(menu_gui, 2, 0, "----- Public Lobbies -----")
 				if(#lobbies.public > 0)then
 					for k, v in ipairs(lobbies.public)do
+						local lobby_mode_id = steam.matchmaking.getLobbyData(v, "gamemode")
 						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 						local lobby_name = steam.matchmaking.getLobbyData(v, "name")
 
@@ -148,10 +158,16 @@ local windows = {
 								end)
 							end
 						else
-							if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-								steam.matchmaking.leaveLobby(v)
-								steam.matchmaking.joinLobby(v, function(e)
-								end)
+							if(active_mode ~= nil)then
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+									steam.matchmaking.leaveLobby(v)
+									steam.matchmaking.joinLobby(v, function(e)
+									end)
+								end
+							else
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id.."[Missing])("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+
+								end
 							end
 						end
 
