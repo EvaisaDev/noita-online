@@ -9,10 +9,10 @@
     background_edge_top="data/weather_gfx/edges/background_cave_04_alt_top.png"
     background_edge_bottom="data/weather_gfx/edges/background_cave_04_alt_bottom.png"
     limit_background_image="0"
+    skip_edge_textures="0"
     fat_biome_edges="0"
     noise_biome_edges="0"
     has_rain="0"
-    skip_edge_textures="0"
   >
   </Topology>
 
