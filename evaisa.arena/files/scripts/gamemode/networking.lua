@@ -42,11 +42,50 @@ networking = {
                 end
             end
         end,
+        arena_loaded = function(lobby, message, user, data)
+
+            local username = steam.friends.getFriendPersonaName(user)
+
+            data.players[tostring(user)].loaded = true
+
+            GamePrint(username .. " has loaded the arena.")
+
+            if(steamutils.IsOwner(lobby))then
+                steam.matchmaking.setLobbyData(lobby, tostring(user).."_loaded", "true")
+            end
+        end,
+        enter_arena = function(lobby, message, user, data)
+            gameplay_handler.LoadArena(lobby, data, true)
+        end,
+        start_countdown = function(lobby, message, user, data)
+            GamePrint("Starting countdown...")
+            data.players_loaded = true
+            gameplay_handler.FightCountdown(lobby, data)
+        end,
+        unlock = function(lobby, message, user, data)
+            player.Immortal(false)
+            gameplay_handler.AllowFiring(data)
+            message_handler.send.RequestWandUpdate(lobby, data)
+            data.countdown:cleanup()
+            data.countdown = nil
+        end,
     },
     send = {
         ready = function(lobby, is_ready, silent)
             silent = silent or false
             steamutils.send("ready", {is_ready, silent},  steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        arena_loaded = function(lobby)
+            steamutils.send("arena_loaded", {},  steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        enter_arena = function(lobby)
+            steamutils.send("enter_arena", {},  steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        start_countdown = function(lobby)
+            steamutils.send("start_countdown", {},  steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        unlock = function(lobby)
+            steamutils.send("unlock", {},  steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
     },
 }

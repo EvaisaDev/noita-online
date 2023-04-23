@@ -800,7 +800,8 @@ ArenaGameplay = {
             -- check if all players are ready
             if(ArenaGameplay.ReadyCheck(lobby, data))then
                 ArenaGameplay.LoadArena(lobby, data, true)
-                message_handler.send.EnterArena(lobby)
+                --message_handler.send.EnterArena(lobby)
+                networking.send.enter_arena(lobby)
             end
         end
 
@@ -879,7 +880,8 @@ ArenaGameplay = {
             "mods/evaisa.arena/files/sprites/ui/countdown/fight.png",
         }, 60, function()
 
-            message_handler.send.Unlock(lobby)
+            --message_handler.send.Unlock(lobby)
+            networking.send.unlock(lobby)
             player.Immortal(false)
             ArenaGameplay.AllowFiring(data)
             message_handler.send.RequestWandUpdate(lobby, data)
@@ -978,7 +980,8 @@ ArenaGameplay = {
                     GamePrint("Spawned!!")
                     
                     if(not steamutils.IsOwner(lobby))then
-                        message_handler.send.Loaded(lobby)
+                        networking.send.arena_loaded(lobby)
+                        --message_handler.send.Loaded(lobby)
                     end
 
                     message_handler.send.Health(lobby)
@@ -1009,7 +1012,8 @@ ArenaGameplay = {
             if(not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))then
                 data.players_loaded = true
                 print("All players loaded")
-                message_handler.send.StartCountdown(lobby)
+                --message_handler.send.StartCountdown(lobby)
+                networking.send.start_countdown(lobby)
                 ArenaGameplay.FightCountdown(lobby, data)
             end
         end
