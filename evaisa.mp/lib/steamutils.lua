@@ -179,11 +179,18 @@ steam_utils.messageTypes = {
 }
 
 message_handlers = {
-	[steam_utils.messageTypes.AllPlayers] = function (data, lobby) 
+	[steam_utils.messageTypes.AllPlayers] = function (data, lobby, reliable) 
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			
-			local success, size = steam.networking.sendString(member.id, data)
+			local success, size = 0, 0
+
+			if(reliable)then
+				success, size = steam.networking.sendStringReliable(member.id, data)
+			else
+				success, size = steam.networking.sendString(member.id, data)
+			end
+			
 			success = tonumber(tostring(success))
 			--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 			if(success ~= 1)then
@@ -195,11 +202,18 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.OtherPlayers] = function (data, lobby) 
+	[steam_utils.messageTypes.OtherPlayers] = function (data, lobby, reliable) 
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			if(member.id ~= steam.user.getSteamID())then
-				local success, size = steam.networking.sendString(member.id, data)
+				local success, size = 0, 0
+
+				if(reliable)then
+					success, size = steam.networking.sendStringReliable(member.id, data)
+				else
+					success, size = steam.networking.sendString(member.id, data)
+				end
+
 				success = tonumber(tostring(success))
 				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if(success ~= 1)then
@@ -210,11 +224,19 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Clients] = function (data, lobby) 
+	[steam_utils.messageTypes.Clients] = function (data, lobby, reliable) 
 		local members = steamutils.getLobbyMembers(lobby)
 		for k, member in pairs(members)do
 			if(member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby))then
-				local success, size = steam.networking.sendString(member.id, data)
+				local success, size = 0, 0
+
+				if(reliable)then
+					success, size = steam.networking.sendStringReliable(member.id, data)
+				else
+					success, size = steam.networking.sendString(member.id, data)
+				end
+
+
 				success = tonumber(tostring(success))
 				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if(success ~= 1)then
@@ -225,8 +247,15 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Host] = function (data, lobby) 
-		local success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
+	[steam_utils.messageTypes.Host] = function (data, lobby, reliable) 
+		local success, size = 0, 0
+
+		if(reliable)then
+			success, size = steam.networking.sendStringReliable(steam.matchmaking.getLobbyOwner(lobby), data)
+		else
+			success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
+		end
+
 		success = tonumber(tostring(success))
 		--GamePrint("Sent message of size " .. tostring(size) .. " to " .. steam.friends.getFriendPersonaName(steam.matchmaking.getLobbyOwner(lobby)) .. " (" .. tostring(success) .. ")")
 		if(success ~= 1)then
@@ -237,7 +266,8 @@ message_handlers = {
 	end,
 }
 
-steam_utils.sendData = function(data, messageType, lobby)
+--[[
+steam_utils.sendData = function(data, messageType, lobby, reliable)
 
 	--print("Sending data")
 	--print(json.stringify(data))
@@ -248,19 +278,78 @@ steam_utils.sendData = function(data, messageType, lobby)
 		if(type(encodedData) == "number")then
 			encodedData = tostring(encodedData)
 		end
-		message_handlers[messageType](encodedData, lobby)
+		message_handlers[messageType](encodedData, lobby, reliable)
 	else
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
 
-steam_utils.sendDataToPlayer = function(data, player)
+steam_utils.sendDataToPlayer = function(data, player, reliable)
 	local encodedData = bitser.dumps(data)--json.stringify(data)
 	if(encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number"))then
 		if(type(encodedData) == "number")then
 			encodedData = tostring(encodedData)
 		end
-		local success, size = steam.networking.sendString(player, encodedData)
+		local success, size = 0, 0
+
+		if(reliable)then
+			success, size = steam.networking.sendStringReliable(player, encodedData)
+		else
+			success, size = steam.networking.sendString(player, encodedData)
+		end
+
+		success = tonumber(tostring(success))
+		if(success ~= 1)then
+			GamePrint("Failed to send message to " .. steam.friends.getFriendPersonaName(player) .. " (" .. tostring(success) .. ")")
+		else
+			bytes_sent = bytes_sent + size
+		end
+	else
+		GamePrint("Failed to send data, encodedData is nil or not a string")
+	end
+end
+]]
+
+steam_utils.send = function(event, message, messageType, lobby, reliable)
+	local data = {event,message}
+	
+	if(not reliable)then
+		table.insert(data, GameGetFrameNum())
+	end
+
+	local encodedData = bitser.dumps(data)
+
+	if(encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number"))then
+		if(type(encodedData) == "number")then
+			encodedData = tostring(encodedData)
+		end
+		message_handlers[messageType](encodedData, lobby, reliable)
+	else
+		GamePrint("Failed to send data, encodedData is nil or not a string")
+	end
+end
+
+steam_utils.sendToPlayer = function(event, message, player, reliable)
+	local data = {event,message}
+
+	if(not reliable)then
+		table.insert(data, GameGetFrameNum())
+	end
+
+	local encodedData = bitser.dumps(data)
+
+	if(encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number"))then
+		if(type(encodedData) == "number")then
+			encodedData = tostring(encodedData)
+		end
+		local success, size = 0, 0
+
+		if(reliable)then
+			success, size = steam.networking.sendStringReliable(player, encodedData)
+		else
+			success, size = steam.networking.sendString(player, encodedData)
+		end
+
 		success = tonumber(tostring(success))
 		if(success ~= 1)then
 			GamePrint("Failed to send message to " .. steam.friends.getFriendPersonaName(player) .. " (" .. tostring(success) .. ")")
@@ -272,8 +361,10 @@ steam_utils.sendDataToPlayer = function(data, player)
 	end
 end
 
+
 steam_utils.parseData = function(data)
 	local decodedData = bitser.loads(data)--json.parse(data)
+	
 	return decodedData
 end
 

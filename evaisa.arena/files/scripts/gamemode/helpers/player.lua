@@ -12,19 +12,25 @@ player_helper.Get = function()
         return
     end
 
+    --[[
     if(#player > 1)then
         print("Found more than one player, issue??")
         -- print all the player entities
         for k, v in pairs(player)do
             print("Player "..k..": "..tostring(v))
         end
+        -- kill first player
+        EntityKill(player[1])
     end
+    ]]
 
+    --[[
     if(player[1] ~= last_player_entity)then
         print("Player changed from "..tostring(last_player_entity).." to "..tostring(player[1]))
     end
 
     last_player_entity = player[1]
+    ]]
 
     return player[1]
 end

@@ -11,7 +11,8 @@ last_player_entity = nil
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
-message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler.lua")
+message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
+networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
@@ -219,8 +220,15 @@ ArenaMode = {
             EntityKill(player)
         end
     end,
+    --[[
     message = function(lobby, message, user)
         message_handler.handle(lobby, message, user, data)
+    end,
+    ]]
+    received = function(lobby, event, message, user)
+        if(networking.receive[event])then
+            networking.receive[event](lobby, message, user, data)
+        end
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
         if(EntityHasTag(shooter_id, "client"))then

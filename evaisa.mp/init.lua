@@ -154,6 +154,7 @@ last_bytes_sent = 0
 bytes_received = 0
 last_bytes_received = 0
 active_members = {}
+member_message_frames = {}
 gamemode_index = 1
 
 function FindGamemode(id)
@@ -163,6 +164,46 @@ function FindGamemode(id)
 		end
 	end
 	return nil
+end
+
+local 
+
+function ReceiveMessages(gamemode)
+	local messages = steam.networking.pollMessages() or {}
+	for k, v in ipairs(messages)do
+		local data = steamutils.parseData(v.data)
+
+
+		
+		--print("Received data: "..json.stringify(data))
+
+
+		bytes_received = bytes_received + v.msg_size
+		if(gamemode.message)then
+			gamemode.message(lobby_code, data, v.user)
+		end
+		if(gamemode.received)then
+			if(data[1] and type(data[1]) == "string" and data[2])then
+				local event = data[1]
+				local message = data[2]
+				local frame = data[3]
+
+				--print("Received event: "..event)
+
+				if(data[3])then
+					-- check if frame is newer than member message frame
+					if(not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] < frame)then
+						member_message_frames[tostring(v.user)] = frame
+						gamemode.received(lobby_code, event, message, v.user)
+					end
+				else
+					gamemode.received(lobby_code, event, message, v.user)
+				end
+				
+				
+			end
+		end
+	end
 end
 
 function OnWorldPreUpdate()
@@ -202,11 +243,15 @@ function OnWorldPreUpdate()
 					if(not active_members[tostring(h)])then
 						active_members[tostring(h)] = h
 					end
+					if(not member_message_frames[tostring(h)])then
+						member_message_frames[tostring(h)] = 0
+					end
 					current_members[tostring(h)] = true
 				end
 				for k, v in pairs(active_members) do
 					if(not current_members[k])then
 						active_members[k] = nil
+						member_message_frames[k] = nil
 						steam.networking.closeSession(v)
 						print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 					end
@@ -265,26 +310,11 @@ function OnWorldPreUpdate()
 						steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
 					end
 				end
-				
-				--print("g")
 
 				lobby_gamemode.update(lobby_code)
-				
-				--print("h")
 
-				--local artificial_lag = math.floor((ModSettingGet("evaisa.mp.artificial_lag") or 1) + 0.5)
+				ReceiveMessages(lobby_gamemode)
 
-				--if(GameGetFrameNum() % artificial_lag == 0)then
-					local messages = steam.networking.pollMessages() or {}
-					for k, v in ipairs(messages)do
-						bytes_received = bytes_received + v.msg_size
-						if(lobby_gamemode.message)then
-							lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
-						end
-					end
-				--end
-
-				--print("i")
 			end
 		end
 	end
@@ -346,6 +376,8 @@ function OnWorldPostUpdate()
 					end
 				end
 				]]
+
+				ReceiveMessages(lobby_gamemode)
 			end
 		end
 	end
@@ -355,6 +387,7 @@ function steam.matchmaking.onLobbyEnter(data)
 
 	for k, v in pairs(active_members)do
 		active_members[k] = nil
+		member_message_frames[k] = nil
 		steam.networking.closeSession(v)
 		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 	end
@@ -524,9 +557,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		print("Checksum passed: "..tostring(response.body))
 	end
 
-
-	ModSettingRemove("lobby_data_store")
-
 --[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
@@ -545,6 +575,8 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
+	ModSettingRemove("lobby_data_store")
+
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

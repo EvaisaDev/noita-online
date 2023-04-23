@@ -585,6 +585,7 @@ ArenaGameplay = {
         data.client.previous_wand = nil
         data.client.previous_anim = nil
         data.projectile_seeds = {}
+        
         data.current_arena = nil
         ArenaGameplay.ResetDamageZone(lobby, data)
         --data.client.projectile_homing = {}
@@ -668,7 +669,8 @@ ArenaGameplay = {
             GameAddFlagRun("can_save_player")
         end)
 
-        message_handler.send.Unready(lobby, true)
+        --message_handler.send.Unready(lobby, true)
+        networking.send.ready(lobby, false, true)
 
         -- load map
         BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/world/map_lobby.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
@@ -805,14 +807,16 @@ ArenaGameplay = {
         if(GameHasFlagRun("player_ready"))then
             GameRemoveFlagRun("player_ready")
             GamePrint("You are ready")
-            message_handler.send.Ready(lobby)
+           -- message_handler.send.Ready(lobby)
+            networking.send.ready(lobby, true, false)
             data.client.ready = true
         end
 
         if(GameHasFlagRun("player_unready"))then
             GameRemoveFlagRun("player_unready")
             GamePrint("You are no longer ready")
-            message_handler.send.Unready(lobby)
+            --message_handler.send.Unready(lobby)
+            networking.send.ready(lobby, false, false)
             data.client.ready = false
         end
 
@@ -1213,7 +1217,7 @@ ArenaGameplay = {
                             data.client.spread_index = 1
                         end]]
                     else
-                        if(data.client.projectile_seeds[entity_that_shot])then
+                        if(data.projectile_seeds[entity_that_shot])then
                             local new_seed = data.projectile_seeds[entity_that_shot] + 25
                             np.SetProjectileSpreadRNG(new_seed)
                             data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
