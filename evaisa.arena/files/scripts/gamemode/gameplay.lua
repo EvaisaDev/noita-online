@@ -70,7 +70,7 @@ ArenaGameplay = {
         local ready_players = (ready_players_string ~= nil and ready_players_string ~= "null") and bitser.loads(ready_players_string) or nil
         local members = steamutils.getLobbyMembers(lobby)
 
-        print(tostring(ready_players_string))
+        --print(tostring(ready_players_string))
         if(ready_players ~= nil)then
             for k, member in pairs(members)do
                 if(member.id ~= steam.user.getSteamID())then
@@ -522,7 +522,7 @@ ArenaGameplay = {
             if(compare_string ~= data.client.player_data_old)then
                 steamutils.SetLocalLobbyData(lobby, "player_data",  serialized_player_data)
 
-                print("Backing up Player Data: \n"..serialized_player_data)
+                --print("Backing up Player Data: \n"..serialized_player_data)
                         
                 data.client.serialized_player = serialized_player_data
                 data.client.player_data_old = compare_string
