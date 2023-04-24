@@ -46,13 +46,8 @@ ArenaMessageHandler = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         health_info = function(lobby, message, user, data)
-            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
-                return
-            end
-
-
-            local health = message.health
-            local maxHealth = message.max_health
+            local health = message[1]
+            local maxHealth = message[2]
 
             if(data.players[tostring(user)].entity ~= nil)then
                 local last_health = maxHealth
@@ -70,17 +65,18 @@ ArenaMessageHandler = {
                     ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
                     ComponentSetValue2(DamageModelComp, "hp", health)
                 end
+
+
+                if(data.players[tostring(user)].hp_bar)then
+                    data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
+                else
+                    local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                    data.players[tostring(user)].hp_bar = hp_bar
+                end
             end
 
             data.players[tostring(user)].health = health
             data.players[tostring(user)].max_health = maxHealth
-
-            if(data.players[tostring(user)].hp_bar)then
-                data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
-            else
-                local hp_bar = healthbar.create(health, maxHealth, 18, 2)
-                data.players[tostring(user)].hp_bar = hp_bar
-            end
         end,
         update_hp = function(lobby, message, user, data)
             local health = message.health
@@ -756,29 +752,21 @@ ArenaMessageHandler = {
             end
         end,
         SendPerks = function(lobby)
-            --GamePrint("Sending perks!")
             local perk_info = {}
             for i,perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
-                --if(perks_allowed[perk_id] == nil or perks_allowed[perk_id] ~= false)then
-                    --if (((( perk_data.one_off_effect == nil ) or ( perk_data.one_off_effect == false )) and perk_data.usable_by_enemies) or perks_allowed[perk_id] == true) then
-                        local flag_name = get_perk_picked_flag_name( perk_id )
+                local flag_name = get_perk_picked_flag_name( perk_id )
 
-                        --print("Checking flag " .. flag_name)
-                        
-                        local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
-                        
-                        --print(tostring(GameHasFlagRun( flag_name )))
+                local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
 
-                        if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
-                            --print("Has flag: " .. perk_id)
-                            table.insert( perk_info, { id = perk_id, count = pickup_count, run_on_clients = (perk_data.run_on_clients or perk_data.usable_by_enemies) or false } )
-                        end
-                   -- end
-                --end
+                if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+                    --print("Has flag: " .. perk_id)
+                    table.insert( perk_info, {perk_id, pickup_count} )
+                end
             end
+
             if(#perk_info > 0)then
-                steamutils.sendData({type = "perk_info", perks = perk_info}, steamutils.messageTypes.OtherPlayers, lobby)
+                local message_data = {perk_info}
             end
         end,
         UpdateHp = function(lobby, data)

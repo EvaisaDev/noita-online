@@ -121,7 +121,7 @@ ArenaMode = {
         if(game_in_progress)then
             ArenaMode.start(lobby)
         end
-        message_handler.send.Handshake(lobby)
+        --message_handler.send.Handshake(lobby)
     end,
     start = function(lobby)
 
@@ -158,7 +158,7 @@ ArenaMode = {
                 
         playermenu = playerinfo_menu:New()
 
-        message_handler.send.Handshake(lobby)
+        --message_handler.send.Handshake(lobby)
     end,
     update = function(lobby)
 

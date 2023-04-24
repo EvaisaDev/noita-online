@@ -34,7 +34,7 @@ entity.ClearGameEffects = function( ent )
     end
 end
 
-entity.GivePerk = function( entity_who_picked, perk_id, amount )
+entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client )
     -- fetch perk info ---------------------------------------------------
 
     local pos_x, pos_y
@@ -43,6 +43,10 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount )
 
     local perk_data = get_perk_with_id( perk_list, perk_id )
     if perk_data == nil then
+        return
+    end
+
+    if (for_client and not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
         return
     end
 

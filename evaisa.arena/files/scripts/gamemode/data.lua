@@ -17,6 +17,7 @@ function data:New()
             previous_anim = nil,
             previous_hp = nil,
             previous_max_hp = nil,
+            previous_perk_string = nil,
             previous_wand_stats = {
                 mana = nil, 
                 mCastDelayStartFrame = nil, 

@@ -347,6 +347,214 @@ networking = {
                 end
             end
         end,
+        animation_update = function(lobby, message, user, data)
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
+                return
+            end
+
+            if(message[1] ~= nil and message[1] ~= "")then
+                local entity = data.players[tostring(user)].entity
+                if(entity ~= nil)then
+                    local spriteComp = EntityGetFirstComponent(entity, "SpriteComponent", "character")
+                    if(spriteComp ~= nil)then
+                        local lastRect = ComponentGetValue2(spriteComp, "rect_animation")
+
+                        if (lastRect == message[1]) then
+                            return
+                        end
+
+                        GamePlayAnimation( entity, message[1], 1 )
+
+                    end
+                end
+            end
+        end,
+        switch_item = function(lobby, message, user, data)
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
+                return
+            end
+
+            --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
+            local id = message[1]
+            if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                    for i,item in ipairs(items) do
+                        -- check id
+                        local item_id = tonumber(GlobalsGetValue(tostring(item).."_wand")) or -1
+                        if(item_id == id)then
+                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                            return
+                        end
+                    end
+                end
+            end
+        end,
+        sync_wand_stats = function(lobby, message, user, data)
+
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
+                return
+            end
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+                    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+                
+                    if(mActiveItem ~= nil)then
+                        --[[
+                            local msg_data = {
+                                mana,
+                                GameGetFrameNum() - cast_delay_start_frame, 
+                                mReloadFramesLeft = reload_frames_left,
+                                mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
+                                mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                            }
+                        ]]
+
+                        local mana = message[1]
+                        local mCastDelayStartFrame = GameGetFrameNum() - message[2]
+                        local mReloadFramesLeft = message[3]
+                        local mReloadNextFrameUsable = message[4] + GameGetFrameNum()
+                        local mNextChargeFrame = message[5] + GameGetFrameNum()
+
+                        local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
+                        if(abilityComp ~= nil)then
+                            ComponentSetValue2(abilityComp, "mana", mana)
+                            ComponentSetValue2(abilityComp, "mCastDelayStartFrame", mCastDelayStartFrame)
+                            ComponentSetValue2(abilityComp, "mReloadFramesLeft", mReloadFramesLeft)
+                            ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
+                            ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
+                        end
+                    end
+                end
+            end
+        end,
+        health_update = function(lobby, message, user, data)
+            local health = message[1]
+            local maxHealth = message[2]
+
+            if(data.players[tostring(user)].entity ~= nil)then
+                local last_health = maxHealth
+                if(data.players[tostring(user)].health)then
+                    last_health = data.players[tostring(user)].health
+                end
+                if(health < last_health)then
+                    local damage = last_health - health
+                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake", "NORMAL", 0, 0, nil)
+                end
+
+                local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
+            
+                if(DamageModelComp ~= nil)then
+                    ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
+                    ComponentSetValue2(DamageModelComp, "hp", health)
+                end
+
+
+                if(data.players[tostring(user)].hp_bar)then
+                    data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
+                else
+                    local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                    data.players[tostring(user)].hp_bar = hp_bar
+                end
+            end
+
+            data.players[tostring(user)].health = health
+            data.players[tostring(user)].max_health = maxHealth
+        end,
+        perk_update = function(lobby, message, user, data)
+            data.players[tostring(user)].perks = message.perks
+        end,
+        fire_wand = function(lobby, message, user, data)
+            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
+                return
+            end
+
+            if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity))then
+            
+                data.players[tostring(user)].can_fire = true
+
+                GlobalsSetValue("shooter_rng_"..tostring(user), tostring(message[4]))
+
+                data.players[tostring(user)].projectile_rng_stack = message[3]
+
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
+                if(controlsComp ~= nil)then
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+                    
+                    if(inventory2Comp == nil)then
+                        return
+                    end
+                    
+                    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+
+                    if(mActiveItem ~= nil)then
+                            
+                        
+
+                        local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                        local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
+
+                        local wand_x, wand_y = EntityGetTransform(mActiveItem)
+
+                        local x = wand_x + (aimNormal_x * 2)
+                        local y = wand_y + (aimNormal_y * 2)
+                        y = y - 1
+
+                        local target_x = x + aim_x
+                        local target_y = y + aim_y
+
+                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
+
+                        EntitySetTransform(mActiveItem, message[1], message[2])
+                        EntityApplyTransform(mActiveItem, message[1], message[2])
+
+                        EntityAddTag(data.players[tostring(user)].entity, "player_unit")
+                        np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
+                        EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+
+                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                    end
+                end
+            end
+        end,
+        death = function(lobby, message, user, data)
+            
+            local killer = message[1]
+            -- iterate data.tweens backwards and remove tweens belonging to the dead player
+            for i = #data.tweens, 1, -1 do
+                local tween = data.tweens[i]
+                if(tween.id == tostring(user))then
+                    table.remove(data.tweens, i)
+                end
+            end
+
+            data.players[tostring(user)]:Clean(lobby)
+            data.players[tostring(user)].alive = false
+            data.deaths = data.deaths + 1
+
+            if(killer == nil)then
+                
+                GamePrint(tostring(username) .. " died.")
+            else
+                local killer_id = gameplay_handler.FindUser(lobby, killer)
+                if(killer_id ~= nil)then
+                    GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
+                else
+                    GamePrint(tostring(username) .. " died.")
+                end
+            end
+
+            gameplay_handler.WinnerCheck(lobby, data)
+        end,
+        zone_update = function(lobby, message, user, data)
+            GlobalsSetValue("arena_area_size", tostring(message[1]))
+            GlobalsSetValue("arena_area_size_cap", tostring(message[1] + 200))
+            data.zone_size = message[1]
+            data.shrink_time = message[2]
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -450,9 +658,133 @@ networking = {
                     mouseDelta_y,
                 }
 
-                steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, true)
+                steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false)
 
             end
+        end,
+        animation_update = function(lobby, data)
+            local rectAnim = player.GetAnimationData()
+            if(rectAnim ~= nil)then
+                if(rectAnim ~= data.client.previous_anim)then
+                    steamutils.send("animation_update", {rectAnim}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                    data.client.previous_anim = rectAnim
+                end
+            end
+        end,
+        switch_item = function(lobby, data)
+            local held_item = player.GetActiveHeldItem()
+            if(held_item ~= nil)then
+                if(held_item ~= data.client.previous_selected_item)then
+                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item).."_wand")) or -1
+                    if(wand_id ~= -1)then
+                        steamutils.send("switch_item", {wand_id}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                        data.client.previous_selected_item = held_item
+                    end
+                end
+            end
+        end,
+        sync_wand_stats = function(lobby, data)
+            local held_item = player.GetActiveHeldItem()
+            if(held_item ~= nil)then
+                -- if has ability component
+                local abilityComp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                if(abilityComp)then
+                    -- get current mana
+                    local mana = ComponentGetValue2(abilityComp, "mana")
+                    -- mCastDelayStartFrame
+                    local cast_delay_start_frame = ComponentGetValue2(abilityComp, "mCastDelayStartFrame")
+                    -- mReloadFramesLeft
+                    local reload_frames_left = ComponentGetValue2(abilityComp, "mReloadFramesLeft")
+                    -- mReloadNextFrameUsable
+                    local reload_next_frame_usable = ComponentGetValue2(abilityComp, "mReloadNextFrameUsable")
+                    -- mNextChargeFramemNextChargeFrame
+                    local next_charge_frame = ComponentGetValue2(abilityComp, "mNextChargeFrame")
+
+                    if( data.client.previous_wand_stats.mana ~= mana or
+                        data.client.previous_wand_stats.mCastDelayStartFrame ~= cast_delay_start_frame or
+                        data.client.previous_wand_stats.mReloadFramesLeft ~= reload_frames_left or
+                        data.client.previous_wand_stats.mReloadNextFrameUsable ~= reload_next_frame_usable or
+                        data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame)then
+                            
+                        data.client.previous_wand_stats.mana = mana
+                        data.client.previous_wand_stats.mCastDelayStartFrame = cast_delay_start_frame
+                        data.client.previous_wand_stats.mReloadFramesLeft = reload_frames_left
+                        data.client.previous_wand_stats.mReloadNextFrameUsable = reload_next_frame_usable
+                        data.client.previous_wand_stats.mNextChargeFrame = next_charge_frame
+
+                        local msg_data = {
+                            mana,
+                            GameGetFrameNum() - cast_delay_start_frame, 
+                            mReloadFramesLeft = reload_frames_left,
+                            mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
+                            mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                        }
+
+                        steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.OtherPlayers, lobby, false)
+                    end
+
+                    
+                end
+            end
+        end,
+        health_update = function(lobby, data, force)
+            local health, max_health = player.GetHealthInfo()
+
+            if((data.client.previous_max_hp ~= max_health or data.client.previous_hp ~= health) or force)then
+                steamutils.send("health_update", {health, max_health}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                data.client.previous_max_hp = max_health
+                data.client.previous_hp = health
+            end
+        end,
+        perk_update = function(lobby, data)
+            local perk_info = {}
+            for i,perk_data in ipairs(perk_list) do
+                local perk_id = perk_data.id
+                local flag_name = get_perk_picked_flag_name( perk_id )
+
+                local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+
+                if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+                    --print("Has flag: " .. perk_id)
+                    table.insert( perk_info, {perk_id, pickup_count} )
+                end
+            end
+
+            if(#perk_info > 0)then
+                local message_data = {perk_info}
+                local perk_string = bitser.dumps(message_data)
+                if(perk_string ~= data.client.previous_perk_string)then
+                    steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true)
+                    data.client.previous_perk_string = perk_string
+                end
+            end
+        end,
+        fire_wand = function(lobby, rng, special_seed, cast_state)
+            local player = player.Get()
+            if(player)then
+                local wand = EntityHelper.GetHeldItem(player)
+
+                if(wand ~= nil)then
+
+                    local x, y = EntityGetTransform(wand)
+                    
+                    local data = {
+                        x,
+                        y,
+                        rng,
+                        special_seed
+                    }
+
+                    steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false)
+
+                end
+            end
+        end,
+        death = function(lobby, killer)
+            steamutils.send("death", {killer}, steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        zone_update = function(lobby, zone_size, shrink_time)
+            steamutils.send("zone_update", {zone_size, shrink_time}, steamutils.messageTypes.OtherPlayers, lobby, false)
         end,
     },
 }

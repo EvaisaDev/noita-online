@@ -50,6 +50,7 @@ local ffi = require "ffi"
 local application_id = 943584660334739457LL
 
 np.EnableGameSimulatePausing(false)
+np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 
 --GameSDK = require("game_sdk")
 

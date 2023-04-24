@@ -362,7 +362,8 @@ ArenaGameplay = {
                     end
 
       
-                    message_handler.send.ZoneUpdate(lobby, data.zone_size, zone_shrink_time)
+                    --message_handler.send.ZoneUpdate(lobby, data.zone_size, zone_shrink_time)
+                    networking.send.zone_update(lobby, data.zone_size, zone_shrink_time)
            
                    -- GamePrint("Zone size: " .. data.zone_size .. " (" .. last_zone_size .. " -> " .. data.zone_size .. ")")
                 end
@@ -483,7 +484,8 @@ ArenaGameplay = {
             data.deaths = data.deaths + 1
             data.client.alive = false
 
-            message_handler.send.Death(lobby, killer)
+            --message_handler.send.Death(lobby, killer)
+            networking.send.death(lobby, killer)
 
             GameRemoveFlagRun("player_died")
 
@@ -723,7 +725,8 @@ ArenaGameplay = {
         data.lobby_loaded = false
         data.client.player_loaded_from_data = false
 
-        message_handler.send.SendPerks(lobby)
+        --message_handler.send.SendPerks(lobby)
+        networking.send.perk_update(lobby, data)
 
         ArenaGameplay.PreventFiring()
 
@@ -823,8 +826,10 @@ ArenaGameplay = {
         end
 
         if(GameGetFrameNum() % 5 == 0)then
-            message_handler.send.UpdateHp(lobby, data)
-            message_handler.send.SendPerks(lobby)
+           -- message_handler.send.UpdateHp(lobby, data)
+            networking.send.update_hp(lobby, data)
+            --message_handler.send.SendPerks(lobby)
+            networking.send.perk_update(lobby, data)
         end
     end,
     UpdateHealthbars = function(data)
@@ -907,13 +912,11 @@ ArenaGameplay = {
             for k, v in ipairs(data.players[tostring(user)].perks)do
                 local perk = v.id
                 local count = v.count
-                local run_on_clients = v.run_on_clients
-                
-                if(run_on_clients)then
-                    for i = 1, count do
-                        entity.GivePerk(client, perk, i)
-                    end
+
+                for i = 1, count do
+                    entity.GivePerk(client, perk, i, true)
                 end
+
             end
         end
     end,
@@ -986,7 +989,8 @@ ArenaGameplay = {
                         --message_handler.send.Loaded(lobby)
                     end
 
-                    message_handler.send.Health(lobby)
+                    --message_handler.send.Health(lobby)
+                    networking.send.health_update(lobby, data, true)
                 end
             else
                 player.Move(data.spawn_point.x, data.spawn_point.y)
@@ -1030,14 +1034,17 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("took_damage"))then
             GameRemoveFlagRun("took_damage")
-            message_handler.send.Health(lobby)
+            --message_handler.send.Health(lobby)
+            networking.send.health_update(lobby, data, true)
         end
         if(data.players_loaded)then
             --message_handler.send.WandUpdate(lobby, data)
             networking.send.wand_update(lobby, data)
-            message_handler.send.SwitchItem(lobby, data)
+            --message_handler.send.SwitchItem(lobby, data)
+            networking.send.switch_item(lobby, data)
             --message_handler.send.Kick(lobby, data)
-            message_handler.send.AnimationUpdate(lobby, data)
+            --message_handler.send.AnimationUpdate(lobby, data)
+            networking.send.animation_update(lobby, data)
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
             networking.send.input_update(lobby)
@@ -1058,9 +1065,9 @@ ArenaGameplay = {
     end,
     Update = function(lobby, data)
 
-        if(GameGetFrameNum() % 60 == 0)then
-            message_handler.send.Handshake(lobby)
-        end
+        --if(GameGetFrameNum() % 60 == 0)then
+            --message_handler.send.Handshake(lobby)
+        --end
 
         --[[local chunk_loaders = EntityGetWithTag("chunk_loader") or {}
         for k, v in pairs(chunk_loaders)do
@@ -1089,6 +1096,7 @@ ArenaGameplay = {
             ArenaGameplay.LobbyUpdate(lobby, data)
         elseif(data.state == "arena")then
            -- message_handler.send.SyncWandStats(lobby, data)
+            networking.send.sync_wand_stats(lobby, data)
             ArenaGameplay.ArenaUpdate(lobby, data)
             ArenaGameplay.KillCheck(lobby, data)
         end
@@ -1110,10 +1118,9 @@ ArenaGameplay = {
 
                 --print(tostring(cast_state))
 
-                local cast_state = nil
-
                 --GamePrint("Sending special seed:"..tostring(special_seed))
-                message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
+                --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
+                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
                 data.client.projectiles_fired = 0
                 data.client.projectile_rng_stack = {}
             end
