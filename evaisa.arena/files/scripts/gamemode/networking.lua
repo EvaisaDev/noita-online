@@ -464,7 +464,9 @@ networking = {
             data.players[tostring(user)].max_health = maxHealth
         end,
         perk_update = function(lobby, message, user, data)
-            data.players[tostring(user)].perks = message.perks
+            print("Received perk update!!")
+            print(json.stringify(message[1]))
+            data.players[tostring(user)].perks = message[1]
         end,
         fire_wand = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
@@ -555,10 +557,37 @@ networking = {
             data.zone_size = message[1]
             data.shrink_time = message[2]
         end,
+        request_perk_update = function(lobby, message, user, data)
+            print("Attempting to send perk update")
+            local perk_info = {}
+            for i,perk_data in ipairs(perk_list) do
+                local perk_id = perk_data.id
+                local flag_name = get_perk_picked_flag_name( perk_id )
+
+                local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+
+                if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+                    --print("Has flag: " .. perk_id)
+                    table.insert( perk_info, {perk_id, pickup_count} )
+                end
+            end
+
+            if(#perk_info > 0)then
+                local message_data = {perk_info}
+
+                print("Replied to perk requests!")
+                steamutils.sendToPlayer("perk_update", message_data, user, true)
+
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
             steamutils.send("handshake", {GameGetFrameNum(), (game_funcs.UintToString(game_funcs.GetUnixTimestamp()))},  steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        request_perk_update = function(lobby)
+            print("Requesting perk update")
+            steamutils.send("request_perk_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
         ready = function(lobby, is_ready, silent)
             silent = silent or false
@@ -754,6 +783,7 @@ networking = {
                 local message_data = {perk_info}
                 local perk_string = bitser.dumps(message_data)
                 if(perk_string ~= data.client.previous_perk_string)then
+                    print("Sent perk update!!")
                     steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true)
                     data.client.previous_perk_string = perk_string
                 end

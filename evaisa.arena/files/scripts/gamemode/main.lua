@@ -119,11 +119,11 @@ ArenaMode = {
 
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
-            ArenaMode.start(lobby)
+            ArenaMode.start(lobby, true)
         end
         --message_handler.send.Handshake(lobby)
     end,
-    start = function(lobby)
+    start = function(lobby, was_in_progress)
 
 
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)

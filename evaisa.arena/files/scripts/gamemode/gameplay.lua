@@ -670,6 +670,8 @@ ArenaGameplay = {
             end
 
             GameAddFlagRun("can_save_player")
+
+            networking.send.request_perk_update(lobby)
         end)
 
         --message_handler.send.Unready(lobby, true)
@@ -827,7 +829,7 @@ ArenaGameplay = {
 
         if(GameGetFrameNum() % 5 == 0)then
            -- message_handler.send.UpdateHp(lobby, data)
-            networking.send.update_hp(lobby, data)
+            networking.send.health_update(lobby, data)
             --message_handler.send.SendPerks(lobby)
             networking.send.perk_update(lobby, data)
         end
@@ -910,8 +912,8 @@ ArenaGameplay = {
 
         if(data.players[tostring(user)].perks)then
             for k, v in ipairs(data.players[tostring(user)].perks)do
-                local perk = v.id
-                local count = v.count
+                local perk = v[1]
+                local count = v[2]
 
                 for i = 1, count do
                     entity.GivePerk(client, perk, i, true)

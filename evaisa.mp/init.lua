@@ -167,17 +167,10 @@ function FindGamemode(id)
 	return nil
 end
 
-local 
-
-function ReceiveMessages(gamemode)
+local function ReceiveMessages(gamemode)
 	local messages = steam.networking.pollMessages() or {}
 	for k, v in ipairs(messages)do
 		local data = steamutils.parseData(v.data)
-
-
-		
-		--print("Received data: "..json.stringify(data))
-
 
 		bytes_received = bytes_received + v.msg_size
 		if(gamemode.message)then
@@ -188,20 +181,18 @@ function ReceiveMessages(gamemode)
 				local event = data[1]
 				local message = data[2]
 				local frame = data[3]
-
-				--print("Received event: "..event)
-
 				if(data[3])then
 					-- check if frame is newer than member message frame
-					if(not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] < frame)then
+					if(not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame)then
 						member_message_frames[tostring(v.user)] = frame
+
+						--GamePrint("Received event: "..event)
+
 						gamemode.received(lobby_code, event, message, v.user)
 					end
 				else
 					gamemode.received(lobby_code, event, message, v.user)
 				end
-				
-				
 			end
 		end
 	end
