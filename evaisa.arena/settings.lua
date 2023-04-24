@@ -14,7 +14,7 @@ mod_settings =
             {
 				id = "predictive_netcode",
 				ui_name = "Predictive Netcode",
-				ui_description = "Predict player movement using latency",
+				ui_description = "Predict player movement using latency \n[Not Implemented]",
 				value_default = false,
 				scope = MOD_SETTING_SCOPE_RUNTIME,
 			},
