@@ -656,16 +656,6 @@ ArenaMessageHandler = {
             end
         end,
         WandUpdate = function(lobby, data, user)
-            --[[
-            local wandData = player.GetWandData()
-            if(wandData ~= nil)then
-                if(wandData ~= data.client.previous_wand)then
-                    local wandDataMana = player.GetWandDataMana()
-                    steamutils.sendData({type = "wand_update", wandData = wandDataMana}, steamutils.messageTypes.OtherPlayers, lobby)
-                    data.client.previous_wand = wandData
-                end
-            end
-            ]]
             local wandString = player.GetWandString()
             if(wandString ~= nil)then
                 if(wandString ~= data.client.previous_wand)then
@@ -732,56 +722,6 @@ ArenaMessageHandler = {
         SyncControls = function(lobby, data)
             local controls = player.GetControlsComponent()
             if(controls ~= nil)then
-
-                --[[
-                    if(message.kick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", false)
-                    end
-
-                    
-                    if(message.fire)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", true)
-                        local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
-                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", false)
-                    end
-
-                    if(message.fire2)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
-                    end
-                    
-                    if(message.leftClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
-                    end
-
-                    if(message.rightClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", false)
-                    end
-
-                    ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
-                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
-
-                ]]
-
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")

@@ -186,9 +186,9 @@ message_handlers = {
 			local success, size = 0, 0
 
 			if(reliable)then
-				success, size = steam.networking.sendStringReliable(member.id, data)
-			else
 				success, size = steam.networking.sendString(member.id, data)
+			else
+				success, size = steam.networking.sendStringUnreliable(member.id, data)
 			end
 			
 			success = tonumber(tostring(success))
@@ -209,9 +209,9 @@ message_handlers = {
 				local success, size = 0, 0
 
 				if(reliable)then
-					success, size = steam.networking.sendStringReliable(member.id, data)
-				else
 					success, size = steam.networking.sendString(member.id, data)
+				else
+					success, size = steam.networking.sendStringUnreliable(member.id, data)
 				end
 
 				success = tonumber(tostring(success))
@@ -231,9 +231,9 @@ message_handlers = {
 				local success, size = 0, 0
 
 				if(reliable)then
-					success, size = steam.networking.sendStringReliable(member.id, data)
-				else
 					success, size = steam.networking.sendString(member.id, data)
+				else
+					success, size = steam.networking.sendStringUnreliable(member.id, data)
 				end
 
 
@@ -251,9 +251,9 @@ message_handlers = {
 		local success, size = 0, 0
 
 		if(reliable)then
-			success, size = steam.networking.sendStringReliable(steam.matchmaking.getLobbyOwner(lobby), data)
-		else
 			success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
+		else
+			success, size = steam.networking.sendStringUnreliable(steam.matchmaking.getLobbyOwner(lobby), data)
 		end
 
 		success = tonumber(tostring(success))
@@ -312,7 +312,7 @@ end
 
 steam_utils.send = function(event, message, messageType, lobby, reliable)
 	local data = {event,message}
-	
+
 	if(not reliable)then
 		table.insert(data, GameGetFrameNum())
 	end
@@ -345,9 +345,9 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 		local success, size = 0, 0
 
 		if(reliable)then
-			success, size = steam.networking.sendStringReliable(player, encodedData)
-		else
 			success, size = steam.networking.sendString(player, encodedData)
+		else
+			success, size = steam.networking.sendStringUnreliable(player, encodedData)
 		end
 
 		success = tonumber(tostring(success))

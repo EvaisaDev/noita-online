@@ -162,6 +162,9 @@ ArenaMode = {
     end,
     update = function(lobby)
 
+        if(GameGetFrameNum() % 60 == 0)then
+            networking.send.handshake(lobby)
+        end
         
         local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")
         if(update_seed == nil)then
@@ -226,6 +229,11 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
+
+        if(not data.players[tostring(user)])then
+            data:DefinePlayer(lobby, user)
+        end
+
         if(networking.receive[event])then
             networking.receive[event](lobby, message, user, data)
         end

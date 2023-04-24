@@ -514,15 +514,16 @@ ArenaGameplay = {
   
             --[[local profile = profiler.new()
             profile:start()]]
-            local serialized_player_data = player.Serialize()
+            local serialized_player_data, compare_string = player.Serialize()
 
 
-            if(serialized_player_data ~= data.client.serialized_player)then
+            if(compare_string ~= data.client.player_data_old)then
                 steamutils.SetLocalLobbyData(lobby, "player_data",  serialized_player_data)
 
                 print("Backing up Player Data: \n"..serialized_player_data)
                         
                 data.client.serialized_player = serialized_player_data
+                data.client.player_data_old = compare_string
             end
             
             --[[profile:stop()
@@ -884,7 +885,8 @@ ArenaGameplay = {
             networking.send.unlock(lobby)
             player.Immortal(false)
             ArenaGameplay.AllowFiring(data)
-            message_handler.send.RequestWandUpdate(lobby, data)
+            --message_handler.send.RequestWandUpdate(lobby, data)
+            networking.send.request_wand_update(lobby)
             data.countdown:cleanup()
             data.countdown = nil
         end)
@@ -1020,21 +1022,25 @@ ArenaGameplay = {
         if(data.countdown ~= nil)then
             data.countdown:update()
         end
-        --if(GameGetFrameNum() % 2 == 0)then
-            message_handler.send.CharacterUpdate(lobby)
-        --end
+
+        if(GameGetFrameNum() % 2 == 0)then
+            --message_handler.send.CharacterUpdate(lobby)
+            networking.send.character_position(lobby)
+        end
 
         if(GameHasFlagRun("took_damage"))then
             GameRemoveFlagRun("took_damage")
             message_handler.send.Health(lobby)
         end
         if(data.players_loaded)then
-            message_handler.send.WandUpdate(lobby, data)
+            --message_handler.send.WandUpdate(lobby, data)
+            networking.send.wand_update(lobby, data)
             message_handler.send.SwitchItem(lobby, data)
             --message_handler.send.Kick(lobby, data)
             message_handler.send.AnimationUpdate(lobby, data)
             --message_handler.send.AimUpdate(lobby)
-            message_handler.send.SyncControls(lobby, data)
+            --message_handler.send.SyncControls(lobby, data)
+            networking.send.input_update(lobby)
             
             ArenaGameplay.CheckFiringBlock(lobby, data)
         end

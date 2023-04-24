@@ -142,7 +142,10 @@ player_helper.Immortal = function( immortal )
     end
 end
 
-player_helper.GetWandData = function()
+player_helper.GetWandData = function(fresh)
+
+    fresh = fresh or false
+
     --[[
     local wand = EZWand.GetHeldWand()
     if(wand == nil)then
@@ -167,7 +170,7 @@ player_helper.GetWandData = function()
 
         GlobalsSetValue(tostring(wand_entity).."_wand", tostring(k))
 
-        table.insert(wandData, {data = v:Serialize(true), id = k, slot_x = slot_x, slot_y = slot_y, active = (mActiveItem == wand_entity)})
+        table.insert(wandData, {data = v:Serialize(not fresh, not fresh), id = k, slot_x = slot_x, slot_y = slot_y, active = (mActiveItem == wand_entity)})
     end
     return wandData
 end
@@ -230,17 +233,6 @@ player_helper.GetControlsComponent = function()
         return
     end
     return controls
-end
-
-player_helper.GetWandDataMana = function()
-    --[[
-    local wand = EZWand.GetHeldWand()
-    if(wand == nil)then
-        return nil
-    end
-    local wandData = wand:Serialize(true)
-    return wandData
-    ]]
 end
 
 player_helper.DidKick = function()
@@ -588,10 +580,20 @@ player_helper.Serialize = function(dont_stringify)
         data.max_health = ComponentGetValue2(healthComponent, "max_hp")
     end
 
+    local compare_data = {
+        health = data.health,
+        max_health = data.max_health,
+        wand_data = player_helper.GetWandData(true),
+        spells = data.spells,
+        perks = data.perks,
+        gold = data.gold,
+    }
+
     local data_out = dont_stringify and data or bitser.dumps(data)
 
+    local compare_string = bitser.dumps(compare_data)
 
-    return data_out
+    return data_out, compare_string
 end
 
 
