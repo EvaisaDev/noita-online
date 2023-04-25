@@ -225,6 +225,8 @@ function OnWorldPreUpdate()
 				return
 			end
 
+			game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+
 			--print("a")
 
 			if(GameGetFrameNum() % 10 == 0)then
@@ -290,6 +292,9 @@ function OnWorldPreUpdate()
 			--print("Game in progress: "..tostring(game_in_progress))
 
 			if(game_in_progress)then
+
+				--print("the hell??")
+
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
 				--print("e")
