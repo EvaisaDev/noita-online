@@ -17,6 +17,12 @@ Todo:
     Sync shuffle
     sync world maybe?????? 
     forfeit button
+    
+    rework the networking
+    Cosmetics
+
+    Win conditions, first to x
+
 
     
 Done:
