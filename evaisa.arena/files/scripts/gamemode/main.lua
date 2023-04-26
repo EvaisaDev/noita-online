@@ -26,10 +26,17 @@ end
 
 playermenu = nil
 
+playerRunQueue = {}
+
+function RunWhenPlayerExists(func)
+    table.insert(playerRunQueue, func)
+end
+
+
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.4,
+    version = 0.41,
     settings = {
         {
             id = "damage_cap",
@@ -173,10 +180,12 @@ ArenaMode = {
 
         GlobalsSetValue("update_seed", update_seed)
 
-        --print(debug.traceback())
-        gameplay_handler.Update(lobby, data)
-        if(not IsPaused())then
-            playermenu:Update(data, lobby)
+        if(data ~= nil)then
+
+            gameplay_handler.Update(lobby, data)
+            if(not IsPaused())then
+                playermenu:Update(data, lobby)
+            end
         end
 
         --[[
@@ -215,7 +224,9 @@ ArenaMode = {
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)
-        gameplay_handler.LateUpdate(lobby, data)
+        if(data ~= nil)then
+            gameplay_handler.LateUpdate(lobby, data)
+        end
     end,
     leave = function(lobby)
         local player = player.Get()
@@ -234,8 +245,10 @@ ArenaMode = {
             data:DefinePlayer(lobby, user)
         end
 
-        if(networking.receive[event])then
-            networking.receive[event](lobby, message, user, data)
+        if(data ~= nil)then
+            if(networking.receive[event])then
+                networking.receive[event](lobby, message, user, data)
+            end
         end
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
@@ -243,14 +256,18 @@ ArenaMode = {
             EntityAddTag(shooter_id, "player_unit")
         end
 
-        gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        if(data ~= nil)then
+            gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        end
     end,
     on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
         if(EntityHasTag(shooter_id, "client"))then
             EntityRemoveTag(shooter_id, "player_unit")
         end
 
-        gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        if(data ~= nil)then
+            gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        end
     end
 }
 

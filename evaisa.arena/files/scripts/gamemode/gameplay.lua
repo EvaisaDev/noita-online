@@ -6,12 +6,6 @@ local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdo
 local json = dofile("mods/evaisa.arena/lib/json.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
-local playerRunQueue = {}
-
-function RunWhenPlayerExists(func)
-    table.insert(playerRunQueue, func)
-end
-
 ArenaGameplay = {
     GetNumRounds = function()
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -117,11 +111,13 @@ ArenaGameplay = {
             end
         end
     end,
-    FindUser = function(lobby, user_string)
+    FindUser = function(lobby, user_string, debug)
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members)do
-            --print("Member: " .. tostring(member.id))
             if(tostring(member.id) == user_string)then
+                if(debug)then
+                    print("found member: " .. tostring(member.id))
+                end
                 return member.id
             end
         end
@@ -545,6 +541,7 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
         GameRemoveFlagRun("can_save_player")
+        GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -890,8 +887,12 @@ ArenaGameplay = {
 
             --message_handler.send.Unlock(lobby)
             networking.send.unlock(lobby)
+            GameAddFlagRun("countdown_completed")
             player.Immortal(false)
             ArenaGameplay.AllowFiring(data)
+
+            print("Completed countdown.")
+
             --message_handler.send.RequestWandUpdate(lobby, data)
             networking.send.request_wand_update(lobby)
             data.countdown:cleanup()
@@ -1016,8 +1017,10 @@ ArenaGameplay = {
             ArenaGameplay.DamageZoneHandler(lobby, data, false)
         end
 
+        local player_entity = player.Get()
+
         if(steamutils.IsOwner(lobby))then
-            if(not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))then
+            if(player_entity ~= nil and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data)))then
                 data.players_loaded = true
                 print("All players loaded")
                 --message_handler.send.StartCountdown(lobby)
@@ -1042,6 +1045,16 @@ ArenaGameplay = {
         if(data.players_loaded)then
             --message_handler.send.WandUpdate(lobby, data)
             networking.send.wand_update(lobby, data)
+
+            if(GameGetFrameNum() % 60 == 0)then
+                networking.send.wand_update(lobby, data, nil, true)
+            end
+
+            if(GameGetFrameNum() % 2 == 0 and GameHasFlagRun("countdown_completed"))then
+                networking.send.unlock(lobby)
+            end
+
+
             --message_handler.send.SwitchItem(lobby, data)
             networking.send.switch_item(lobby, data)
             --message_handler.send.Kick(lobby, data)

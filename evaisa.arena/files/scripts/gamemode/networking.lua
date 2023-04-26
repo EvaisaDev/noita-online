@@ -49,6 +49,7 @@ networking = {
             data.players[tostring(user)].loaded = true
 
             GamePrint(username .. " has loaded the arena.")
+            print(username .. " has loaded the arena.") 
 
             if(steamutils.IsOwner(lobby))then
                 steam.matchmaking.setLobbyData(lobby, tostring(user).."_loaded", "true")
@@ -58,18 +59,30 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         start_countdown = function(lobby, message, user, data)
-            GamePrint("Starting countdown...")
-            data.players_loaded = true
-            gameplay_handler.FightCountdown(lobby, data)
+            RunWhenPlayerExists(function()
+
+                GamePrint("Starting countdown...")
+
+                print("Received all clear for starting countdown.")
+
+                data.players_loaded = true
+                gameplay_handler.FightCountdown(lobby, data)
+
+            end)
         end,
         unlock = function(lobby, message, user, data)
-            player.Immortal(false)
-            gameplay_handler.AllowFiring(data)
-            --message_handler.send.RequestWandUpdate(lobby, data)
-            networking.send.request_wand_update(lobby)
-            if(data.countdown ~= nil)then
-                data.countdown:cleanup()
-                data.countdown = nil
+            if(GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died"))then
+
+                print("Received unlock message, attempting to unlock player.")
+
+                player.Immortal(false)
+                gameplay_handler.AllowFiring(data)
+                --message_handler.send.RequestWandUpdate(lobby, data)
+                networking.send.request_wand_update(lobby)
+                if(data.countdown ~= nil)then
+                    data.countdown:cleanup()
+                    data.countdown = nil
+                end
             end
         end,
         character_position = function(lobby, message, user, data)
@@ -175,44 +188,57 @@ networking = {
 
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
 
-                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
-                    local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
-                    for i,item_id in ipairs(items) do
-                        GameKillInventoryItem( data.players[tostring(user)].entity, item_id )
-                        EntityKill(item_id)
-                    end
+                local wand_string = message[2]
+
+                local last_inventory_string = data.players[tostring(user)].last_inventory_string
+
+                if(last_inventory_string == nil)then
+                    last_inventory_string = ""
                 end
-                if(message[1] ~= nil)then
-                    for k, wandInfo in ipairs(message[1])do
 
-                        local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                if(last_inventory_string ~= wand_string)then
 
-                        local wand = EZWand(wandInfo.data, x, y)
-                        if(wand == nil)then
-                            return
+                    if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                        local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                        for i,item_id in ipairs(items) do
+                            GameKillInventoryItem( data.players[tostring(user)].entity, item_id )
+                            EntityKill(item_id)
                         end
-
-                        wand:PickUp(data.players[tostring(user)].entity)
-                        
-                        local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
-                        if(itemComp ~= nil)then
-                            ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
-                        end
-
-                        if(wandInfo.active)then
-                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, wand.entity_id, false, false)
-                        end
-
-                        GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
-                        
                     end
+                    if(message[1] ~= nil)then
+                        for k, wandInfo in ipairs(message[1])do
+
+                            local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+
+                            local wand = EZWand(wandInfo.data, x, y)
+                            if(wand == nil)then
+                                return
+                            end
+
+                            wand:PickUp(data.players[tostring(user)].entity)
+                            
+                            local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
+                            if(itemComp ~= nil)then
+                                ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
+                            end
+
+                            if(wandInfo.active)then
+                                game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, wand.entity_id, false, false)
+                            end
+
+                            GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
+                            
+                        end
+                    end
+
+                    data.players[tostring(user)].last_inventory_string = wand_string
                 end
 
             end
         end,
         request_wand_update = function(lobby, message, user, data)
             data.client.previous_wand = nil
-            networking.send.wand_update(lobby, data, user)
+            networking.send.wand_update(lobby, data, user, true)
         end,
         input_update = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
@@ -523,7 +549,8 @@ networking = {
             end
         end,
         death = function(lobby, message, user, data)
-            
+            local username = steam.friends.getFriendPersonaName(user)
+
             local killer = message[1]
             -- iterate data.tweens backwards and remove tweens belonging to the dead player
             for i = #data.tweens, 1, -1 do
@@ -532,6 +559,8 @@ networking = {
                     table.remove(data.tweens, i)
                 end
             end
+
+            --print(json.stringify(killer))
 
             data.players[tostring(user)]:Clean(lobby)
             data.players[tostring(user)].alive = false
@@ -543,6 +572,7 @@ networking = {
             else
                 local killer_id = gameplay_handler.FindUser(lobby, killer)
                 if(killer_id ~= nil)then
+
                     GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
                 else
                     GamePrint(tostring(username) .. " died.")
@@ -615,25 +645,25 @@ networking = {
                 steamutils.send("character_position", {x, y, vel_x, vel_y}, steamutils.messageTypes.OtherPlayers, lobby, false)
             end
         end,
-        wand_update = function(lobby, data, user)
+        wand_update = function(lobby, data, user, force)
             local wandString = player.GetWandString()
             if(wandString ~= nil)then
-                if(wandString ~= data.client.previous_wand)then
+                if(force or (wandString ~= data.client.previous_wand))then
                     local wandData = player.GetWandData()
                     if(wandData ~= nil)then
-                        GamePrint("Sending wand data to player")
+                        --GamePrint("Sending wand data to player")
                         if(user ~= nil)then
                             --steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
-                            steamutils.sendToPlayer("wand_update", {wandData}, user, true)
+                            steamutils.sendToPlayer("wand_update", {wandData, wandString}, user, true)
                         else
                             --steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
-                            steamutils.send("wand_update", {wandData}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                            steamutils.send("wand_update", {wandData, wandString}, steamutils.messageTypes.OtherPlayers, lobby, true)
                         end
                     end
                     data.client.previous_wand = wandString
                 end
             else
-                if(data.client.previous_wand ~= nil)then
+                if(force or (data.client.previous_wand ~= nil))then
                     
                     if(user ~= nil)then
                         --steamutils.sendDataToPlayer({type = "wand_update"}, user)

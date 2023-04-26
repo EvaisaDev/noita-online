@@ -30,7 +30,7 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.3
+MP_VERSION = 1.31
 Version_string = "63479623967237"
 
 Checksum_passed = false

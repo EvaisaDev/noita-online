@@ -18,6 +18,7 @@ function playerinfo:New(user)
         --[[last_position_x = nil,
         last_position_y = nil,]]
         previous_positions = {},
+        last_inventory_string = nil,
         ping = 0,
         id = user,
         perks = {},
@@ -48,6 +49,7 @@ function playerinfo:New(user)
         --[[self.last_position_x = nil
         self.last_position_y = nil]]
         self.previous_positions = {}
+        self.last_inventory_string = nil
         
         --[[if(steamutils.IsOwner(lobby))then
             steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_loaded", "false")
