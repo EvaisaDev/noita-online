@@ -221,11 +221,11 @@ networking = {
                                 return
                             end
 
-                            local item_pick_upper_component = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ItemPickUpperComponent")
+                            --[[local item_pick_upper_component = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ItemPickUpperComponent")
 
                             if(item_pick_upper_component ~= nil)then
                                 ComponentSetValue2(item_pick_upper_component, "only_pick_this_entity", wand.entity_id)
-                            end
+                            end]]
 
                             wand:PickUp(data.players[tostring(user)].entity)
 
