@@ -1048,6 +1048,7 @@ ArenaGameplay = {
 
             if(GameGetFrameNum() % 60 == 0)then
                 networking.send.wand_update(lobby, data, nil, true)
+                networking.send.switch_item(lobby, data, nil, true)
             end
 
             if(GameGetFrameNum() % 2 == 0 and GameHasFlagRun("countdown_completed"))then

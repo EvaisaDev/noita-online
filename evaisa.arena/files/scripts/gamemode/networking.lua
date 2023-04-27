@@ -239,6 +239,7 @@ networking = {
         request_wand_update = function(lobby, message, user, data)
             data.client.previous_wand = nil
             networking.send.wand_update(lobby, data, user, true)
+            networking.send.switch_item(lobby, data, user, true)
         end,
         input_update = function(lobby, message, user, data)
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
@@ -404,17 +405,22 @@ networking = {
             local id = message[1]
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
 
-                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
-                    local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
-                    for i,item in ipairs(items) do
-                        -- check id
-                        local item_id = tonumber(GlobalsGetValue(tostring(item).."_wand")) or -1
-                        if(item_id == id)then
+                local items = GameGetAllInventoryItems( data.players[tostring(user)].entity ) or {}
+                for i,item in ipairs(items) do
+                    -- check id
+                    local item_id = tonumber(GlobalsGetValue(tostring(item).."_wand")) or -1
+                    if(item_id == id)then
+
+                        local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "Inventory2Component")
+                        local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+
+                        if(mActiveItem ~= item)then
                             game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
-                            return
                         end
+                        return
                     end
                 end
+
             end
         end,
         sync_wand_stats = function(lobby, message, user, data)
@@ -730,14 +736,18 @@ networking = {
                 end
             end
         end,
-        switch_item = function(lobby, data)
+        switch_item = function(lobby, data, user, force)
             local held_item = player.GetActiveHeldItem()
             if(held_item ~= nil)then
-                if(held_item ~= data.client.previous_selected_item)then
+                if(force or user ~= nil or held_item ~= data.client.previous_selected_item)then
                     local wand_id = tonumber(GlobalsGetValue(tostring(held_item).."_wand")) or -1
                     if(wand_id ~= -1)then
-                        steamutils.send("switch_item", {wand_id}, steamutils.messageTypes.OtherPlayers, lobby, true)
-                        data.client.previous_selected_item = held_item
+                        if(user == nil)then
+                            steamutils.send("switch_item", {wand_id}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                            data.client.previous_selected_item = held_item
+                        else
+                            steamutils.sendToPlayer("switch_item", {wand_id}, user, true)
+                        end
                     end
                 end
             end
