@@ -1091,7 +1091,18 @@ function wand:PickUp(entity)
   if item_component then
     ComponentSetValue2(item_component, "has_been_picked_by_player", true)
   end
-  GamePickUpInventoryItem(entity, self.entity_id, false)
+  --GamePickUpInventoryItem(entity, self.entity_id, false)
+  local entity_children = EntityGetAllChildren(entity)
+  -- 
+  for key, child in pairs( children ) do
+    if EntityGetName( child ) == "inventory_quick" then
+      EntityAddChild( child, self.entity_id )
+    end
+  end
+
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_hand", false )
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_inventory", true )
 end
 
 -- Turns the wand properties etc into a string

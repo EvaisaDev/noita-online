@@ -670,12 +670,16 @@ networking = {
                     local wandData = player.GetWandData()
                     if(wandData ~= nil)then
                         --GamePrint("Sending wand data to player")
+                        local data = {wandData, wandString}
+                        if force then
+                            table.insert(data, true)
+                        end
                         if(user ~= nil)then
                             --steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
-                            steamutils.sendToPlayer("wand_update", {wandData, wandString}, user, true)
+                            steamutils.sendToPlayer("wand_update", data, user, true)
                         else
                             --steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
-                            steamutils.send("wand_update", {wandData, wandString}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                            steamutils.send("wand_update", data, steamutils.messageTypes.OtherPlayers, lobby, true)
                         end
                     end
                     data.client.previous_wand = wandString
