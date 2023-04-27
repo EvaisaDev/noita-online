@@ -36,7 +36,7 @@ end
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.41,
+    version = 0.42,
     settings = {
         {
             id = "damage_cap",
@@ -150,6 +150,9 @@ ArenaMode = {
 
         GlobalsSetValue("local_seed", tostring(local_seed))
 
+        local unique_seed = data.random.range(100, 10000000)
+        GlobalsSetValue("unique_seed", tostring(unique_seed))
+
 
         gameplay_handler.GetGameData(lobby, data)
 
@@ -171,6 +174,18 @@ ArenaMode = {
 
         if(GameGetFrameNum() % 60 == 0)then
             networking.send.handshake(lobby)
+
+            -- fix daynight cycle
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            ComponentSetValue2(world_state_component, "time", 0.2)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+            ComponentSetValue2(world_state_component, "fog", 0)
+            ComponentSetValue2(world_state_component, "intro_weather", true)
+
+            local unique_seed = data.random.range(100, 10000000)
+            GlobalsSetValue("unique_seed", tostring(unique_seed))
+
         end
         
         local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")
@@ -188,8 +203,7 @@ ArenaMode = {
             end
         end
 
-        --[[
-
+        
         local player_ent = player.Get()
 
         if(player_ent ~= nil)then
@@ -198,6 +212,13 @@ ArenaMode = {
                 local kick = ComponentGetValue2(controlsComp, "mButtonDownKick")
                 local kick_frame = ComponentGetValue2(controlsComp, "mButtonFrameKick")
                 if(kick and kick_frame == GameGetFrameNum())then
+
+                    local world_state = GameGetWorldStateEntity()
+
+                    EntityKill(world_state)
+
+                    --[[
+
                     local component = EntityGetFirstComponent( player_ent, "Inventory2Component" );
                     if component ~= nil then
                         local mActiveItem =  ComponentGetValue2( component, "mActiveItem" );
@@ -214,11 +235,11 @@ ArenaMode = {
                         n:PutInPlayersInventory()
 
                     end
-
+                    ]]
                 end
             end
         end
-        ]]
+
 
 
         --print("Did something go wrong?")

@@ -30,7 +30,7 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.31
+MP_VERSION = 1.32
 Version_string = "63479623967237"
 
 Checksum_passed = false
@@ -71,7 +71,10 @@ local request = require("luajit-request")
 local old_print = print
 print = function(...)
 	if not disable_print then
-		old_print(...)
+		local content = ...
+		local source = debug.getinfo(2).source
+
+		old_print("["..source.."]: "..tostring(content))
 	end
 end
 
@@ -225,7 +228,7 @@ function OnWorldPreUpdate()
 				return
 			end
 
-			game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+			--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 
 			--print("a")
 
@@ -573,7 +576,7 @@ end
 
 function OnPlayerSpawned(player)
 	ModSettingRemove("lobby_data_store")
-
+	GameRemoveFlagRun("game_paused")
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

@@ -44,7 +44,14 @@ function rng.new(seed)
     self.next_normal_int = function(min, max)
         return math.floor(self.next_normal_range(min, max + 1))
     end
-    self.range = function(min, max)
+    self.range = function(min, max, debug)
+        local out = self.next_range(min, max)
+        if(debug)then
+            print("Getting random number between "..tostring(min).." and "..tostring(max)..": "..tostring(math.floor(out)).." ("..out..")")
+        end
+        return math.floor(out)
+    end
+    self.float_range = function(min, max)
         return self.next_range(min, max)
     end
     return self

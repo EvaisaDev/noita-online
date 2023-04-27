@@ -5,6 +5,14 @@ genomes:add("pvp", 0, 0, 0, {})
 genomes:add("pvp_client", 0, 0, 0, {})
 genomes:finish()
 
+--[[
+local post_final = ModTextFileGetContent("data/shaders/post_final.frag")
+
+post_final = string.gsub(post_final, "const bool ENABLE_LIGHTING	    		= 1>0;", "const bool ENABLE_LIGHTING	    		= 1<0;")
+
+ModTextFileSetContent("data/shaders/post_final.frag", post_final)
+]]
+
 ModMaterialsFileAdd("mods/evaisa.arena/files/materials.xml")
 ModMagicNumbersFileAdd("mods/evaisa.arena/files/magic.xml")
 ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")

@@ -57,6 +57,7 @@ player_helper.Lock = function()
     end
 
     GameAddFlagRun("player_locked")
+    print("Player locked")
 
     local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
     if(characterDataComponent ~= nil)then
@@ -77,6 +78,22 @@ player_helper.Unlock = function()
     local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
     if(controls ~= nil)then
         ComponentSetValue2(controls, "enabled", true)
+    end
+
+    print("Player unlocked")
+
+    if(not GameHasFlagRun("game_paused"))then
+        if(player)then
+            np.RegisterPlayerEntityId(player)
+            local inventory_gui = EntityGetFirstComponentIncludingDisabled(player, "InventoryGuiComponent")
+            local controls_component = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+
+            EntitySetComponentIsEnabled(player, inventory_gui, true)
+            np.EnableInventoryGuiUpdate(true)
+            np.EnablePlayerItemPickUpper(true)
+            ComponentSetValue2(controls_component, "enabled", true)
+
+        end
     end
 
     GameRemoveFlagRun("player_locked")
@@ -318,6 +335,7 @@ player_helper.GetHealthInfo = function()
     end
     return health, maxHealth
 end
+
 
 player_helper.GetSpells = function()
     local player = player_helper.Get()
