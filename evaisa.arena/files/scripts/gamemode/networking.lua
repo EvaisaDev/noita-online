@@ -75,7 +75,6 @@ networking = {
 
                 print("Received unlock message, attempting to unlock player.")
 
-                a
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
                 networking.send.request_wand_update(lobby)
