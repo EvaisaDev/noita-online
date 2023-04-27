@@ -199,6 +199,9 @@ player_helper.SetWandData = function(wand_data)
     end
 
     if(wand_data ~= nil)then
+
+        local active_item_entity = nil
+
         for k, wandInfo in ipairs(wand_data)do
     
             local x, y = EntityGetTransform(player)
@@ -218,12 +221,15 @@ player_helper.SetWandData = function(wand_data)
             --print("Deserialized wand #"..tostring(k).." - Active? "..tostring(wandInfo.active))
     
             if(wandInfo.active)then
-                
-                game_funcs.SetActiveHeldEntity(player, wand.entity_id, false, false)
+                active_item_entity = wand.entity_id
             end
     
             GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
             
+        end
+
+        if(active_item_entity ~= nil)then
+            game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
         end
     end
 end
