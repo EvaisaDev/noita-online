@@ -11,7 +11,7 @@ local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/en
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 dofile_once( "data/scripts/perks/perk_list.lua" )
 dofile_once("mods/evaisa.arena/content/data.lua")
-
+local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 -- whatever ill just leave it
 
 networking = {
@@ -75,7 +75,9 @@ networking = {
 
                 --print("Received unlock message, attempting to unlock player.")
 
-                player.immortal(false)
+                --player_helper.immortal(false)
+
+                GameRemoveFlagRun("Immortal")
 
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
@@ -204,12 +206,13 @@ networking = {
                             EntityKill(item_id)
                         end
                     end
+
                     if(message[1] ~= nil)then
+                        local username = steam.friends.getFriendPersonaName(user)
+
+                        print("User ["..username.."] received inventory: "..tostring(json.stringify(message[1])))
+
                         for k, wandInfo in ipairs(message[1])do
-
-                            local username = steam.friends.getFriendPersonaName(user)
-
-                            print("Gave inventory: "..tostring(json.stringify(message[1])).." to user "..username)
 
                             local x, y = EntityGetTransform(data.players[tostring(user)].entity)
 
@@ -219,6 +222,12 @@ networking = {
                             end
 
                             wand:PickUp(data.players[tostring(user)].entity)
+
+                            
+                            local wand_owner = EntityGetName(EntityGetRootEntity(wand.entity_id))
+
+                            print("Wand has been picked up by: ["..tostring(wand_owner).."] was supposed to be: ["..tostring(user).."]")
+                            
                             
                             local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
                             if(itemComp ~= nil)then

@@ -322,13 +322,10 @@ ArenaMessageHandler = {
             end
         end,
         wand_update = function(lobby, message, user, data)
-            --print(message.wandData)
 
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-
-            --GamePrint("Received wand update")
 
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
 
@@ -350,7 +347,7 @@ ArenaMessageHandler = {
                         end
 
                         wand:PickUp(data.players[tostring(user)].entity)
-                        
+
                         local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
                         if(itemComp ~= nil)then
                             ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
@@ -365,11 +362,6 @@ ArenaMessageHandler = {
                     end
                 end
 
-                --[[
-                if(DebugGetIsDevBuild())then
-                    EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
-                end
-            ]]
             end
         end,
         switch_item = function(lobby, message, user, data)

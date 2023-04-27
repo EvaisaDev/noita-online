@@ -1045,10 +1045,10 @@ ArenaGameplay = {
             --message_handler.send.WandUpdate(lobby, data)
             networking.send.wand_update(lobby, data)
 
-            if(GameGetFrameNum() % 60 == 0)then
+            --[[if(GameGetFrameNum() % 60 == 0)then
                 networking.send.wand_update(lobby, data, nil, true)
                 networking.send.switch_item(lobby, data, nil, true)
-            end
+            end]]
 
             if(GameGetFrameNum() % 2 == 0 and GameHasFlagRun("countdown_completed"))then
                 networking.send.unlock(lobby)
