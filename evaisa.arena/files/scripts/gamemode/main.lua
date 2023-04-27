@@ -213,9 +213,9 @@ ArenaMode = {
                 local kick_frame = ComponentGetValue2(controlsComp, "mButtonFrameKick")
                 if(kick and kick_frame == GameGetFrameNum())then
 
-                    local world_state = GameGetWorldStateEntity()
+                    --local world_state = GameGetWorldStateEntity()
 
-                    EntityKill(world_state)
+                    --EntityKill(world_state)
 
                     --[[
 
