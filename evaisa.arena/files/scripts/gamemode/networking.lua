@@ -205,7 +205,7 @@ networking = {
                     if(message[1] ~= nil)then
                         for k, wandInfo in ipairs(message[1])do
 
-                            local username = steam.friends.GetFriendPersonaName(user)
+                            local username = steam.friends.getFriendPersonaName(user)
 
                             print("Gave inventory: "..tostring(json.stringify(message[1])).." to user "..username)
 
