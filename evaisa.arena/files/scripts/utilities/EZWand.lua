@@ -1092,9 +1092,9 @@ function wand:PickUp(entity)
     ComponentSetValue2(item_component, "has_been_picked_by_player", true)
   end
   --GamePickUpInventoryItem(entity, self.entity_id, false)
-  local entity_children = EntityGetAllChildren(entity)
+  local entity_children = EntityGetAllChildren(entity) or {}
   -- 
-  for key, child in pairs( children ) do
+  for key, child in pairs( entity_children ) do
     if EntityGetName( child ) == "inventory_quick" then
       EntityAddChild( child, self.entity_id )
     end

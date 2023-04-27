@@ -199,7 +199,9 @@ ArenaMode = {
 
             gameplay_handler.Update(lobby, data)
             if(not IsPaused())then
-                playermenu:Update(data, lobby)
+                if(playermenu ~= nil)then
+                    playermenu:Update(data, lobby)
+                end
             end
         end
 
