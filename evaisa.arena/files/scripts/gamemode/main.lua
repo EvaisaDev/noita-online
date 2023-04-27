@@ -36,7 +36,7 @@ end
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.42,
+    version = 0.43,
     settings = {
         {
             id = "damage_cap",
