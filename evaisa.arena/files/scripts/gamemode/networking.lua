@@ -73,7 +73,9 @@ networking = {
         unlock = function(lobby, message, user, data)
             if(GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died"))then
 
-                print("Received unlock message, attempting to unlock player.")
+                --print("Received unlock message, attempting to unlock player.")
+
+                player.immortal(false)
 
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
