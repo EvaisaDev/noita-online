@@ -75,7 +75,7 @@ networking = {
 
                 print("Received unlock message, attempting to unlock player.")
 
-                player.Immortal(false)
+                a
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
                 networking.send.request_wand_update(lobby)
@@ -184,8 +184,6 @@ networking = {
                 return
             end
 
-            --GamePrint("Received wand update")
-
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
 
                 local wand_string = message[2]
@@ -207,6 +205,10 @@ networking = {
                     end
                     if(message[1] ~= nil)then
                         for k, wandInfo in ipairs(message[1])do
+
+                            local username = steam.friends.GetFriendPersonaName(user)
+
+                            print("Gave inventory: "..tostring(json.stringify(message[1])).." to user "..username)
 
                             local x, y = EntityGetTransform(data.players[tostring(user)].entity)
 

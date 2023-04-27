@@ -593,15 +593,14 @@ ArenaGameplay = {
         -- set state
         data.state = "lobby"
 
+        player.Immortal(true)
+
         RunWhenPlayerExists(function()
             -- clean and unlock player entity
             player.Clean(first_entry)
             player.Unlock()
 
             GameRemoveFlagRun("player_is_unlocked")
-
-            -- grant immortality
-            player.Immortal(true)
 
             -- move player to correct position
             player.Move(0, 0)
