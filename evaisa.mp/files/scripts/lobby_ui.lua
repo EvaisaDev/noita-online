@@ -268,7 +268,7 @@ local windows = {
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Leave lobby"))then
 					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 					if(active_mode)then
-						active_mode.leave()
+						active_mode.leave(lobby_code)
 					end
 					gamemode_settings = {}
 					steam.matchmaking.leaveLobby(lobby_code)
@@ -701,90 +701,97 @@ local windows = {
 
 				GuiText(menu_gui, 2, 0, "--------------------")
 				GuiText(menu_gui, 2, 0, " ")
-				local lobby_types = {
-					"Public",
-					"Private",
-					"Friends Only",
-				}
 
-				local internal_types = { "Public", "Private", "FriendsOnly",}
 
-				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Lobby type: "..lobby_types[lobby_type]))then
-					lobby_type = lobby_type + 1
-					if(lobby_type > #lobby_types)then
-						lobby_type = 1
+				if(#gamemodes > 0)then
+
+					local lobby_types = {
+						"Public",
+						"Private",
+						"Friends Only",
+					}
+
+					local internal_types = { "Public", "Private", "FriendsOnly",}
+
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Lobby type: "..lobby_types[lobby_type]))then
+						lobby_type = lobby_type + 1
+						if(lobby_type > #lobby_types)then
+							lobby_type = 1
+						end
 					end
-				end
 
 
-				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, "Gamemode: "..gamemodes[gamemode_index].name))then
-					gamemode_index = gamemode_index + 1
-					if(gamemode_index > #gamemodes)then
-						gamemode_index = 1
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, "Gamemode: "..gamemodes[gamemode_index].name))then
+						gamemode_index = gamemode_index + 1
+						if(gamemode_index > #gamemodes)then
+							gamemode_index = 1
+						end
 					end
-				end
 
-				GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-				GuiText(menu_gui, 2, 1, "Lobby name: ")
-				local lobby_name_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 1, lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
-				if(lobby_name_value ~= lobby_name)then
-					lobby_name = lobby_name_value
-				end
-				GuiLayoutEnd(menu_gui)
-				
-				GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-				GuiText(menu_gui, 2, 3, "Max players: ")
-				local slider_value = GuiSlider(menu_gui, NewID("CreateLobby"), 0, 4, "", lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
-				if(slider_value ~= lobby_max_players)then
-					lobby_max_players = slider_value
-				end
-				GuiLayoutEnd(menu_gui)
+					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+					GuiText(menu_gui, 2, 1, "Lobby name: ")
+					local lobby_name_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 1, lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
+					if(lobby_name_value ~= lobby_name)then
+						lobby_name = lobby_name_value
+					end
+					GuiLayoutEnd(menu_gui)
+					
+					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+					GuiText(menu_gui, 2, 3, "Max players: ")
+					local slider_value = GuiSlider(menu_gui, NewID("CreateLobby"), 0, 4, "", lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
+					if(slider_value ~= lobby_max_players)then
+						lobby_max_players = slider_value
+					end
+					GuiLayoutEnd(menu_gui)
 
-				GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-				GuiText(menu_gui, 2, 4, "World seed: ")
-				local lobby_seed_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 4, lobby_seed, 120, 10, "1234567890")
-				if(lobby_seed_value ~= lobby_seed)then
-					lobby_seed = lobby_seed_value
-				end
-				GuiLayoutEnd(menu_gui)
+					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+					GuiText(menu_gui, 2, 4, "World seed: ")
+					local lobby_seed_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 4, lobby_seed, 120, 10, "1234567890")
+					if(lobby_seed_value ~= lobby_seed)then
+						lobby_seed = lobby_seed_value
+					end
+					GuiLayoutEnd(menu_gui)
 
-				GuiText(menu_gui, 2, 0, " ")
+					GuiText(menu_gui, 2, 0, " ")
 
-				if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Create lobby"))then
-					CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
-						msg.log("Created new lobby!")
-						
-						for k, setting in ipairs(gamemodes[gamemode_index].settings or {})do
-							if(gamemode_settings[setting.id] == nil)then
-								gamemode_settings[setting.id] = setting.default
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Create lobby"))then
+						CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
+							msg.log("Created new lobby!")
+							
+							for k, setting in ipairs(gamemodes[gamemode_index].settings or {})do
+								if(gamemode_settings[setting.id] == nil)then
+									gamemode_settings[setting.id] = setting.default
 
-								steam.matchmaking.setLobbyData(code, "setting_"..setting.id, tostring(setting.default))
+									steam.matchmaking.setLobbyData(code, "setting_"..setting.id, tostring(setting.default))
+								end
 							end
-						end
 
-						for k, data in pairs(gamemodes[gamemode_index].default_data or {})do
-							steam.matchmaking.setLobbyData(code, k, data)
-						end
+							for k, data in pairs(gamemodes[gamemode_index].default_data or {})do
+								steam.matchmaking.setLobbyData(code, k, data)
+							end
 
-						steam.matchmaking.setLobbyData(code, "name", lobby_name)
-						steam.matchmaking.setLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
-						steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
-						steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
-						steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
-						steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
-						steam.matchmaking.setLobbyData(code, "in_progress", "false")
+							steam.matchmaking.setLobbyData(code, "name", lobby_name)
+							steam.matchmaking.setLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
+							steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
+							steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
+							steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
+							steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
+							steam.matchmaking.setLobbyData(code, "in_progress", "false")
 
-						if(dev_mode)then
-							steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
-						end
+							if(dev_mode)then
+								steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
+							end
 
 
-						steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
+							steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
 
-						lobby_code = code
-					end)
+							lobby_code = code
+						end)
+					end
+				else
+					GuiText(menu_gui, 2, 0, "No gamemodes installed!")
 				end
-	
+
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end

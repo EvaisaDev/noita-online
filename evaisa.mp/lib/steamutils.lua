@@ -109,6 +109,7 @@ steam_utils.GetLocalLobbyData = function(lobby, key)
     return value
 end
 
+
 steam_utils.CheckLocalLobbyData = function()
     -- destroy data for any lobbies which no longer exist
 
@@ -148,6 +149,28 @@ steam_utils.CheckLocalLobbyData = function()
 
 
 end
+
+steam_utils.RemoveLocalLobbyData = function(lobby, key)
+	-- Compress the lobby ID
+	lobby = steam.utils.compressSteamID(lobby)
+	local key_string = data_store.Get("all_keys")
+    local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
+
+	data_store.Remove(tostring(lobby).."_"..key)
+
+	for lob, lobby_keys in pairs(keys) do
+		if(lob == lobby)then
+			for k, _ in pairs(lobby_keys) do
+				if(k == key)then
+					keys[lob][key] = nil
+					data_store.Set("all_keys", bitser.dumps(keys))
+					return
+				end
+			end
+		end
+	end
+end
+
 
 --[[
 steam_utils.CheckLocalLobbyData = function()

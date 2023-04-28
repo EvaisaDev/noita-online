@@ -32,6 +32,7 @@ function RunWhenPlayerExists(func)
     table.insert(playerRunQueue, func)
 end
 
+lobby_member_names = {}
 
 ArenaMode = {
     id = "arena",
@@ -132,6 +133,7 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
+        gameplay_handler.ResetEverything(lobby)
 
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
@@ -172,7 +174,19 @@ ArenaMode = {
     end,
     update = function(lobby)
 
+
+
         if(GameGetFrameNum() % 60 == 0)then
+            local members = steamutils.getLobbyMembers(lobby)
+            for k, member in pairs(members)do
+                if(member.id ~= steam.user.getSteamID())then
+                    local name = steam.friends.getFriendPersonaName(member.id)
+                    if(name ~= nil)then
+                        lobby_member_names[tostring(member.id)] = name
+                    end
+                end
+            end
+
             networking.send.handshake(lobby)
 
             -- fix daynight cycle
@@ -252,10 +266,8 @@ ArenaMode = {
         end
     end,
     leave = function(lobby)
-        local player = player.Get()
-        if(player ~= nil)then
-            EntityKill(player)
-        end
+        GameAddFlagRun("player_unloaded")
+        gameplay_handler.ResetEverything(lobby)
     end,
     --[[
     message = function(lobby, message, user)

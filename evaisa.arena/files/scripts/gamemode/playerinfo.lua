@@ -10,7 +10,7 @@ function playerinfo:New(user)
         health = 4,
         max_health = 4,
         ready = false,
-        alive = true,
+        alive = false,
         loaded = false,
         projectile_rng_stack = {},
         target = nil,
@@ -45,7 +45,7 @@ function playerinfo:New(user)
             self.hp_bar = nil
         end
         self.ready = false
-        self.alive = true
+        self.alive = false
         --[[self.last_position_x = nil
         self.last_position_y = nil]]
         self.previous_positions = {}

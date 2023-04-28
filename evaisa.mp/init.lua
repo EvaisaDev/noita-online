@@ -67,14 +67,18 @@ pretty = require("pretty_print")
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
 local request = require("luajit-request")
+local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and true or false
 
-local old_print = print
-print = function(...)
-	if not disable_print then
-		local content = ...
-		local source = debug.getinfo(2).source
+if(not (ModIsEnabled("evaisa.betterlogger") and extended_logging_enabled))then
+	local old_print = print
+	print = function(...)
+		if not disable_print then
+			local content = ...
+			local source = debug.getinfo(2).source
+		
+			old_print("["..source.."]: "..tostring(content))
 
-		old_print("["..source.."]: "..tostring(content))
+		end
 	end
 end
 

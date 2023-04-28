@@ -80,6 +80,39 @@ ArenaGameplay = {
             end
         end
     end,
+    ResetEverything = function(lobby)
+        local player = player.Get()
+        if(player ~= nil)then
+            EntityKill(player)
+        end
+
+        dofile_once( "data/scripts/perks/perk_list.lua" )
+        for i,perk_data in ipairs(perk_list) do
+            local perk_id = perk_data.id
+            local flag_name = get_perk_picked_flag_name( perk_id )
+
+            GlobalsSetValue( flag_name .. "_PICKUP_COUNT", "0" )
+        end
+
+        GlobalsSetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" )
+        GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
+        GlobalsSetValue( "EXTRA_MONEY_COUNT", "0" )
+        GlobalsSetValue( "RESPAWN_COUNT", "0" )
+        GlobalsSetValue( "holyMountainCount", "0" )
+
+        if(steamutils.IsOwner(lobby))then
+            steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
+            steam.matchmaking.deleteLobbyData(lobby, "total_gold")
+            steam.matchmaking.deleteLobbyData(lobby, "ready_players")
+        end
+
+        steamutils.RemoveLocalLobbyData(lobby, "player_data")
+        steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+
+        GameRemoveFlagRun( "saving_grace" )
+        GameRemoveFlagRun( "player_ready" )
+
+    end,
     ReadyAmount = function(data, lobby)
         local amount = data.client.ready and 1 or 0
         local members = steamutils.getLobbyMembers(lobby)
@@ -507,7 +540,7 @@ ArenaGameplay = {
             end
         end
     end,
-    SavePlayerData = function(lobby, data)
+    SavePlayerData = function(lobby, data, force)
         if((not GameHasFlagRun("player_unloaded")) and player.Get())then
   
             --[[local profile = profiler.new()
@@ -515,7 +548,7 @@ ArenaGameplay = {
             local serialized_player_data, compare_string = player.Serialize()
 
 
-            if(compare_string ~= data.client.player_data_old)then
+            if(force or compare_string ~= data.client.player_data_old)then
                 steamutils.SetLocalLobbyData(lobby, "player_data",  serialized_player_data)
 
                 --print("Backing up Player Data: \n"..serialized_player_data)
@@ -546,7 +579,7 @@ ArenaGameplay = {
         first_entry = first_entry or false
 
         if(not first_entry)then
-            --ArenaGameplay.SavePlayerData(lobby, data)
+            ArenaGameplay.SavePlayerData(lobby, data, true)
             ArenaGameplay.ClearWorld()
         end
 
@@ -580,7 +613,9 @@ ArenaGameplay = {
         data.tweens = {}
         
         -- clean local data
-        data.client.ready = false
+        
+        ArenaGameplay.SetReady(lobby, data, false, true)
+        
         data.client.alive = true
         data.client.previous_wand = nil
         data.client.previous_anim = nil
@@ -671,7 +706,6 @@ ArenaGameplay = {
         end)
 
         --message_handler.send.Unready(lobby, true)
-        networking.send.ready(lobby, false, true)
 
         -- load map
         BiomeMapLoad_KeepPlayer( "mods/evaisa.arena/files/scripts/world/map_lobby.lua", "mods/evaisa.arena/files/biome/holymountain_scenes.xml" )
@@ -693,7 +727,8 @@ ArenaGameplay = {
         --print(json.stringify(data))
     end,
     LoadArena = function(lobby, data, show_message)
-        --ArenaGameplay.SavePlayerData(lobby, data)
+        
+        ArenaGameplay.SavePlayerData(lobby, data, true)
 
         GameRemoveFlagRun("can_save_player")
 
@@ -723,6 +758,14 @@ ArenaGameplay = {
         data.lobby_loaded = false
         data.client.player_loaded_from_data = false
 
+        local members = steamutils.getLobbyMembers(lobby)
+        
+        for _, member in pairs(members)do
+            if(member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil)then
+                data.players[tostring(member.id)].alive = true
+            end
+        end
+
         --message_handler.send.SendPerks(lobby)
         networking.send.perk_update(lobby, data)
 
@@ -750,6 +793,20 @@ ArenaGameplay = {
     end,
     ReadyCheck = function(lobby, data)
         return ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby)
+    end,
+    SetReady = function(lobby, data, ready, silent)
+
+        if(ready)then
+            GamePrint("You are ready")
+        else
+            GamePrint("You are no longer ready")
+        end
+
+        networking.send.ready(lobby, ready, silent or false)
+        data.client.ready = ready
+        if(steamutils.IsOwner(lobby))then
+            steam.matchmaking.setLobbyData(lobby, tostring(steam.user.getSteamID()).."_ready", tostring(ready))
+        end
     end,
     CleanMembers = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
@@ -809,18 +866,14 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("player_ready"))then
             GameRemoveFlagRun("player_ready")
-            GamePrint("You are ready")
-           -- message_handler.send.Ready(lobby)
-            networking.send.ready(lobby, true, false)
-            data.client.ready = true
+            
+            ArenaGameplay.SetReady(lobby, data, true)
         end
 
         if(GameHasFlagRun("player_unready"))then
             GameRemoveFlagRun("player_unready")
-            GamePrint("You are no longer ready")
-            --message_handler.send.Unready(lobby)
-            networking.send.ready(lobby, false, false)
-            data.client.ready = false
+            
+            ArenaGameplay.SetReady(lobby, data, false)
         end
 
         if(GameGetFrameNum() % 5 == 0)then
@@ -1072,14 +1125,23 @@ ArenaGameplay = {
             local playerid = ArenaGameplay.FindUser(lobby, k)
 
             if(playerid == nil)then
-                print("Player " .. k .. " is not in the lobby anymore")
                 v:Clean(lobby)
                 data.players[k] = nil
+                --local name = steam.friends.getFriendPersonaName(playerid)
+                GamePrint("Player "..tostring(lobby_member_names[k]).." left the game")
+
+                -- if we are the last player, unready
+
+
+                lobby_member_names[k] = nil
+                if(data.state == "arena")then
+                    ArenaGameplay.WinnerCheck(lobby, data)
+                end
             end
         end
     end,
     Update = function(lobby, data)
-
+        player.TrySetNextFrame()
         --if(GameGetFrameNum() % 60 == 0)then
             --message_handler.send.Handshake(lobby)
         --end

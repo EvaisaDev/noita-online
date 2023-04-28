@@ -23,7 +23,7 @@ Todo:
 
     Win conditions, first to x
 
-
+    unlock send reply if unlocked then dont unlock again lolololol
     
 Done:
     Kicking sync

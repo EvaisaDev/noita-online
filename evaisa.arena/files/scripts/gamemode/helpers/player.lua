@@ -192,6 +192,25 @@ player_helper.GetWandData = function(fresh)
     return wandData
 end
 
+set_next_frame = set_next_frame or nil
+
+player_helper.TrySetNextFrame = function()
+    local player = player_helper.Get()
+    if(player == nil)then
+        return
+    end
+
+    if(set_next_frame ~= nil and EntityGetIsAlive(set_next_frame))then
+        game_funcs.SetActiveHeldEntity(player, set_next_frame, true, true)
+        print("Set selected item to: "..tostring(set_next_frame))
+        set_next_frame = nil
+    end
+end
+
+player_helper.SetNextFrame = function(entity)
+    set_next_frame = entity
+end
+
 player_helper.SetWandData = function(wand_data)
     local player = player_helper.Get()
     if(player == nil)then
@@ -229,7 +248,21 @@ player_helper.SetWandData = function(wand_data)
         end
 
         if(active_item_entity ~= nil)then
+            print("Selected item was: "..tostring(active_item_entity))
+
             game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
+            
+            player_helper.SetNextFrame(active_item_entity)
+
+            --[[
+            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+
+            ComponentSetValue2(inventory2Comp, "mActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mActualActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mInitialized", false)
+            ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+            ]]
+
         end
     end
 end
