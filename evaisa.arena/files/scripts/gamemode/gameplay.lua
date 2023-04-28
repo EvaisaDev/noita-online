@@ -177,6 +177,12 @@ ArenaGameplay = {
         local current_player = EntityLoad("data/entities/player.xml", 0, 0)
         game_funcs.SetPlayerEntity(current_player)
         np.RegisterPlayerEntityId(current_player)
+
+        -- Mark inventory as initialised, else the game will change the item
+        -- after we've set it in the deserialization.
+        local inventory = EntityGetFirstComponentIncludingDisabled(current_player, "Inventory2Component")
+        ComponentSetValue2(inventory, "mInitialized", true)
+
         player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data))
 
         GameRemoveFlagRun("player_unloaded")
@@ -905,29 +911,6 @@ ArenaGameplay = {
         return ready
     end,
     FightCountdown = function(lobby, data)
-        local playerEntity = player.Get()
-
-        
-        if(playerEntity ~= nil)then
-            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(playerEntity, "Inventory2Component")
-            if(inventory2Comp ~= nil)then
-                ComponentSetValue2(inventory2Comp, "mInitialized", false)
-                ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
-                --[[
-                local activeItem = ComponentGetValue2(playerEntity, "mActiveItem")
-
-                if(activeItem ~= nil)then
-                    local abilityComp = EntityGetFirstComponentIncludingDisabled(activeItem, "AbilityComponent")
-                    if(abilityComp ~= nil)then
-                        ComponentSetValue2(abilityComp, "mReloadFramesLeft", 2)
-                        ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", GameGetFrameNum() + 2)
-                        ComponentSetValue2(abilityComp, "mNextFrameUsable", GameGetFrameNum() + 2)
-                    end
-                end]]
-            end
-        end
-        
-        
         player.Unlock()
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
@@ -1141,7 +1124,6 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
-        player.TrySetNextFrame()
         --if(GameGetFrameNum() % 60 == 0)then
             --message_handler.send.Handshake(lobby)
         --end

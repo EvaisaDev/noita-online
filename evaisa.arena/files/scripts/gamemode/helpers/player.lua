@@ -194,23 +194,6 @@ end
 
 set_next_frame = set_next_frame or nil
 
-player_helper.TrySetNextFrame = function()
-    local player = player_helper.Get()
-    if(player == nil)then
-        return
-    end
-
-    if(set_next_frame ~= nil and EntityGetIsAlive(set_next_frame))then
-        game_funcs.SetActiveHeldEntity(player, set_next_frame, true, true)
-        print("Set selected item to: "..tostring(set_next_frame))
-        set_next_frame = nil
-    end
-end
-
-player_helper.SetNextFrame = function(entity)
-    set_next_frame = entity
-end
-
 player_helper.SetWandData = function(wand_data)
     local player = player_helper.Get()
     if(player == nil)then
@@ -251,8 +234,6 @@ player_helper.SetWandData = function(wand_data)
             print("Selected item was: "..tostring(active_item_entity))
 
             game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
-            
-            player_helper.SetNextFrame(active_item_entity)
 
             --[[
             local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
