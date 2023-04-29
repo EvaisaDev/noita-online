@@ -301,7 +301,11 @@ local windows = {
 					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, start_string ))then
 						gui_closed = not gui_closed
 						invite_menu_open = false
-						steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+						if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
+							steam.matchmaking.sendLobbyChatMsg(lobby_code, "restart")
+						else
+							steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+						end
 						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
 					end
 				end

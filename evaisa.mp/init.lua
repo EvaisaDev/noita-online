@@ -495,6 +495,25 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				end
 			end
 		end
+	elseif(data.fromOwner and data.message == "restart")then
+		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		
+		if handleVersionCheck() then
+			if handleGamemodeVersionCheck(lobby_code) then
+				if(lobby_gamemode)then
+					if(lobby_gamemode.start)then
+						lobby_gamemode.start(lobby_code, false)
+					end
+					game_in_progress = true
+					gui_closed = true
+				else
+					disconnect({
+						lobbyID = lobby_code,
+						message = "Gamemode missing: "..tostring(lobby_gamemode.id)
+					})
+				end
+			end
+		end	
 	elseif(data.fromOwner and data.message == "refresh")then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 

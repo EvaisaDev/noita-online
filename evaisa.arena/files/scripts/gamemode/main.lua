@@ -133,7 +133,24 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
+        if(not was_in_progress)then
+            steamutils.RemoveLocalLobbyData(lobby, "player_data")
+            steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        end
+
         gameplay_handler.ResetEverything(lobby)
+
+        local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
+        local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
+
+        if(unique_game_id_server ~= unique_game_id_client)then
+            print("Unique game id mismatch, removing player data")
+            steamutils.RemoveLocalLobbyData(lobby, "player_data")
+            steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        end
+
+
+        GameAddFlagRun("player_unloaded")
 
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
@@ -155,6 +172,10 @@ ArenaMode = {
         local unique_seed = data.random.range(100, 10000000)
         GlobalsSetValue("unique_seed", tostring(unique_seed))
 
+        if(steamutils.IsOwner(lobby))then
+            local unique_game_id = data.random.range(100, 10000000)
+            steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
+        end
 
         gameplay_handler.GetGameData(lobby, data)
 
@@ -170,6 +191,8 @@ ArenaMode = {
                 
         playermenu = playerinfo_menu:New()
 
+
+
         --message_handler.send.Handshake(lobby)
     end,
     update = function(lobby)
@@ -177,6 +200,12 @@ ArenaMode = {
 
 
         if(GameGetFrameNum() % 60 == 0)then
+
+            if(data ~= nil)then
+                local unique_game_id = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
+                steamutils.SetLocalLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
+            end
+
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members)do
                 if(member.id ~= steam.user.getSteamID())then
@@ -229,9 +258,11 @@ ArenaMode = {
                 local kick_frame = ComponentGetValue2(controlsComp, "mButtonFrameKick")
                 if(kick and kick_frame == GameGetFrameNum())then
 
-                    --local world_state = GameGetWorldStateEntity()
+                    -- REMOVE THIS
 
-                    --EntityKill(world_state)
+                    local world_state = GameGetWorldStateEntity()
+
+                    EntityKill(world_state)
 
                     --[[
 

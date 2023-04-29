@@ -32,7 +32,7 @@ function data_store.Get(key)
     -- Create the file path by joining the folder path and key
     local file_path = data_folder_name .. "\\" .. key
     -- Open the file for reading
-    local file = io.open(file_path, "r")
+    local file, err = io.open(file_path, "r")
     -- Check if the file is successfully opened
     if file then
         -- Read the content of the file
@@ -43,7 +43,8 @@ function data_store.Get(key)
         return content
     else
         -- Print an error message if the file cannot be opened
-        print("Error: Could not open the file for reading.")
+        print("Error: Could not open the file ["..file_path.."] for reading.")
+        print(tostring(err))
         -- Return nil to indicate an error
         return nil
     end

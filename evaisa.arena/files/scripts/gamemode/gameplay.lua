@@ -84,16 +84,28 @@ ArenaGameplay = {
     end,
     ResetEverything = function(lobby)
         local player = player.Get()
-        if(player ~= nil)then
-            EntityKill(player)
-        end
 
         dofile_once( "data/scripts/perks/perk_list.lua" )
         for i,perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name( perk_id )
 
+            local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
+
+            if( pickup_count > 0 ) then
+                if(perk_data.func_remove ~= nil)then
+                    perk_data.func_remove(player)
+                end
+            end
+
             GlobalsSetValue( flag_name .. "_PICKUP_COUNT", "0" )
+
+            
+
+        end
+
+        if(player ~= nil)then
+            EntityKill(player)
         end
 
         GlobalsSetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" )
@@ -101,6 +113,24 @@ ArenaGameplay = {
         GlobalsSetValue( "EXTRA_MONEY_COUNT", "0" )
         GlobalsSetValue( "RESPAWN_COUNT", "0" )
         GlobalsSetValue( "holyMountainCount", "0" )
+        GlobalsSetValue( "HEARTS_MORE_EXTRA_HP_MULTIPLIER", "1" )
+        GlobalsSetValue( "PERK_SHIELD_COUNT", "0" )
+        GlobalsSetValue( "PERK_ATTRACT_ITEMS_RANGE", "0" )
+        GlobalsSetValue( "PERK_NO_MORE_SHUFFLE_WANDS", "0" )
+        GlobalsSetValue( "TEMPLE_PERK_COUNT", "3" )
+        GlobalsSetValue( "TEMPLE_PERK_DESTROY_CHANCE", "100" )
+        GlobalsSetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" )
+        GlobalsSetValue( "TEMPLE_PEACE_WITH_GODS", "0" )
+        GlobalsSetValue( "TEMPLE_SPAWN_GUARDIAN", "0" )
+        GameRemoveFlagRun( "ATTACK_FOOT_CLIMBER" )
+        GameRemoveFlagRun( "player_status_cordyceps" )
+        GameRemoveFlagRun( "player_status_mold" )
+        GameRemoveFlagRun( "player_status_fungal_disease" )
+        GameRemoveFlagRun( "player_status_angry_ghost" )
+        GameRemoveFlagRun( "player_status_hungry_ghost" )
+        GameRemoveFlagRun( "player_status_death_ghost" )
+        GameRemoveFlagRun( "player_status_lukki_minion" )
+        GameRemoveFlagRun( "exploding_gold" )
 
         if(steamutils.IsOwner(lobby))then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
@@ -114,9 +144,6 @@ ArenaGameplay = {
                 steam.matchmaking.deleteLobbyData(lobby, winner_key)
             end
         end
-
-        steamutils.RemoveLocalLobbyData(lobby, "player_data")
-        steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
 
         GameRemoveFlagRun( "saving_grace" )
         GameRemoveFlagRun( "player_ready" )
