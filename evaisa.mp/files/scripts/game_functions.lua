@@ -49,6 +49,8 @@ game_funcs = {
 		np.SetActiveHeldEntity(entity_id, item_id, unknown, make_noise)
 	end,
     ID2Color = function(str)
+
+
         str = tostring(str)
         -- get the bytes of each character counted together
         local sum = 0
@@ -56,9 +58,16 @@ game_funcs = {
             sum = sum + str:byte(i)
         end
         -- seed random number generator with it
-        math.randomseed(sum)
+		local random = rng.new(sum)
         -- return a random color
-        return {r = math.random(150, 255), g = math.random(150, 255), b = math.random(150, 255)}
+
+		--print("sum: "..tostring(sum))
+		
+		if(sum == 897)then
+			return {r = 235, g = 174, b = 186}
+		end
+
+        return {r = random.range(130, 255), g = random.range(130, 255), b = random.range(130, 255)}
         
     end,
     RenderOffScreenMarkers = function(players)

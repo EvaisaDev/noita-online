@@ -33,6 +33,8 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 MP_VERSION = 1.32
 Version_string = "63479623967237"
 
+rng = dofile("mods/evaisa.mp/lib/rng.lua")
+
 Checksum_passed = false
 Spawned = false
 
@@ -207,7 +209,7 @@ end
 
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
-	math.randomseed( os.time() )
+	--math.randomseed( os.time() )
 
 	if(steam and not Checksum_passed and Spawned)then
 		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
