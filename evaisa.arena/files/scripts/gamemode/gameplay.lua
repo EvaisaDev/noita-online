@@ -6,6 +6,8 @@ local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdo
 local json = dofile("mods/evaisa.arena/lib/json.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
+ArenaLoadCountdown = ArenaLoadCountdown or nil
+
 ArenaGameplay = {
     GetNumRounds = function()
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -817,10 +819,13 @@ ArenaGameplay = {
     end,
     SetReady = function(lobby, data, ready, silent)
 
+        --print("SetReady called: "..tostring(ready))
+
         if(ready)then
             GamePrint("You are ready")
         else
             GamePrint("You are no longer ready")
+            GameRemoveFlagRun("ready_check")
         end
 
         networking.send.ready(lobby, ready, silent or false)
@@ -878,10 +883,20 @@ ArenaGameplay = {
 
         if(steamutils.IsOwner(lobby))then
             -- check if all players are ready
-            if(ArenaGameplay.ReadyCheck(lobby, data))then
-                ArenaGameplay.LoadArena(lobby, data, true)
-                --message_handler.send.EnterArena(lobby)
-                networking.send.enter_arena(lobby)
+            if(ArenaGameplay.ReadyCheck(lobby, data) and ArenaLoadCountdown == nil)then
+                ArenaLoadCountdown = GameGetFrameNum() + 62
+            end
+
+            if(ArenaLoadCountdown ~= nil and GameGetFrameNum() >= ArenaLoadCountdown )then
+
+                ArenaLoadCountdown = nil
+
+                -- still ready? start game.
+                if(ArenaGameplay.ReadyCheck(lobby, data))then
+                    ArenaGameplay.LoadArena(lobby, data, true)
+                    --message_handler.send.EnterArena(lobby)
+                    networking.send.enter_arena(lobby)
+                end
             end
         end
 
@@ -1129,6 +1144,10 @@ ArenaGameplay = {
                 GamePrint("Player "..tostring(lobby_member_names[k]).." left the game")
 
                 -- if we are the last player, unready
+                if(steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
+                    ArenaGameplay.SetReady(lobby, data, false, true)
+                end
+
                 if(steamutils.IsOwner(lobby))then
                     local winner_key = tostring(k).."_wins"
                     steam.matchmaking.deleteLobbyData(lobby, winner_key)
