@@ -131,6 +131,7 @@ ArenaGameplay = {
         GameRemoveFlagRun( "player_status_death_ghost" )
         GameRemoveFlagRun( "player_status_lukki_minion" )
         GameRemoveFlagRun( "exploding_gold" )
+        GameRemoveFlagRun("first_death")
 
         if(steamutils.IsOwner(lobby))then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
