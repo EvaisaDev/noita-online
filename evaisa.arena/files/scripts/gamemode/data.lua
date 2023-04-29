@@ -15,8 +15,6 @@ function data:New()
             alive = true,
             previous_wand = nil,
             previous_anim = nil,
-            previous_hp = nil,
-            previous_max_hp = nil,
             previous_perk_string = nil,
             previous_wand_stats = {
                 mana = nil, 
@@ -37,6 +35,9 @@ function data:New()
             spread_index = 1,
             projectiles_fired = 0,
             projectile_rng_stack = {},
+            hp = 100,
+            max_hp = 100,
+            perks = {},
         },
         state = "lobby",
         preparing = false,

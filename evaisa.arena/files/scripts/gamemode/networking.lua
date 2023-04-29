@@ -821,10 +821,10 @@ networking = {
         health_update = function(lobby, data, force)
             local health, max_health = player.GetHealthInfo()
 
-            if((data.client.previous_max_hp ~= max_health or data.client.previous_hp ~= health) or force)then
+            if((data.client.max_hp ~= max_health or data.client.hp ~= health) or force)then
                 steamutils.send("health_update", {health, max_health}, steamutils.messageTypes.OtherPlayers, lobby, true)
-                data.client.previous_max_hp = max_health
-                data.client.previous_hp = health
+                data.client.max_hp = max_health
+                data.client.hp = health
             end
         end,
         perk_update = function(lobby, data)
@@ -848,6 +848,7 @@ networking = {
                     print("Sent perk update!!")
                     steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true)
                     data.client.previous_perk_string = perk_string
+                    data.client.perks = perk_info
                 end
             end
         end,

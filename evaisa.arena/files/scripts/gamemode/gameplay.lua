@@ -104,6 +104,13 @@ ArenaGameplay = {
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
             steam.matchmaking.deleteLobbyData(lobby, "total_gold")
             steam.matchmaking.deleteLobbyData(lobby, "ready_players")
+
+            -- loop through all players and remove their data
+            local members = steamutils.getLobbyMembers(lobby)
+            for k, member in pairs(members)do
+                local winner_key = tostring(member.id).."_wins"
+                steam.matchmaking.deleteLobbyData(lobby, winner_key)
+            end
         end
 
         steamutils.RemoveLocalLobbyData(lobby, "player_data")
@@ -473,6 +480,9 @@ ArenaGameplay = {
             end
         end
     end,
+    GetWins = function(lobby, user)
+        return tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user).."_wins")) or "0")
+    end,
     WinnerCheck = function(lobby, data)
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
@@ -485,11 +495,16 @@ ArenaGameplay = {
         if(alive == 1)then
             GamePrintImportant(steam.friends.getFriendPersonaName(winner) .. " won this round!", "Prepare for the next round in your holy mountain.")
 
-
+            -- if we are owner, add win to tally
+            if(steamutils.IsOwner(lobby))then
+                local winner_key = tostring(winner).."_wins"
+                local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
+                steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            end
 
             ArenaGameplay.LoadLobby(lobby, data, false)
         elseif(alive == 0)then
-            GamePrintImportant("Nobody won this round!", "Prepare for the next round in your holy mountain.")
+            GamePrintImportant("It was a tie!", "Prepare for the next round in your holy mountain.")
 
             ArenaGameplay.LoadLobby(lobby, data, false)
         end
@@ -538,7 +553,7 @@ ArenaGameplay = {
     ClearWorld = function()
         local all_entities = EntityGetInRadius(0, 0, math.huge)
         for k, v in pairs(all_entities)do
-            if(v ~= GameGetWorldStateEntity()--[[ and v ~= GameGetPlayerStatsEntity()]])then
+            if(v ~= GameGetWorldStateEntity() and not EntityHasTag(v, "free_camera_light")--[[ and v ~= GameGetPlayerStatsEntity()]])then
                 if(EntityHasTag(v, "player_unit"))then
                     EntityRemoveTag(v, "player_unit")
                 end
@@ -1114,7 +1129,10 @@ ArenaGameplay = {
                 GamePrint("Player "..tostring(lobby_member_names[k]).." left the game")
 
                 -- if we are the last player, unready
-
+                if(steamutils.IsOwner(lobby))then
+                    local winner_key = tostring(k).."_wins"
+                    steam.matchmaking.deleteLobbyData(lobby, winner_key)
+                end
 
                 lobby_member_names[k] = nil
                 if(data.state == "arena")then

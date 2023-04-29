@@ -1,3 +1,5 @@
+local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
+
 local function get_health_bar_color(health, max_health)
     local health_ratio = health / max_health
     -- generate color between green and red based on health ratio
@@ -102,8 +104,8 @@ function playerinfo_menu:New()
         end
 
 
-        local scrollbar_offset = player_count > 4 and -8 or 0
-        local index = 0
+        local scrollbar_offset = player_count > 2 and -8 or 0
+        local index = 1
 
         local player_perk_sprites = {}
         local perk_draw_x = 0
@@ -122,6 +124,101 @@ function playerinfo_menu:New()
         GuiBeginScrollContainer(self.gui, new_id(), current_x, self.offset_y, self.width + scrollbar_offset, self.height)
         
         GuiLayoutBeginVertical(self.gui, 0, 0, true)
+
+
+        ------------- DRAW OUR OWN CARD ---------------
+        local player_id = steam.user.getSteamID()
+        local username = steam.friends.getFriendPersonaName(player_id)
+
+        local hp = data.client.hp
+        local max_hp = data.client.max_hp
+
+        local wins = ArenaGameplay.GetWins(lobby, player_id)
+                    
+        GuiZSetForNextWidget(self.gui, 900)
+
+        local color = game_funcs.ID2Color(player_id)
+        if(color == nil)then
+            color = {r = 255, g = 255, b = 255}
+        end
+        local r, g, b = color.r, color.g, color.b
+        local a = 1
+        GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
+
+        GuiText(self.gui, 0, 0, username.." (You)")
+
+        local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+        scroll_offset = scroll_y - self.offset_y - 2
+
+        GuiZSetForNextWidget(self.gui, 900)
+        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+        GuiText(self.gui, 0, 0, "Wins: "..tostring(wins))
+
+        local health_ratio = hp / max_hp
+        local health_bar_width = 90
+        local health_width = health_bar_width * health_ratio
+        local rest_width = health_bar_width - health_width
+
+        local health_percentage = health_width / health_bar_width
+        local rest_percentage = rest_width / health_bar_width
+
+        local health_bar_color = get_health_bar_color(hp, max_hp)
+
+        GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
+        GuiZSetForNextWidget(self.gui, 900)
+        GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
+        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
+        local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+        if(hp_hovered1)then
+            player_index = index
+            hovered_max_hp = max_hp
+            hovered_hp = hp
+            draw_hp_info = true
+        end
+
+
+        GuiZSetForNextWidget(self.gui, 900)
+        GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
+        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
+        local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+        if(hp_hovered2)then
+            player_index = index
+            hovered_max_hp = max_hp
+            hovered_hp = hp
+            draw_hp_info = true
+        end
+
+        GuiZSetForNextWidget(self.gui, 900)
+        GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
+        local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+        if(hovered)then
+            player_index = index
+            if(data.client.perks)then
+                for k, v in ipairs(data.client.perks)do
+                    local perk = v[1]
+                    local count = v[2]
+            
+                    local perk_sprite = perk_sprites[perk]
+                    
+                    if(perk_sprite)then
+                        for i = 1, count do
+                            
+                            table.insert(player_perk_sprites, perk_sprite)
+                        end
+                    end
+                end
+            end
+            draw_perks = true
+        end
+        perk_draw_x = draw_x
+        perk_draw_y = draw_y
+        GuiLayoutEnd(self.gui)
+        
+        -----------------------------------------------
+
+
         --for k, v in pairs(player_test_list)do
         for k, v in pairs(data.players)do
             local draw_player_data = function()
@@ -138,6 +235,13 @@ function playerinfo_menu:New()
     
                     local username = v.name or steam.friends.getFriendPersonaName(playerid)
                     GuiZSetForNextWidget(self.gui, 900)
+                    local color = game_funcs.ID2Color(playerid)
+                    if(color == nil)then
+                        color = {r = 255, g = 255, b = 255}
+                    end
+                    local r, g, b = color.r, color.g, color.b
+                    local a = 1
+                    GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
                     GuiText(self.gui, 0, 0, username)
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
@@ -145,11 +249,13 @@ function playerinfo_menu:New()
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
                     GuiText(self.gui, 0, 0, "Delay: "..tostring(v.delay_frames).." frames")
+
+                    local wins = ArenaGameplay.GetWins(lobby, playerid)
                     
-                    if(index == 1)then
-                        local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-                        scroll_offset = scroll_y - self.offset_y - 2
-                    end
+                    GuiZSetForNextWidget(self.gui, 900)
+                    GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+                    GuiText(self.gui, 0, 0, "Wins: "..tostring(wins))
+                    
                     local health_ratio = v.health / v.max_health
                     local health_bar_width = 90
                     local health_width = health_bar_width * health_ratio
@@ -230,11 +336,17 @@ function playerinfo_menu:New()
             end
         end
 
+
         GuiLayoutEnd(self.gui)
 
         GuiEndScrollContainer(self.gui)
         
-        local draw_pos = self.offset_y + 5 + (23 * (player_index - 1))
+        local draw_pos = 0
+        if(player_index == 1)then
+            draw_pos = self.offset_y + 16
+        else
+            draw_pos = self.offset_y + 76 + (56 * (player_index - 2))
+        end
 
         draw_pos = draw_pos + scroll_offset
 
