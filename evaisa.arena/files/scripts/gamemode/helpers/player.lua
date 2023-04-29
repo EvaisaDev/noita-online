@@ -69,12 +69,13 @@ player_helper.Lock = function()
     end
 end
 
-player_helper.Unlock = function()
+player_helper.Unlock = function(data)
     local player = player_helper.Get()
     if(player == nil)then
         return
     end
     GameSetCameraFree(false)
+    data.spectator_mode = false
     local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
     if(controls ~= nil)then
         ComponentSetValue2(controls, "enabled", true)

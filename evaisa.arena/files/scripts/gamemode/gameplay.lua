@@ -573,6 +573,8 @@ ArenaGameplay = {
 
             GameSetCameraFree(true)
 
+            data.spectator_mode = true
+
             player.Lock()
             player.Immortal(true)
             --player.Move(-3000, -3000)
@@ -624,6 +626,7 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        data.selected_player = nil
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
@@ -686,7 +689,7 @@ ArenaGameplay = {
         RunWhenPlayerExists(function()
             -- clean and unlock player entity
             player.Clean(first_entry)
-            player.Unlock()
+            player.Unlock(data)
 
             GameRemoveFlagRun("player_is_unlocked")
 
@@ -973,7 +976,7 @@ ArenaGameplay = {
         return ready
     end,
     FightCountdown = function(lobby, data)
-        player.Unlock()
+        player.Unlock(data)
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
@@ -1188,6 +1191,37 @@ ArenaGameplay = {
                 lobby_member_names[k] = nil
                 if(data.state == "arena")then
                     ArenaGameplay.WinnerCheck(lobby, data)
+                end
+            end
+        end
+    end,
+    SpectatorMode = function(lobby, data)
+        if(data.spectator_mode)then
+            if(data.selected_player == nil)then
+                local client_entity = EntityGetWithName(data.selected_player)
+                if(client_entity ~= nil)then
+                    local x, y = EntityGetTransform(client_entity)
+                    GameSetCameraPos(x, y)
+                else
+                    data.selected_player = nil
+                end
+            end
+
+            local pressed, shift_held = hack_update_keys()
+
+            for _, key in ipairs(pressed) do
+                if(data.selected_player ~= nil)then
+                    if(key == "w" or key == "a" or key == "s" or key == "d")then
+                        
+                        data.selected_player = nil
+                        
+                    elseif(key == "q")then
+
+                        
+
+                    elseif(key == "e")then
+
+                    end
                 end
             end
         end

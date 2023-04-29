@@ -40,6 +40,8 @@ function data:New()
             perks = {},
         },
         state = "lobby",
+        spectator_mode = false,
+        selected_player = nil,
         preparing = false,
         players_loaded = false,
         deaths = 0,
