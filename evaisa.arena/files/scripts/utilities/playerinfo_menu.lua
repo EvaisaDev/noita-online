@@ -130,8 +130,8 @@ function playerinfo_menu:New()
         local player_id = steam.user.getSteamID()
         local username = steam.friends.getFriendPersonaName(player_id)
 
-        local hp = data.client.hp
-        local max_hp = data.client.max_hp
+        local hp = data.client.hp or 100
+        local max_hp = data.client.max_hp or 100
 
         local wins = ArenaGameplay.GetWins(lobby, player_id)
                     

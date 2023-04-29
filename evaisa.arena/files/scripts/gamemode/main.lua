@@ -37,7 +37,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.44,
+    version = 0.441,
     settings = {
         {
             id = "damage_cap",

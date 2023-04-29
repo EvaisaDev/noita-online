@@ -622,6 +622,8 @@ ArenaGameplay = {
             if(first_entry and player.Get())then
                 GameDestroyInventoryItems( player.Get() )
             end
+            
+            player.Immortal(true)
         end)
 
         -- clean other player's data
@@ -880,6 +882,8 @@ ArenaGameplay = {
 
             data.ready_counter:update()
         end
+
+        GameAddFlagRun("Immortal")
 
         if(steamutils.IsOwner(lobby))then
             -- check if all players are ready

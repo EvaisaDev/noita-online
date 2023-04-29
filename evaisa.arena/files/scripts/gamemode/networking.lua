@@ -484,34 +484,36 @@ networking = {
             local health = message[1]
             local maxHealth = message[2]
 
-            if(data.players[tostring(user)].entity ~= nil)then
-                local last_health = maxHealth
-                if(data.players[tostring(user)].health)then
-                    last_health = data.players[tostring(user)].health
-                end
-                if(health < last_health)then
-                    local damage = last_health - health
-                    EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake", "NORMAL", 0, 0, nil)
+            if(health ~= nil and maxHealth ~= nil)then
+                if(data.players[tostring(user)].entity ~= nil)then
+                    local last_health = maxHealth
+                    if(data.players[tostring(user)].health)then
+                        last_health = data.players[tostring(user)].health
+                    end
+                    if(health < last_health)then
+                        local damage = last_health - health
+                        EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake", "NONE", 0, 0, nil)
+                    end
+
+                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
+                
+                    if(DamageModelComp ~= nil)then
+                        ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
+                        ComponentSetValue2(DamageModelComp, "hp", health)
+                    end
+
+
+                    if(data.players[tostring(user)].hp_bar)then
+                        data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
+                    else
+                        local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                        data.players[tostring(user)].hp_bar = hp_bar
+                    end
                 end
 
-                local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
-            
-                if(DamageModelComp ~= nil)then
-                    ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
-                    ComponentSetValue2(DamageModelComp, "hp", health)
-                end
-
-
-                if(data.players[tostring(user)].hp_bar)then
-                    data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
-                else
-                    local hp_bar = healthbar.create(health, maxHealth, 18, 2)
-                    data.players[tostring(user)].hp_bar = hp_bar
-                end
+                data.players[tostring(user)].health = health
+                data.players[tostring(user)].max_health = maxHealth
             end
-
-            data.players[tostring(user)].health = health
-            data.players[tostring(user)].max_health = maxHealth
         end,
         perk_update = function(lobby, message, user, data)
             print("Received perk update!!")
@@ -821,10 +823,12 @@ networking = {
         health_update = function(lobby, data, force)
             local health, max_health = player.GetHealthInfo()
 
-            if((data.client.max_hp ~= max_health or data.client.hp ~= health) or force)then
-                steamutils.send("health_update", {health, max_health}, steamutils.messageTypes.OtherPlayers, lobby, true)
-                data.client.max_hp = max_health
-                data.client.hp = health
+            if(health ~= nil and max_health ~= nil)then
+                if((data.client.max_hp ~= max_health or data.client.hp ~= health) or force)then
+                    steamutils.send("health_update", {health, max_health}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                    data.client.max_hp = max_health
+                    data.client.hp = health
+                end
             end
         end,
         perk_update = function(lobby, data)
