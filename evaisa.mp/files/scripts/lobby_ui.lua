@@ -293,7 +293,12 @@ local windows = {
 				end
 
 				if(owner == steam.user.getSteamID())then
-					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Start Game" ))then
+					local start_string = "Start Game"
+					if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
+						start_string = "Restart Game"
+					end
+
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, start_string ))then
 						gui_closed = not gui_closed
 						invite_menu_open = false
 						steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
