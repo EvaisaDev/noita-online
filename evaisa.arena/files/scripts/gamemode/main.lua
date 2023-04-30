@@ -11,6 +11,7 @@ last_player_entity = nil
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
+font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
@@ -133,6 +134,10 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
+        if(data ~= nil)then
+            ArenaGameplay.GracefulReset(lobby, data)
+        end
+        
         if(not was_in_progress)then
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")

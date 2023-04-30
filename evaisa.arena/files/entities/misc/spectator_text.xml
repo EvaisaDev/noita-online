@@ -1,0 +1,9 @@
+<Entity>
+    <SpriteComponent
+        is_text_sprite = "1"
+        image_file = "mods/evaisa.arena/files/font/Daydream_128.xml"
+        text = "Spectator"
+        never_ragdollify_on_death = "1"
+        ui_is_parent = "1"
+    ></SpriteComponent>
+</Entity>

@@ -10,6 +10,9 @@ function data:New()
         projectile_seeds = {},
         ready_counter = nil,
         countdown = nil,
+        spectator_gui_entity = nil,
+        spectator_gui = nil,
+        big_font = font_helper.NewFont("mods/evaisa.arena/files/font/Daydream_128.xml"),
         client = {
             ready = false,
             alive = true,
@@ -42,6 +45,7 @@ function data:New()
         state = "lobby",
         spectator_mode = false,
         selected_player = nil,
+        selected_player_name = nil,
         preparing = false,
         players_loaded = false,
         deaths = 0,

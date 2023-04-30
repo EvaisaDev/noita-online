@@ -19,6 +19,9 @@ local function load(modulename)
     return errmsg
 end
 
+get_content = ModTextFileGetContent
+set_content = ModTextFileSetContent
+
 table.insert(package.loaders, 2, load)
 
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
@@ -578,9 +581,6 @@ function steam.networking.onSessionFailed(steamID, endReason, endDebug, connecti
 		print("Connection description: "..tostring(connectionDescription))
 	end
 end
-
-local get_content = ModTextFileGetContent
-local set_content = ModTextFileSetContent
 
 function OnMagicNumbersAndWorldSeedInitialized()
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")

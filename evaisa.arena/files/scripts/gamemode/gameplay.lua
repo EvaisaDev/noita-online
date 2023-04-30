@@ -82,6 +82,24 @@ ArenaGameplay = {
             end
         end
     end,
+    GracefulReset = function(lobby, data)
+        if(data.spectator_gui)then
+            GuiDestroy(data.spectator_gui)
+            data.spectator_gui = nil
+
+            if(data.spectator_gui_entity and EntityGetIsAlive(data.spectator_gui_entity))then
+                EntityKill(data.sspectator_gui_entity)
+            end
+        end
+        if(data.countdown)then
+            data.countdown:cleanup()
+            data.countdown = nil
+        end
+        if(data.ready_counter)then
+            data.ready_counter:cleanup()
+            data.ready_counter = nil
+        end
+    end,
     ResetEverything = function(lobby)
         local player = player.Get()
 
@@ -514,6 +532,7 @@ ArenaGameplay = {
         return tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user).."_wins")) or "0")
     end,
     WinnerCheck = function(lobby, data)
+
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
         for k, v in pairs(data.players)do
@@ -626,7 +645,11 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+
+        ArenaGameplay.GracefulReset(lobby, data)
+        
         data.selected_player = nil
+        data.selected_player_name = nil
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
@@ -1208,7 +1231,40 @@ ArenaGameplay = {
         return alive_players
     end,
     SpectatorMode = function(lobby, data)
+
         if(data.spectator_mode)then
+
+            if(data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity))then
+                data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
+                        
+                EntitySetTransform(data.spectator_gui_entity,  0, 0, 0, 0.25, 0.25)
+            end
+    
+            if(data.spectator_gui == nil)then
+                data.spectator_gui = GuiCreate()
+            end
+    
+            local camera_x, camera_y = GameGetCameraPos()
+    
+            local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
+    
+            local text = "Spectating"
+    
+            if(data.selected_player ~= nil and data.selected_player_name ~= nil)then
+                text = text .. " " .. data.selected_player_name
+            end
+    
+    
+            local font_width, font_height = data.big_font:GetTextDimensions(text, 0.25, 0.25)
+    
+            local text_sprite_component = EntityGetFirstComponentIncludingDisabled(data.spectator_gui_entity, "SpriteComponent")
+    
+            ComponentSetValue2(text_sprite_component, "text", text)
+            ComponentSetValue2(text_sprite_component, "transform_offset", screen_width / 2 - font_width / 2, 0)
+            
+            EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
+
+
             --GamePrint("Spectator mode")
             if(data.selected_player ~= nil)then
                 local client_entity = data.selected_player
@@ -1217,7 +1273,7 @@ ArenaGameplay = {
 
                     -- camera smoothing
                     local camera_speed = 0.1
-                    local camera_x, camera_y = GameGetCameraPos()
+                    
                     local camera_x_diff = x - camera_x
                     local camera_y_diff = y - camera_y
                     local camera_x_new = camera_x + camera_x_diff * camera_speed
@@ -1226,6 +1282,7 @@ ArenaGameplay = {
 
                 else
                     data.selected_player = nil
+                    data.selected_player_name = nil
                 end
             end
 
@@ -1240,10 +1297,11 @@ ArenaGameplay = {
 
             if(keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d)then
                 data.selected_player = nil
+                data.selected_player_name = nil
             end
 
             if(keys_pressed.q)then
-                GamePrint("Q pressed")
+               -- GamePrint("Q pressed")
                 local players = ArenaGameplay.GetAlivePlayers(lobby, data)
                 local player_count = #players
                 if(player_count > 0)then
@@ -1262,11 +1320,19 @@ ArenaGameplay = {
                     end
                     data.selected_player = players[selected_index].entity
                     print("Spectating player: "..EntityGetName(data.selected_player))
+
+                    local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
+
+                    data.selected_player_name = "Unknown Player"
+                    if(player ~= nil)then
+                        data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                    end
+                    
                 end
             end
 
             if(keys_pressed.e)then
-                GamePrint("E pressed")
+               -- GamePrint("E pressed")
                 local players = ArenaGameplay.GetAlivePlayers(lobby, data)
                 local player_count = #players
                 if(player_count > 0)then
@@ -1285,6 +1351,13 @@ ArenaGameplay = {
                     end
                     data.selected_player = players[selected_index].entity
                     print("Spectating player: "..EntityGetName(data.selected_player))
+
+                    local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
+
+                    data.selected_player_name = "Unknown Player"
+                    if(player ~= nil)then
+                        data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                    end
                 end
             end
 

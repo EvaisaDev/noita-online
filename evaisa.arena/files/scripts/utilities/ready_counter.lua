@@ -39,6 +39,9 @@ function ready_counter.create( text, callback, finish_callback )
         appy_offset = function(self, x, y)
             self.offset_x = x
             self.offset_y = y
+        end,
+        cleanup = function(self)
+            GuiDestroy(gui_ready_counter)
         end
     }
 
