@@ -58,7 +58,7 @@ function disconnect(data)
 	msg.log("You were disconnected from the lobby.")
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 	if(active_mode)then
-		active_mode.leave()
+		active_mode.leave(data.lobbyID)
 	end
 	gamemode_settings = {}
 	steam.matchmaking.leaveLobby(data.lobbyID)

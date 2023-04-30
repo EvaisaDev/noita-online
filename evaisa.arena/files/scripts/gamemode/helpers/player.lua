@@ -12,19 +12,25 @@ player_helper.Get = function()
         return
     end
 
+    --[[
     if(#player > 1)then
         print("Found more than one player, issue??")
         -- print all the player entities
         for k, v in pairs(player)do
             print("Player "..k..": "..tostring(v))
         end
+        -- kill first player
+        EntityKill(player[1])
     end
+    ]]
 
+    --[[
     if(player[1] ~= last_player_entity)then
         print("Player changed from "..tostring(last_player_entity).." to "..tostring(player[1]))
     end
 
     last_player_entity = player[1]
+    ]]
 
     return player[1]
 end
@@ -51,6 +57,7 @@ player_helper.Lock = function()
     end
 
     GameAddFlagRun("player_locked")
+    print("Player locked")
 
     local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
     if(characterDataComponent ~= nil)then
@@ -71,6 +78,22 @@ player_helper.Unlock = function()
     local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
     if(controls ~= nil)then
         ComponentSetValue2(controls, "enabled", true)
+    end
+
+    print("Player unlocked")
+
+    if(not GameHasFlagRun("game_paused"))then
+        if(player)then
+            np.RegisterPlayerEntityId(player)
+            local inventory_gui = EntityGetFirstComponentIncludingDisabled(player, "InventoryGuiComponent")
+            local controls_component = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+
+            EntitySetComponentIsEnabled(player, inventory_gui, true)
+            np.EnableInventoryGuiUpdate(true)
+            np.EnablePlayerItemPickUpper(true)
+            ComponentSetValue2(controls_component, "enabled", true)
+
+        end
     end
 
     GameRemoveFlagRun("player_locked")
@@ -136,7 +159,10 @@ player_helper.Immortal = function( immortal )
     end
 end
 
-player_helper.GetWandData = function()
+player_helper.GetWandData = function(fresh)
+
+    fresh = fresh or false
+
     --[[
     local wand = EZWand.GetHeldWand()
     if(wand == nil)then
@@ -161,10 +187,12 @@ player_helper.GetWandData = function()
 
         GlobalsSetValue(tostring(wand_entity).."_wand", tostring(k))
 
-        table.insert(wandData, {data = v:Serialize(true), id = k, slot_x = slot_x, slot_y = slot_y, active = (mActiveItem == wand_entity)})
+        table.insert(wandData, {data = v:Serialize(not fresh, not fresh), id = k, slot_x = slot_x, slot_y = slot_y, active = (mActiveItem == wand_entity)})
     end
     return wandData
 end
+
+set_next_frame = set_next_frame or nil
 
 player_helper.SetWandData = function(wand_data)
     local player = player_helper.Get()
@@ -173,6 +201,9 @@ player_helper.SetWandData = function(wand_data)
     end
 
     if(wand_data ~= nil)then
+
+        local active_item_entity = nil
+
         for k, wandInfo in ipairs(wand_data)do
     
             local x, y = EntityGetTransform(player)
@@ -192,12 +223,27 @@ player_helper.SetWandData = function(wand_data)
             --print("Deserialized wand #"..tostring(k).." - Active? "..tostring(wandInfo.active))
     
             if(wandInfo.active)then
-                
-                game_funcs.SetActiveHeldEntity(player, wand.entity_id, false, false)
+                active_item_entity = wand.entity_id
             end
     
             GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
             
+        end
+
+        if(active_item_entity ~= nil)then
+            print("Selected item was: "..tostring(active_item_entity))
+
+            game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
+
+            --[[
+            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+
+            ComponentSetValue2(inventory2Comp, "mActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mActualActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mInitialized", false)
+            ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+            ]]
+
         end
     end
 end
@@ -224,17 +270,6 @@ player_helper.GetControlsComponent = function()
         return
     end
     return controls
-end
-
-player_helper.GetWandDataMana = function()
-    --[[
-    local wand = EZWand.GetHeldWand()
-    if(wand == nil)then
-        return nil
-    end
-    local wandData = wand:Serialize(true)
-    return wandData
-    ]]
 end
 
 player_helper.DidKick = function()
@@ -320,6 +355,7 @@ player_helper.GetHealthInfo = function()
     end
     return health, maxHealth
 end
+
 
 player_helper.GetSpells = function()
     local player = player_helper.Get()
@@ -582,10 +618,20 @@ player_helper.Serialize = function(dont_stringify)
         data.max_health = ComponentGetValue2(healthComponent, "max_hp")
     end
 
+    local compare_data = {
+        health = data.health,
+        max_health = data.max_health,
+        wand_data = player_helper.GetWandData(true),
+        spells = data.spells,
+        perks = data.perks,
+        gold = data.gold,
+    }
+
     local data_out = dont_stringify and data or bitser.dumps(data)
 
+    local compare_string = bitser.dumps(compare_data)
 
-    return data_out
+    return data_out, compare_string
 end
 
 

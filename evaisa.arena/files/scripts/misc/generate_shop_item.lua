@@ -1,10 +1,9 @@
 dofile_once("data/scripts/lib/utilities.lua")
 dofile( "data/scripts/gun/gun_actions.lua" )
-
-
--- cardcost = tostring(math.max(40, cardcost + math.random(-4,4) * 10))
+dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 
 function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
+	
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
 
@@ -64,7 +63,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		level = 7
 	end
 
-	item = GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
+	item = RandomAction(level)--GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
 
 	biomeid = biomeid * biomeid
 
@@ -267,7 +266,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	-- local x, y = EntityGetTransform( entity_id )
 	-- SetRandomSeed( x, y )
-	local eid = EntityLoad( item, x + math.random(-1000, 1000), y + math.random(-1000, 1000))
+	local eid = EntityLoad( item, x, y)
 
 	EntityAddComponent( eid, "SpriteComponent", { 
 		_tags="shop_cost,enabled_in_world",

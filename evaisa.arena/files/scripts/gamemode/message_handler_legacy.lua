@@ -46,13 +46,8 @@ ArenaMessageHandler = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         health_info = function(lobby, message, user, data)
-            if(not gameplay_handler.CheckPlayer(lobby, user, data))then
-                return
-            end
-
-
-            local health = message.health
-            local maxHealth = message.max_health
+            local health = message[1]
+            local maxHealth = message[2]
 
             if(data.players[tostring(user)].entity ~= nil)then
                 local last_health = maxHealth
@@ -70,17 +65,18 @@ ArenaMessageHandler = {
                     ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
                     ComponentSetValue2(DamageModelComp, "hp", health)
                 end
+
+
+                if(data.players[tostring(user)].hp_bar)then
+                    data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
+                else
+                    local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                    data.players[tostring(user)].hp_bar = hp_bar
+                end
             end
 
             data.players[tostring(user)].health = health
             data.players[tostring(user)].max_health = maxHealth
-
-            if(data.players[tostring(user)].hp_bar)then
-                data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
-            else
-                local hp_bar = healthbar.create(health, maxHealth, 18, 2)
-                data.players[tostring(user)].hp_bar = hp_bar
-            end
         end,
         update_hp = function(lobby, message, user, data)
             local health = message.health
@@ -326,13 +322,10 @@ ArenaMessageHandler = {
             end
         end,
         wand_update = function(lobby, message, user, data)
-            --print(message.wandData)
 
             if(not gameplay_handler.CheckPlayer(lobby, user, data))then
                 return
             end
-
-            --GamePrint("Received wand update")
 
             if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
 
@@ -354,7 +347,7 @@ ArenaMessageHandler = {
                         end
 
                         wand:PickUp(data.players[tostring(user)].entity)
-                        
+
                         local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
                         if(itemComp ~= nil)then
                             ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
@@ -369,11 +362,6 @@ ArenaMessageHandler = {
                     end
                 end
 
-                --[[
-                if(DebugGetIsDevBuild())then
-                    EntitySave(data.players[tostring(user)].entity, "player_" .. tostring(user) .. ".xml")
-                end
-            ]]
             end
         end,
         switch_item = function(lobby, message, user, data)
@@ -656,16 +644,6 @@ ArenaMessageHandler = {
             end
         end,
         WandUpdate = function(lobby, data, user)
-            --[[
-            local wandData = player.GetWandData()
-            if(wandData ~= nil)then
-                if(wandData ~= data.client.previous_wand)then
-                    local wandDataMana = player.GetWandDataMana()
-                    steamutils.sendData({type = "wand_update", wandData = wandDataMana}, steamutils.messageTypes.OtherPlayers, lobby)
-                    data.client.previous_wand = wandData
-                end
-            end
-            ]]
             local wandString = player.GetWandString()
             if(wandString ~= nil)then
                 if(wandString ~= data.client.previous_wand)then
@@ -732,56 +710,6 @@ ArenaMessageHandler = {
         SyncControls = function(lobby, data)
             local controls = player.GetControlsComponent()
             if(controls ~= nil)then
-
-                --[[
-                    if(message.kick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownKick", false)
-                    end
-
-                    
-                    if(message.fire)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", true)
-                        local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
-                        ComponentSetValue2(controlsComp, "mButtonLastFrameFire", lastFireFrame)
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire", false)
-                    end
-
-                    if(message.fire2)then
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
-                    end
-                    
-                    if(message.leftClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
-                    end
-
-                    if(message.rightClick)then
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", true)
-                        ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
-                    else
-                        ComponentSetValue2(controlsComp, "mButtonDownRight", false)
-                    end
-
-                    ComponentSetValue2(controlsComp, "mAimingVector", message.aim.x, message.aim.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal.x, message.aimNormal.y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero.x, message.aimNonZero.y)
-                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse.x, message.mouse.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw.x, message.mouseRaw.y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev.x, message.mouseRawPrev.y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta.x, message.mouseDelta.y)
-
-                ]]
-
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")
@@ -816,29 +744,21 @@ ArenaMessageHandler = {
             end
         end,
         SendPerks = function(lobby)
-            --GamePrint("Sending perks!")
             local perk_info = {}
             for i,perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
-                --if(perks_allowed[perk_id] == nil or perks_allowed[perk_id] ~= false)then
-                    --if (((( perk_data.one_off_effect == nil ) or ( perk_data.one_off_effect == false )) and perk_data.usable_by_enemies) or perks_allowed[perk_id] == true) then
-                        local flag_name = get_perk_picked_flag_name( perk_id )
+                local flag_name = get_perk_picked_flag_name( perk_id )
 
-                        --print("Checking flag " .. flag_name)
-                        
-                        local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
-                        
-                        --print(tostring(GameHasFlagRun( flag_name )))
+                local pickup_count = tonumber( GlobalsGetValue( flag_name .. "_PICKUP_COUNT", "0" ) )
 
-                        if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
-                            --print("Has flag: " .. perk_id)
-                            table.insert( perk_info, { id = perk_id, count = pickup_count, run_on_clients = (perk_data.run_on_clients or perk_data.usable_by_enemies) or false } )
-                        end
-                   -- end
-                --end
+                if GameHasFlagRun( flag_name ) or ( pickup_count > 0 ) then
+                    --print("Has flag: " .. perk_id)
+                    table.insert( perk_info, {perk_id, pickup_count} )
+                end
             end
+
             if(#perk_info > 0)then
-                steamutils.sendData({type = "perk_info", perks = perk_info}, steamutils.messageTypes.OtherPlayers, lobby)
+                local message_data = {perk_info}
             end
         end,
         UpdateHp = function(lobby, data)

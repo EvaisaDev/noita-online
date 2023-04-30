@@ -30,8 +30,10 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.261
+MP_VERSION = 1.41
 Version_string = "63479623967237"
+
+rng = dofile("mods/evaisa.mp/lib/rng.lua")
 
 Checksum_passed = false
 Spawned = false
@@ -50,6 +52,7 @@ local ffi = require "ffi"
 local application_id = 943584660334739457LL
 
 np.EnableGameSimulatePausing(false)
+np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 
 --GameSDK = require("game_sdk")
 
@@ -66,11 +69,18 @@ pretty = require("pretty_print")
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
 local request = require("luajit-request")
+local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and true or false
 
-local old_print = print
-print = function(...)
-	if not disable_print then
-		old_print(...)
+if(not (ModIsEnabled("evaisa.betterlogger") and extended_logging_enabled))then
+	local old_print = print
+	print = function(...)
+		if not disable_print then
+			local content = ...
+			local source = debug.getinfo(2).source
+		
+			old_print("["..source.."]: "..tostring(content))
+
+		end
 	end
 end
 
@@ -154,6 +164,7 @@ last_bytes_sent = 0
 bytes_received = 0
 last_bytes_received = 0
 active_members = {}
+member_message_frames = {}
 gamemode_index = 1
 
 function FindGamemode(id)
@@ -165,9 +176,40 @@ function FindGamemode(id)
 	return nil
 end
 
+local function ReceiveMessages(gamemode)
+	local messages = steam.networking.pollMessages() or {}
+	for k, v in ipairs(messages)do
+		local data = steamutils.parseData(v.data)
+
+		bytes_received = bytes_received + v.msg_size
+		if(gamemode.message)then
+			gamemode.message(lobby_code, data, v.user)
+		end
+		if(gamemode.received)then
+			if(data[1] and type(data[1]) == "string" and data[2])then
+				local event = data[1]
+				local message = data[2]
+				local frame = data[3]
+				if(data[3])then
+					-- check if frame is newer than member message frame
+					if(not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame)then
+						member_message_frames[tostring(v.user)] = frame
+
+						--GamePrint("Received event: "..event)
+
+						gamemode.received(lobby_code, event, message, v.user)
+					end
+				else
+					gamemode.received(lobby_code, event, message, v.user)
+				end
+			end
+		end
+	end
+end
+
 function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
-	math.randomseed( os.time() )
+	--math.randomseed( os.time() )
 
 	if(steam and not Checksum_passed and Spawned)then
 		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
@@ -192,6 +234,8 @@ function OnWorldPreUpdate()
 				return
 			end
 
+			--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+
 			--print("a")
 
 			if(GameGetFrameNum() % 10 == 0)then
@@ -202,11 +246,15 @@ function OnWorldPreUpdate()
 					if(not active_members[tostring(h)])then
 						active_members[tostring(h)] = h
 					end
+					if(not member_message_frames[tostring(h)])then
+						member_message_frames[tostring(h)] = 0
+					end
 					current_members[tostring(h)] = true
 				end
 				for k, v in pairs(active_members) do
 					if(not current_members[k])then
 						active_members[k] = nil
+						member_message_frames[k] = nil
 						steam.networking.closeSession(v)
 						print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 					end
@@ -253,6 +301,9 @@ function OnWorldPreUpdate()
 			--print("Game in progress: "..tostring(game_in_progress))
 
 			if(game_in_progress)then
+
+				--print("the hell??")
+
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
 				--print("e")
@@ -265,32 +316,18 @@ function OnWorldPreUpdate()
 						steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
 					end
 				end
-				
-				--print("g")
 
 				lobby_gamemode.update(lobby_code)
-				
-				--print("h")
 
-				--local artificial_lag = math.floor((ModSettingGet("evaisa.mp.artificial_lag") or 1) + 0.5)
+				ReceiveMessages(lobby_gamemode)
 
-				--if(GameGetFrameNum() % artificial_lag == 0)then
-					local messages = steam.networking.pollMessages() or {}
-					for k, v in ipairs(messages)do
-						bytes_received = bytes_received + v.msg_size
-						if(lobby_gamemode.message)then
-							lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
-						end
-					end
-				--end
-
-				--print("i")
 			end
 		end
 	end
 end
 
 function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+
 	if steam and Checksum_passed then 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
@@ -346,6 +383,8 @@ function OnWorldPostUpdate()
 					end
 				end
 				]]
+
+				ReceiveMessages(lobby_gamemode)
 			end
 		end
 	end
@@ -355,6 +394,7 @@ function steam.matchmaking.onLobbyEnter(data)
 
 	for k, v in pairs(active_members)do
 		active_members[k] = nil
+		member_message_frames[k] = nil
 		steam.networking.closeSession(v)
 		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 	end
@@ -455,6 +495,25 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				end
 			end
 		end
+	elseif(data.fromOwner and data.message == "restart")then
+		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		
+		if handleVersionCheck() then
+			if handleGamemodeVersionCheck(lobby_code) then
+				if(lobby_gamemode)then
+					if(lobby_gamemode.start)then
+						lobby_gamemode.start(lobby_code, false)
+					end
+					game_in_progress = true
+					gui_closed = true
+				else
+					disconnect({
+						lobbyID = lobby_code,
+						message = "Gamemode missing: "..tostring(lobby_gamemode.id)
+					})
+				end
+			end
+		end	
 	elseif(data.fromOwner and data.message == "refresh")then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
@@ -524,9 +583,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		print("Checksum passed: "..tostring(response.body))
 	end
 
-
-	ModSettingRemove("lobby_data_store")
-
 --[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
 		
@@ -545,6 +601,8 @@ function OnWorldInitialized()
 end
 
 function OnPlayerSpawned(player)
+	ModSettingRemove("lobby_data_store")
+	GameRemoveFlagRun("game_paused")
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

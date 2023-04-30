@@ -53,10 +53,21 @@ function spawn_hp( x, y )
 end
 
 function spawn_all_shopitems( x, y )
-	local spawn_shop, spawn_perks = temple_random( x, y )
+
+	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	
+	local random_seed = GlobalsGetValue("unique_seed", "0")
+	
+	print("random_seed = "..tostring(random_seed))
+	
+	local random = rng.new(random_seed)
+
+	--[[local spawn_shop, spawn_perks = temple_random( x, y )
 	if( spawn_shop == "0" ) then
 		return
-	end
+	end]]
 
 	local round = tonumber(GlobalsGetValue("holyMountainCount", "0"))
 
@@ -72,9 +83,11 @@ function spawn_all_shopitems( x, y )
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count
-	local sale_item_i = math.random( 1, count )
+	local sale_item_i = random.range( 1, count, true )
 
-	if( math.random( 0, 100 ) <= 50 ) then
+	print("Sale item: "..tostring(sale_item_i))
+
+	if( random.range( 0, 100 ) <= 50 ) then
 		for i=1,count do
 			if( i == sale_item_i ) then
 				generate_shop_item( x + (i-1)*item_width, y, true, round, true )
@@ -85,7 +98,7 @@ function spawn_all_shopitems( x, y )
 			generate_shop_item( x + (i-1)*item_width, y - 30, false, round, true )
 			LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
 		end
-	else	
+	else
 		for i=1,count do
 			if( i == sale_item_i ) then
 				generate_shop_wand( x + (i-1)*item_width, y, true, round )

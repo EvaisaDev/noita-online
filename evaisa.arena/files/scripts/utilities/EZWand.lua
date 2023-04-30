@@ -232,55 +232,31 @@ local function deserialize(str)
     return "Wrong wand import string format"
   end
   local values = string_split(str, ";")
-  if #values < 17 then
+  if #values < 18 then
     return "Wrong wand import string format"
   end
 
-  local out = {
+  local     out = {
     props = {
       shuffle = values[2] == "1",
       spellsPerCast = tonumber(values[3]),
       castDelay = tonumber(values[4]),
       rechargeTime = tonumber(values[5]),
       manaMax = tonumber(values[6]),
-      mana = tonumber(values[6]),
-      manaChargeSpeed = tonumber(values[7]),
-      capacity = tonumber(values[8]),
-      spread = tonumber(values[9]),
-      speedMultiplier = tonumber(values[10])
+      mana = tonumber(values[7]),
+      manaChargeSpeed = tonumber(values[8]),
+      capacity = tonumber(values[9]),
+      spread = tonumber(values[10]),
+      speedMultiplier = tonumber(values[11])
     },
-    spells = string_split(values[11] == "-" and "" or values[11], ","),
-    always_cast_spells = string_split(values[12] == "-" and "" or values[12], ","),
-    sprite_image_file = values[13],
-    offset_x = tonumber(values[14]),
-    offset_y = tonumber(values[15]),
-    tip_x = tonumber(values[16]),
-    tip_y = tonumber(values[17])
+    spells = string_split(values[12] == "-" and "" or values[12], ","),
+    always_cast_spells = string_split(values[13] == "-" and "" or values[13], ","),
+    sprite_image_file = values[14],
+    offset_x = tonumber(values[15]),
+    offset_y = tonumber(values[16]),
+    tip_x = tonumber(values[17]),
+    tip_y = tonumber(values[18])
   }
-
-  if #values == 18 then
-    out = {
-      props = {
-        shuffle = values[2] == "1",
-        spellsPerCast = tonumber(values[3]),
-        castDelay = tonumber(values[4]),
-        rechargeTime = tonumber(values[5]),
-        manaMax = tonumber(values[6]),
-        mana = tonumber(values[7]),
-        manaChargeSpeed = tonumber(values[8]),
-        capacity = tonumber(values[9]),
-        spread = tonumber(values[10]),
-        speedMultiplier = tonumber(values[11])
-      },
-      spells = string_split(values[12] == "-" and "" or values[12], ","),
-      always_cast_spells = string_split(values[13] == "-" and "" or values[13], ","),
-      sprite_image_file = values[14],
-      offset_x = tonumber(values[15]),
-      offset_y = tonumber(values[16]),
-      tip_x = tonumber(values[17]),
-      tip_y = tonumber(values[18])
-    }
-  end
 
   if #out.spells == 1 and out.spells[1] == "" then
     out.spells = {}
@@ -1115,15 +1091,34 @@ function wand:PickUp(entity)
   if item_component then
     ComponentSetValue2(item_component, "has_been_picked_by_player", true)
   end
-  GamePickUpInventoryItem(entity, self.entity_id, false)
+  --GamePickUpInventoryItem(entity, self.entity_id, false)
+  local entity_children = EntityGetAllChildren(entity) or {}
+  -- 
+  for key, child in pairs( entity_children ) do
+    if EntityGetName( child ) == "inventory_quick" then
+      EntityAddChild( child, self.entity_id )
+    end
+  end
+
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_hand", false )
+  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_inventory", true )
+
+  local wand_children = EntityGetAllChildren(self.entity_id) or {}
+
+  for k, v in ipairs(wand_children)do
+    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
+  end
+
 end
 
 -- Turns the wand properties etc into a string
 -- Output string looks like:
 -- EZWv(version);shuffle[1|0];spellsPerCast;castDelay;rechargeTime;manaMax;mana;manaChargeSpeed;capacity;spread;speedMultiplier;
 -- SPELL_ONE,SPELL_TWO;ALWAYS_CAST_ONE,ALWAYS_CAST_TWO;sprite.png;offset_x;offset_y;tip_x;tip_y
-function wand:Serialize(include_mana)
+function wand:Serialize(include_mana, include_offsets)
   include_mana = include_mana or false
+  include_offsets = include_offsets or false
   local spells_string = ""
   local always_casts_string = ""
   local spells, always_casts = self:GetSpells()
@@ -1151,40 +1146,23 @@ function wand:Serialize(include_mana)
 
   local serialize_version = "1"
 
-  if(include_mana)then
-    return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
-      serialize_version,
-      self.shuffle and 1 or 0,
-      self.spellsPerCast,
-      self.castDelay,
-      self.rechargeTime,
-      self.manaMax,
-      self.mana,
-      self.manaChargeSpeed,
-      self.capacity,
-      self.spread,
-      self.speedMultiplier,
-      spells_string == "" and "-" or spells_string,
-      always_casts_string == "" and "-" or always_casts_string,
-      sprite_image_file, offset_x, offset_y, tip_x, tip_y
-    )
-  end
-
-  return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
+  return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
     serialize_version,
     self.shuffle and 1 or 0,
     self.spellsPerCast,
     self.castDelay,
     self.rechargeTime,
     self.manaMax,
+    include_mana and self.mana or self.manaMax,
     self.manaChargeSpeed,
     self.capacity,
     self.spread,
     self.speedMultiplier,
     spells_string == "" and "-" or spells_string,
     always_casts_string == "" and "-" or always_casts_string,
-    sprite_image_file, offset_x, offset_y, tip_x, tip_y
+    sprite_image_file, include_offsets and offset_x or 0, include_offsets and offset_y or 0, include_offsets and tip_x or 0, include_offsets and tip_y or 0
   )
+
 end
 
 local function get_held_wand()
