@@ -575,37 +575,39 @@ networking = {
             end
         end,
         death = function(lobby, message, user, data)
-            local username = steam.friends.getFriendPersonaName(user)
+            if(data.state == "arena")then
+                local username = steam.friends.getFriendPersonaName(user)
 
-            local killer = message[1]
-            -- iterate data.tweens backwards and remove tweens belonging to the dead player
-            for i = #data.tweens, 1, -1 do
-                local tween = data.tweens[i]
-                if(tween.id == tostring(user))then
-                    table.remove(data.tweens, i)
+                local killer = message[1]
+                -- iterate data.tweens backwards and remove tweens belonging to the dead player
+                for i = #data.tweens, 1, -1 do
+                    local tween = data.tweens[i]
+                    if(tween.id == tostring(user))then
+                        table.remove(data.tweens, i)
+                    end
                 end
-            end
 
-            --print(json.stringify(killer))
+                --print(json.stringify(killer))
 
-            data.players[tostring(user)]:Clean(lobby)
-            data.players[tostring(user)].alive = false
-            data.deaths = data.deaths + 1
+                data.players[tostring(user)]:Clean(lobby)
+                data.players[tostring(user)].alive = false
+                data.deaths = data.deaths + 1
 
-            if(killer == nil)then
-                
-                GamePrint(tostring(username) .. " died.")
-            else
-                local killer_id = gameplay_handler.FindUser(lobby, killer)
-                if(killer_id ~= nil)then
-
-                    GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
-                else
+                if(killer == nil)then
+                    
                     GamePrint(tostring(username) .. " died.")
-                end
-            end
+                else
+                    local killer_id = gameplay_handler.FindUser(lobby, killer)
+                    if(killer_id ~= nil)then
 
-            gameplay_handler.WinnerCheck(lobby, data)
+                        GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
+                    else
+                        GamePrint(tostring(username) .. " died.")
+                    end
+                end
+
+                gameplay_handler.WinnerCheck(lobby, data)
+            end
         end,
         zone_update = function(lobby, message, user, data)
             GlobalsSetValue("arena_area_size", tostring(message[1]))

@@ -1144,7 +1144,7 @@ ArenaGameplay = {
         end
         if(data.players_loaded)then
 
-            ArenaGameplay.SpectatorMode(lobby, data)
+            
             
             --message_handler.send.WandUpdate(lobby, data)
             networking.send.wand_update(lobby, data)
@@ -1202,30 +1202,40 @@ ArenaGameplay = {
         local alive_players = {}
         for k, v in pairs(data.players)do
             if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
-                alive_players[k] = v
+                table.insert(alive_players, v)
             end
         end
         return alive_players
     end,
     SpectatorMode = function(lobby, data)
         if(data.spectator_mode)then
-            if(data.selected_player == nil)then
-                local client_entity = EntityGetWithName(data.selected_player)
+            --GamePrint("Spectator mode")
+            if(data.selected_player ~= nil)then
+                local client_entity = data.selected_player
                 if(client_entity ~= nil)then
                     local x, y = EntityGetTransform(client_entity)
-                    GameSetCameraPos(x, y)
+
+                    -- camera smoothing
+                    local camera_speed = 0.1
+                    local camera_x, camera_y = GameGetCameraPos()
+                    local camera_x_diff = x - camera_x
+                    local camera_y_diff = y - camera_y
+                    local camera_x_new = camera_x + camera_x_diff * camera_speed
+                    local camera_y_new = camera_y + camera_y_diff * camera_speed
+                    GameSetCameraPos(camera_x_new, camera_y_new)
+
                 else
                     data.selected_player = nil
                 end
             end
 
             local keys_pressed = {
-                w = input.WasKeyPressed("w"),
-                a = input.WasKeyPressed("a"),
-                s = input.WasKeyPressed("s"),
-                d = input.WasKeyPressed("d"),
-                q = input.WasKeyPressed("q"),
-                e = input.WasKeyPressed("e"),
+                w = keys_down["w"],
+                a = keys_down["a"],
+                s = keys_down["s"],
+                d = keys_down["d"],
+                q = keys_down["q"],
+                e = keys_down["e"],
             }
 
             if(keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d)then
@@ -1233,48 +1243,48 @@ ArenaGameplay = {
             end
 
             if(keys_pressed.q)then
+                GamePrint("Q pressed")
                 local players = ArenaGameplay.GetAlivePlayers(lobby, data)
                 local player_count = #players
                 if(player_count > 0)then
                     local selected_index = 1
                     if(data.selected_player ~= nil)then
-                        local index = 1
-                        for k, v in pairs(players)do
-                            if(k == data.selected_player)then
-                                selected_index = index
+                        for k, v in ipairs(players)do
+                            if(v.entity == data.selected_player)then
+                                selected_index = k
                                 break
                             end
-                            index = index + 1
                         end
                     end
                     selected_index = selected_index - 1
                     if(selected_index < 1)then
                         selected_index = player_count
                     end
-                    data.selected_player = players[selected_index]
+                    data.selected_player = players[selected_index].entity
+                    print("Spectating player: "..EntityGetName(data.selected_player))
                 end
             end
 
             if(keys_pressed.e)then
+                GamePrint("E pressed")
                 local players = ArenaGameplay.GetAlivePlayers(lobby, data)
                 local player_count = #players
                 if(player_count > 0)then
                     local selected_index = 1
                     if(data.selected_player ~= nil)then
-                        local index = 1
-                        for k, v in pairs(players)do
-                            if(k == data.selected_player)then
-                                selected_index = index
+                        for k, v in ipairs(players)do
+                            if(v.entity == data.selected_player)then
+                                selected_index = k
                                 break
                             end
-                            index = index + 1
                         end
                     end
                     selected_index = selected_index + 1
                     if(selected_index > player_count)then
                         selected_index = 1
                     end
-                    data.selected_player = players[selected_index]
+                    data.selected_player = players[selected_index].entity
+                    print("Spectating player: "..EntityGetName(data.selected_player))
                 end
             end
 
@@ -1300,6 +1310,7 @@ ArenaGameplay = {
         end
     end,
     Update = function(lobby, data)
+        ArenaGameplay.SpectatorMode(lobby, data)
         --if(GameGetFrameNum() % 60 == 0)then
             --message_handler.send.Handshake(lobby)
         --end
