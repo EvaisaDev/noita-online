@@ -126,10 +126,12 @@ ArenaMode = {
 
         GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
 
+        --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
             ArenaMode.start(lobby, true)
         end
+        ]]
         --message_handler.send.Handshake(lobby)
     end,
     start = function(lobby, was_in_progress)
@@ -199,6 +201,9 @@ ArenaMode = {
 
 
         --message_handler.send.Handshake(lobby)
+    end,
+    spectate = function(lobby, was_in_progress)
+
     end,
     update = function(lobby)
 

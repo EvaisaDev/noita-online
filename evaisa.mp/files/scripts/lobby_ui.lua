@@ -292,7 +292,18 @@ local windows = {
 					invite_menu_open = false
 				end
 
+				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and "Stop spectating" or "Spectate"))then
+					if(owner == steam.user.getSteamID())then
+						steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
+					else
+						steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+					end
+				end
+
+
 				if(owner == steam.user.getSteamID())then
+
 					local start_string = "Start Game"
 					if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
 						start_string = "Restart Game"
@@ -309,6 +320,28 @@ local windows = {
 						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
 					end
 				end
+
+				spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
+
+				local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
+				if(game_in_progress)then
+					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Enter Game") then
+						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+						if(active_mode)then
+							if(spectating)then
+								if(active_mode.spectate)then
+									active_mode.spectate(lobby_code, true)
+								end
+							else
+								if(active_mode.start)then
+									active_mode.start(lobby_code, true)
+								end
+							end
+
+						end
+					end
+				end
+
 
 				GuiText(menu_gui, 2, 0, "--------------------")
 				local players = steam_utils.getLobbyMembers(lobby_code)
