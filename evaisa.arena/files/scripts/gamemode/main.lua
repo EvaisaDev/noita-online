@@ -37,7 +37,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.442,
+    version = 0.443,
     settings = {
         {
             id = "damage_cap",
@@ -260,9 +260,11 @@ ArenaMode = {
 
                     -- REMOVE THIS
 
+                    --[[
                     local world_state = GameGetWorldStateEntity()
 
                     EntityKill(world_state)
+                    ]]
 
                     --[[
 
