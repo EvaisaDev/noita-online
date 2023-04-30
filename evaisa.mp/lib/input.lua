@@ -2,25 +2,13 @@ last_pressed_keys = last_pressed_keys or {}
 
 local input = {}
 
-input.getPressedKeys = function ()
-    local keys = {}
-
-    local pressed, shift_held = hack_update_keys()
-
-    for _, key in ipairs(pressed) do
-        keys[key] = true
-    end
-
-    return keys
-end
-
 -- was key pressed this frame
 input.WasKeyPressed = function(key)
-    local pressed_keys = input.getPressedKeys()
+    local pressed_keys = keys_down
 
     local out = false
-
-    if pressed_keys[key] and not last_pressed_keys[key] then
+    
+    if pressed_keys[key] and last_pressed_keys[key] == nil then
         out = true
     end
 
@@ -41,14 +29,14 @@ end
 
 -- is key held down
 input.IsKeyHeld = function(key)
-    local pressed_keys = input.getPressedKeys()
+    local pressed_keys = keys_down
 
     return pressed_keys[key]
 end
 
 -- was key released this frame
 input.WasKeyReleased = function(key)
-    local pressed_keys = input.getPressedKeys()
+    local pressed_keys = keys_down
 
     local out = false
 

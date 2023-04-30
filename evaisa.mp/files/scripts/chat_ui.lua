@@ -69,21 +69,21 @@ local UnlockPlayer = function()
 end
 
 if(lobby_code ~= nil)then
-	local pressed, shift_held = hack_update_keys()
+	--local pressed, shift_held = hack_update_keys()
 
 	local hit_enter = false
-	for _, key in ipairs(pressed) do
-		if key == "enter" or key == "return" then
-			hit_enter = true
-		end
-		if(key == "t")then
-			if(chat_open == false)then
-				chat_open = true
-			elseif(was_input_hovered == false)then
-				chat_open = false
-			end
+	--for _, key in ipairs(pressed) do
+	if keys_down["enter"] or keys_down["return"] then
+		hit_enter = true
+	end
+	if(keys_down["t"])then
+		if(chat_open == false)then
+			chat_open = true
+		elseif(was_input_hovered == false)then
+			chat_open = false
 		end
 	end
+	--end
 
 	if(chat_open)then
 		new_chat_message = false

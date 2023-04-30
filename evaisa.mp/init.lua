@@ -157,6 +157,9 @@ dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
+
+keys_down = {}
+
 input = dofile_once("mods/evaisa.mp/lib/input.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
@@ -209,6 +212,14 @@ local function ReceiveMessages(gamemode)
 end
 
 function OnWorldPreUpdate()
+	local pressed, shift_held = hack_update_keys()
+
+	keys_down = {}
+
+	for _, key in ipairs(pressed) do
+		keys_down[key] = true
+	end
+
 	wake_up_waiting_threads(1)
 	--math.randomseed( os.time() )
 
