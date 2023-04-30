@@ -1143,6 +1143,9 @@ ArenaGameplay = {
             networking.send.health_update(lobby, data, true)
         end
         if(data.players_loaded)then
+
+            ArenaGameplay.SpectatorMode(lobby, data)
+            
             --message_handler.send.WandUpdate(lobby, data)
             networking.send.wand_update(lobby, data)
 
@@ -1195,6 +1198,15 @@ ArenaGameplay = {
             end
         end
     end,
+    GetAlivePlayers = function(lobby, data)
+        local alive_players = {}
+        for k, v in pairs(data.players)do
+            if(v.entity ~= nil and EntityGetIsAlive(v.entity))then
+                alive_players[k] = v
+            end
+        end
+        return alive_players
+    end,
     SpectatorMode = function(lobby, data)
         if(data.spectator_mode)then
             if(data.selected_player == nil)then
@@ -1207,6 +1219,66 @@ ArenaGameplay = {
                 end
             end
 
+            local keys_pressed = {
+                w = input.WasKeyPressed("w"),
+                a = input.WasKeyPressed("a"),
+                s = input.WasKeyPressed("s"),
+                d = input.WasKeyPressed("d"),
+                q = input.WasKeyPressed("q"),
+                e = input.WasKeyPressed("e"),
+            }
+
+            if(keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d)then
+                data.selected_player = nil
+            end
+
+            if(keys_pressed.q)then
+                local players = ArenaGameplay.GetAlivePlayers(lobby, data)
+                local player_count = #players
+                if(player_count > 0)then
+                    local selected_index = 1
+                    if(data.selected_player ~= nil)then
+                        local index = 1
+                        for k, v in pairs(players)do
+                            if(k == data.selected_player)then
+                                selected_index = index
+                                break
+                            end
+                            index = index + 1
+                        end
+                    end
+                    selected_index = selected_index - 1
+                    if(selected_index < 1)then
+                        selected_index = player_count
+                    end
+                    data.selected_player = players[selected_index]
+                end
+            end
+
+            if(keys_pressed.e)then
+                local players = ArenaGameplay.GetAlivePlayers(lobby, data)
+                local player_count = #players
+                if(player_count > 0)then
+                    local selected_index = 1
+                    if(data.selected_player ~= nil)then
+                        local index = 1
+                        for k, v in pairs(players)do
+                            if(k == data.selected_player)then
+                                selected_index = index
+                                break
+                            end
+                            index = index + 1
+                        end
+                    end
+                    selected_index = selected_index + 1
+                    if(selected_index > player_count)then
+                        selected_index = 1
+                    end
+                    data.selected_player = players[selected_index]
+                end
+            end
+
+            --[[
             local pressed, shift_held = hack_update_keys()
 
             for _, key in ipairs(pressed) do
@@ -1224,6 +1296,7 @@ ArenaGameplay = {
                     end
                 end
             end
+            ]]
         end
     end,
     Update = function(lobby, data)

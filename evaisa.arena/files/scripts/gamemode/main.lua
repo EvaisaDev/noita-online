@@ -260,9 +260,11 @@ ArenaMode = {
 
                     -- REMOVE THIS
 
+                    --[[
                     local world_state = GameGetWorldStateEntity()
 
                     EntityKill(world_state)
+                    ]]
 
                     --[[
 

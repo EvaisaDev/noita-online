@@ -157,6 +157,7 @@ dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("mods/evaisa.mp/lib/keyboard.lua")
+input = dofile_once("mods/evaisa.mp/lib/input.lua")
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
 bytes_sent = 0
