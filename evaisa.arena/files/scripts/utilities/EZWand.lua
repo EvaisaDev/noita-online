@@ -22,7 +22,7 @@ local function filter_spells(spells)
   end
   local out = {}
   for i, spell in ipairs(spells) do
-    if spell_lookup[spell] then
+    if spell == "" or spell_lookup[spell] then
       table.insert(out, spell)
     end
   end
@@ -236,7 +236,7 @@ local function deserialize(str)
     return "Wrong wand import string format"
   end
 
-  local     out = {
+  local out = {
     props = {
       shuffle = values[2] == "1",
       spellsPerCast = tonumber(values[3]),
@@ -309,6 +309,14 @@ end
 -- To get this easily you can use EZWand.Deserialize(EZWand(wand):Serialize())
 -- Better cache it though, it's not super expensive but...
 local function render_tooltip(origin_x, origin_y, wand, gui_)
+  origin_x = tonumber(origin_x)
+  if not origin_x then
+    error("RenderTooltip: Argument x is required and must be a number", 2)
+  end
+  origin_y = tonumber(origin_y)
+  if not origin_y then
+    error("RenderTooltip: Argument y is required and must be a number", 2)
+  end
   -- gui = gui or GuiCreate()
   gui = gui_ or gui or GuiCreate()
   if not gui_ then
@@ -452,20 +460,23 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
   -- /Always casts
   -- Spells
   local spell_icon_scale = 0.711
-  local background_scale = 0.768
-  GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + last_icon_height + 7 + add_some, true)
+  local background_scale = 0.7685
+  GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + last_icon_height + 7 + add_some + 0.05, true)
   local row = 0
   for i=1, wand.props.capacity do
     GuiZSetForNextWidget(gui, 9)
-    GuiImage(gui, new_id(), -0.3, -0.5, "data/ui_gfx/inventory/inventory_box.png", 1, background_scale, background_scale)
+    GuiImage(gui, new_id(), -0.3, -0.4, "data/ui_gfx/inventory/inventory_box.png", 0.95, background_scale, background_scale)
     update_bounds()
-    if wand.spells[i] then
-      local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-      x = x + 0.3
-      y = y + 0.5
-      local item_bg_icon = get_spell_bg(wand.spells[i])
-      GuiZSetForNextWidget(gui, 8.5)
-      GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
+    local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+    x = x + 0.3
+    y = y + 0.4
+    local item_bg_icon = get_spell_bg(wand.spells[i])
+    GuiZSetForNextWidget(gui, 8.5)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
+    if not wand.spells[i] or wand.spells[i] == "" then
+      -- Render an invisible (alpha = 0.0001) item just so it counts for the auto-layout
+      GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.0001, background_scale + 0.01, background_scale + 0.01)
+    else
       -- Background / Spell type border
       GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.8, background_scale + 0.01, background_scale + 0.01)
       GuiZSetForNextWidget(gui, 8)
@@ -477,7 +488,7 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
       row = row + 1
       GuiLayoutEnd(gui)
       _, _, _, _, last_icon_y, last_icon_width, last_icon_height = GuiGetPreviousWidgetInfo(gui)
-      GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + 19.7 * spell_icon_scale, true)
+      GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + 22.5 * spell_icon_scale, true)
     end
   end
   GuiLayoutEnd(gui)
@@ -514,6 +525,25 @@ local function refresh_wand_if_in_inventory(wand_id)
   end
 end
 
+local function add_spell_at_pos(wand, action_id, pos)
+  local spells_on_wand = wand:GetSpells()
+  -- Check if there's space for one more spell
+  if wand.capacity == #spells_on_wand then
+    return false
+  end
+  -- Check if there's already a spell at the desired position
+  for i, spell in ipairs(spells_on_wand) do
+    if spell.inventory_x + 1 == pos then
+      return false
+    end
+  end
+  local action_entity_id = CreateItemActionEntity(action_id)
+  EntityAddChild(wand.entity_id, action_entity_id)
+  EntitySetComponentsWithTagEnabled(action_entity_id, "enabled_in_world", false)
+  local item_component = EntityGetFirstComponentIncludingDisabled(action_entity_id, "ItemComponent")
+  ComponentSetValue2(item_component, "inventory_slot", pos-1, 0)
+  return true
+end
 -- ##########################
 -- ####    UTILS END     ####
 -- ##########################
@@ -570,7 +600,11 @@ function wand:new(from, rng_seed_x, rng_seed_y)
       -- Filter spells whose ID no longer exist (for instance when a modded spellpack was disabled)
       values.spells = filter_spells(values.spells)
       values.always_cast_spells = filter_spells(values.always_cast_spells)
-      o:AddSpells(values.spells)
+      for i, action_id in ipairs(values.spells) do
+        if action_id ~= "" then
+          add_spell_at_pos(o, action_id, i)
+        end
+      end      
       o:AttachSpells(values.always_cast_spells)
       o:SetSprite(values.sprite_image_file, values.offset_x, values.offset_y, values.tip_x, values.tip_y)
       o:HideWorldStuff()
@@ -646,6 +680,9 @@ function wand:_SetProperty(key, value)
 end
 -- Retrieves the actual property from the component or object
 function wand:_GetProperty(key)
+  if not variable_mappings[key] then
+    error(("EZWand has no property '%s'"):format(key), 4)
+  end  
   local mapped_key = variable_mappings[key].name
   local target_getters = {
     ability_component = function(key)
@@ -1122,8 +1159,12 @@ function wand:Serialize(include_mana, include_offsets)
   local spells_string = ""
   local always_casts_string = ""
   local spells, always_casts = self:GetSpells()
+  local slots = {}
   for i, spell in ipairs(spells) do
-    spells_string = spells_string .. (i == 1 and "" or ",") .. spell.action_id
+    slots[spell.inventory_x+1] = spell
+  end
+  for i=1, self.capacity do
+    spells_string = spells_string .. (i == 1 and "" or ",") .. (slots[i] and slots[i].action_id or "")
   end
   for i, spell in ipairs(always_casts) do
     always_casts_string = always_casts_string .. (i == 1 and "" or ",") .. spell.action_id
@@ -1175,6 +1216,13 @@ local function get_held_wand()
     else
       return nil
     end
+  end
+end
+
+function wand:RenderTooltip(origin_x, origin_y, gui_)
+  local success, error_msg = pcall(render_tooltip, origin_x, origin_y, deserialize(self:Serialize()), gui_)
+  if not success then
+    error(error_msg, 2)
   end
 end
 
