@@ -592,7 +592,7 @@ ArenaGameplay = {
 
             GameSetCameraFree(true)
 
-            data.spectator_mode = true
+            data.arena_spectator = true
 
             player.Lock()
             player.Immortal(true)
@@ -1232,7 +1232,7 @@ ArenaGameplay = {
     end,
     SpectatorMode = function(lobby, data)
 
-        if(data.spectator_mode)then
+        if(data.arena_spectator)then
 
             if(data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity))then
                 data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")

@@ -75,7 +75,7 @@ player_helper.Unlock = function(data)
         return
     end
     GameSetCameraFree(false)
-    data.spectator_mode = false
+    data.arena_spectator = false
     local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
     if(controls ~= nil)then
         ComponentSetValue2(controls, "enabled", true)

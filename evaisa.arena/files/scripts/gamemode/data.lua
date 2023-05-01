@@ -43,7 +43,7 @@ function data:New()
             perks = {},
         },
         state = "lobby",
-        spectator_mode = false,
+        arena_spectator = false,
         selected_player = nil,
         selected_player_name = nil,
         preparing = false,
