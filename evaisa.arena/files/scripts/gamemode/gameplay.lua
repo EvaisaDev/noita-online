@@ -1268,18 +1268,22 @@ ArenaGameplay = {
             --GamePrint("Spectator mode")
             if(data.selected_player ~= nil)then
                 local client_entity = data.selected_player
-                if(client_entity ~= nil)then
+                if(client_entity ~= nil and EntityGetIsAlive(client_entity))then
                     local x, y = EntityGetTransform(client_entity)
 
-                    -- camera smoothing
-                    local camera_speed = 0.1
-                    
-                    local camera_x_diff = x - camera_x
-                    local camera_y_diff = y - camera_y
-                    local camera_x_new = camera_x + camera_x_diff * camera_speed
-                    local camera_y_new = camera_y + camera_y_diff * camera_speed
-                    GameSetCameraPos(camera_x_new, camera_y_new)
-
+                    if(x ~= nil and y ~= nil)then
+                        -- camera smoothing
+                        local camera_speed = 0.1
+                        
+                        local camera_x_diff = x - camera_x
+                        local camera_y_diff = y - camera_y
+                        local camera_x_new = camera_x + camera_x_diff * camera_speed
+                        local camera_y_new = camera_y + camera_y_diff * camera_speed
+                        GameSetCameraPos(camera_x_new, camera_y_new)
+                    else
+                        data.selected_player = nil
+                        data.selected_player_name = nil
+                    end
                 else
                     data.selected_player = nil
                     data.selected_player_name = nil
