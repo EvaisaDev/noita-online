@@ -39,6 +39,7 @@ Version_string = "63479623967237"
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
 
 Checksum_passed = false
+in_game = false
 Spawned = false
 
 disable_print = false
@@ -415,7 +416,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		steam.networking.closeSession(v)
 		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 	end
-
+	in_game = false
 	game_in_progress = false
 	if(data.response ~= 2)then
 		lobby_code = data.lobbyID
@@ -431,6 +432,7 @@ function steam.matchmaking.onLobbyEnter(data)
 						gui_closed = true
 					end
 					lobby_gamemode.enter(lobby_code)
+					
 
 
 					defineLobbyUserData(lobby_code)
@@ -502,6 +504,8 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		if handleVersionCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if(lobby_gamemode)then
+					local user = data.userID
+
 					spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
 
 					if(spectating)then
@@ -514,6 +518,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 						end
 					end
 
+					in_game = true
 					game_in_progress = true
 					gui_closed = true
 				else

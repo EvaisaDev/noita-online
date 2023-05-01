@@ -292,14 +292,19 @@ local windows = {
 					invite_menu_open = false
 				end
 
+				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and "Stop spectating" or "Spectate"))then
-					if(owner == steam.user.getSteamID())then
-						steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
-					else
-						steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+				if(active_mode and active_mode.spectate)then
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and "Stop spectating" or "Spectator Mode"))then
+						if(owner == steam.user.getSteamID())then
+							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
+						else
+							steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+						end
 					end
 				end
+
+				GuiText(menu_gui, 0, -6, " ")
 
 
 				if(owner == steam.user.getSteamID())then
@@ -321,12 +326,14 @@ local windows = {
 					end
 				end
 
-				spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
+				spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
 
-				local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
-				if(game_in_progress)then
+				--print(tostring(spectating))
+
+				local game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+				if(game_in_progress and not in_game)then
 					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Enter Game") then
-						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+						
 						if(active_mode)then
 							if(spectating)then
 								if(active_mode.spectate)then
@@ -337,6 +344,8 @@ local windows = {
 									active_mode.start(lobby_code, true)
 								end
 							end
+
+							in_game = true
 
 						end
 					end

@@ -207,7 +207,9 @@ ArenaMode = {
     end,
     update = function(lobby)
 
-
+        if(data == nil)then
+            return
+        end
 
         if(GameGetFrameNum() % 60 == 0)then
 
@@ -304,6 +306,10 @@ ArenaMode = {
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)
+        if(data == nil)then
+            return
+        end
+
         if(data ~= nil)then
             gameplay_handler.LateUpdate(lobby, data)
         end
@@ -318,7 +324,10 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
-
+        if(data == nil)then
+            return
+        end
+        
         if(not data.players[tostring(user)])then
             data:DefinePlayer(lobby, user)
         end
