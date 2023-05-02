@@ -33,7 +33,7 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.42
+MP_VERSION = 1.43
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
@@ -44,7 +44,7 @@ Spawned = false
 
 disable_print = false
 
-dev_mode = false
+dev_mode = true
 
 base64 = require("base64")
 
@@ -110,10 +110,10 @@ function OnPausedChanged(paused, is_wand_pickup)
 
 	if(paused)then
 		GameAddFlagRun("game_paused")
-		GamePrint("paused")
+		--GamePrint("paused")
 	else
 		GameRemoveFlagRun("game_paused")
-		GamePrint("unpaused")
+		--GamePrint("unpaused")
 	end
 end
 
@@ -302,6 +302,7 @@ function OnWorldPreUpdate()
 
 			byte_rate_gui = byte_rate_gui or GuiCreate()
 			GuiStartFrame(byte_rate_gui)
+			
 			local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
 
 			local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
@@ -427,10 +428,10 @@ function steam.matchmaking.onLobbyEnter(data)
 		if handleVersionCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if(lobby_gamemode)then
-					game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+					--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 					if(game_in_progress)then
 						gui_closed = true
-					end
+					end]]
 					lobby_gamemode.enter(lobby_code)
 					
 
@@ -509,17 +510,18 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 					spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
 
 					if(spectating)then
-						if(lobby_gamemode.spectate)then
+						if(lobby_gamemode.spectate ~= nil)then
 							lobby_gamemode.spectate(lobby_code)
 						end
 					else
-						if(lobby_gamemode.start)then
+						if(lobby_gamemode.start ~= nil)then
 							lobby_gamemode.start(lobby_code)
 						end
 					end
 
 					in_game = true
 					game_in_progress = true
+					
 					gui_closed = true
 				else
 					disconnect({

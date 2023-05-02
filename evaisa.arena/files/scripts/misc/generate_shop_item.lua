@@ -134,7 +134,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	EntityAddComponent( eid, "ItemCostComponent", { 
 		_tags="shop_cost,enabled_in_world", 
 		cost=cardcost,
-		stealable=stealable_value
+		stealable="0"
 		} )
 		
 	EntityAddComponent( eid, "LuaComponent", { 
@@ -283,7 +283,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	EntityAddComponent( eid, "ItemCostComponent", { 
 		_tags="shop_cost,enabled_in_world", 
 		cost=wandcost,
-		stealable="1"
+		stealable="0"
 		} )
 		
 	EntityAddComponent( eid, "LuaComponent", { 

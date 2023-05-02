@@ -73,6 +73,7 @@ game_funcs = {
     RenderOffScreenMarkers = function(players)
         marker_gui = marker_gui or GuiCreate()
         GuiStartFrame(marker_gui)
+		
         GuiOptionsAdd(marker_gui, GUI_OPTION.NonInteractive)
         local id = 2041242
         local function new_id()

@@ -11,6 +11,7 @@
 	ui_newgame_gfx_banner_fg=""
 	translation_xml_path=""
 	translation_csv_path=""
+	download_link=""
 >
 </Mod>
 	

@@ -7,6 +7,11 @@ chat_gui = chat_gui or GuiCreate()
 
 GuiStartFrame(chat_gui)
 
+if(GameGetIsGamepadConnected())then
+	GuiOptionsAdd(chat_gui, GUI_OPTION.NonInteractive)
+end
+
+
 GuiOptionsAdd( chat_gui, GUI_OPTION.NoPositionTween )
 
 local screen_width, screen_height = GuiGetScreenDimensions( chat_gui );

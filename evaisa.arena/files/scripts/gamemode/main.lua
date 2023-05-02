@@ -14,6 +14,7 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
+spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
@@ -38,7 +39,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.45,
+    version = 0.46,
     settings = {
         {
             id = "damage_cap",
@@ -136,6 +137,8 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
+        print("Start called!!!")
+
         if(data ~= nil)then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -203,9 +206,9 @@ ArenaMode = {
 
         --message_handler.send.Handshake(lobby)
     end,
-    spectate = function(lobby, was_in_progress)
+    --[[spectate = function(lobby, was_in_progress)
 
-    end,
+    end,]]
     update = function(lobby)
 
         if(data == nil)then
@@ -213,6 +216,8 @@ ArenaMode = {
         end
 
         data.spectator_mode = steamutils.IsSpectator(lobby)
+
+        data.using_controller = GameGetIsGamepadConnected()
 
         if(GameGetFrameNum() % 60 == 0)then
 
@@ -336,8 +341,14 @@ ArenaMode = {
         end
 
         if(data ~= nil)then
-            if(networking.receive[event])then
-                networking.receive[event](lobby, message, user, data)
+            if(not data.spectator_mode)then
+                if(networking.receive[event])then
+                    networking.receive[event](lobby, message, user, data)
+                end
+            else
+                if(spectator_networking.receive[event])then
+                    spectator_networking.receive[event](lobby, message, user, data)
+                end
             end
         end
     end,

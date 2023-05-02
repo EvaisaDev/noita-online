@@ -362,6 +362,10 @@ ArenaGameplay = {
 
                         GuiStartFrame(data.zone_gui)
 
+                        if(data.using_controller)then
+                            GuiOptionsAdd(data.zone_gui, GUI_OPTION.NonInteractive)
+                        end
+
                         local step_size = zone_speed / 60 / 60
 
                         --GamePrint("step_size: " .. step_size)
@@ -398,6 +402,11 @@ ArenaGameplay = {
                         end
 
                         GuiStartFrame(data.zone_gui)
+
+                        if(data.using_controller)then
+                            GuiOptionsAdd(data.zone_gui, GUI_OPTION.NonInteractive)
+                        end
+
                         -- every step should take step_time seconds to complete
                         if(GameGetFrameNum() - data.last_step_frame > zone_step_interval)then
                             local step_size = zone_speed / step_time
@@ -465,6 +474,9 @@ ArenaGameplay = {
 
                     GuiStartFrame(data.zone_gui)
 
+                    if(data.using_controller)then
+                        GuiOptionsAdd(data.zone_gui, GUI_OPTION.NonInteractive)
+                    end
                    -- GamePrint("???")
 
                     if(zone_type == "shrinking_Linear")then
@@ -655,6 +667,12 @@ ArenaGameplay = {
         show_message = show_message or false
         first_entry = first_entry or false
 
+        np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
+        np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
+        np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
+        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
+        
+
         if(not first_entry)then
             ArenaGameplay.SavePlayerData(lobby, data, true)
             ArenaGameplay.ClearWorld()
@@ -813,6 +831,10 @@ ArenaGameplay = {
 
         show_message = show_message or false
 
+        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+
         ArenaGameplay.ClearWorld()
 
         playermenu:Close()
@@ -874,6 +896,10 @@ ArenaGameplay = {
         return ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby)
     end,
     SetReady = function(lobby, data, ready, silent)
+
+        if(ready == nil)then
+            return
+        end
 
         --print("SetReady called: "..tostring(ready))
 
