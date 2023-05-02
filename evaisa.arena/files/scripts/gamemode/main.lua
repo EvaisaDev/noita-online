@@ -169,6 +169,7 @@ ArenaMode = {
 
         data = data_holder:New()
         data.state = "lobby"
+        data.spectator_mode = steamutils.IsSpectator(lobby)
         data:DefinePlayers(lobby)
 
         
@@ -210,6 +211,8 @@ ArenaMode = {
         if(data == nil)then
             return
         end
+
+        data.spectator_mode = steamutils.IsSpectator(lobby)
 
         if(GameGetFrameNum() % 60 == 0)then
 

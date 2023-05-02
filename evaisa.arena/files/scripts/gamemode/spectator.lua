@@ -1,0 +1,7 @@
+
+
+SpectatorMode = {
+
+}
+
+return SpectatorMode
