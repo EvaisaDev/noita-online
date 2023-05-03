@@ -123,7 +123,7 @@ steam_utils.CheckLocalLobbyData = function()
 	mp_log:print("Checking lobby data: " .. pretty.table(keys))
 
 	-- Set a variable to represent 12 hours in seconds
-	local twelve_hours_sec = 10 --12 * 60 * 60
+	local twelve_hours_sec = 12 * 60 * 60
 
 	-- Iterate through all the saved lobbies
 	for lobby, lobby_keys in pairs(keys) do

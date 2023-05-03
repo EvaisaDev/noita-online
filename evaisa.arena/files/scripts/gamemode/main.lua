@@ -1,3 +1,5 @@
+arena_log = logger.init("noita-arena.log")
+
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
@@ -19,10 +21,10 @@ gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
-dofile_once( "data/scripts/perks/perk_list.lua" )
+dofile_once("data/scripts/perks/perk_list.lua")
 
 perk_sprites = {}
-for k, perk in pairs(perk_list)do
+for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
 end
 
@@ -46,7 +48,8 @@ ArenaMode = {
             name = "Damage Cap",
             description = "One shot protection, how much damage can be dealt to a player at once.",
             type = "enum",
-            options = {{"0.25", "25% of max"}, {"0.5", "50% of max"}, {"0.75", "75% of max"}, {"disabled", "Disabled"}},
+            options = { { "0.25", "25% of max" }, { "0.5", "50% of max" }, { "0.75", "75% of max" },
+                { "disabled", "Disabled" } },
             default = "0.25"
         },
         {
@@ -54,7 +57,8 @@ ArenaMode = {
             name = "Zone Mode",
             description = "How the damage zone shrinks over time.",
             type = "enum",
-            options = {{"disabled", "Disabled"}, {"static", "Static"}, {"shrinking_Linear", "Linear Shrinking"}, {"shrinking_step", "Stepped Shrinking"}},
+            options = { { "disabled", "Disabled" }, { "static", "Static" }, { "shrinking_Linear", "Linear Shrinking" },
+                { "shrinking_step", "Stepped Shrinking" } },
             default = "static"
         },
         {
@@ -89,43 +93,43 @@ ArenaMode = {
     },
     refresh = function(lobby)
         local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
-        if(damage_cap == nil)then
+        if (damage_cap == nil) then
             damage_cap = 0.25
         end
         GlobalsSetValue("damage_cap", tostring(damage_cap))
 
         local zone_shrink = steam.matchmaking.getLobbyData(lobby, "setting_zone_shrink")
-        if(zone_shrink == nil)then
+        if (zone_shrink == nil) then
             zone_shrink = "static"
         end
         GlobalsSetValue("zone_shrink", tostring(zone_shrink))
 
         local zone_speed = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_speed"))
-        if(zone_speed == nil)then
+        if (zone_speed == nil) then
             zone_speed = 30
         end
         GlobalsSetValue("zone_speed", tostring(zone_speed))
 
         local zone_step_interval = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_step_interval"))
-        if(zone_step_interval == nil)then
+        if (zone_step_interval == nil) then
             zone_step_interval = 30
         end
         GlobalsSetValue("zone_step_interval", tostring(zone_step_interval))
 
-        print("Lobby data refreshed")
+        arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
 
         local player = player.Get()
-        if(player ~= nil)then
+        if (player ~= nil) then
             EntityKill(player)
         end
 
         --print("WE GOOD???")
 
-        GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
+        GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
 
         --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
@@ -136,14 +140,13 @@ ArenaMode = {
         --message_handler.send.Handshake(lobby)
     end,
     start = function(lobby, was_in_progress)
+        arena_log:print("Start called!!!")
 
-        print("Start called!!!")
-
-        if(data ~= nil)then
+        if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
-        
-        if(not was_in_progress)then
+
+        if (not was_in_progress) then
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
         end
@@ -153,8 +156,8 @@ ArenaMode = {
         local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
         local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
 
-        if(unique_game_id_server ~= unique_game_id_client)then
-            print("Unique game id mismatch, removing player data")
+        if (unique_game_id_server ~= unique_game_id_client) then
+            arena_log:print("Unique game id mismatch, removing player data")
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
         end
@@ -164,7 +167,7 @@ ArenaMode = {
 
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
-        SetWorldSeed( seed )
+        SetWorldSeed(seed)
 
         local player_entity = player.Get()
 
@@ -175,7 +178,7 @@ ArenaMode = {
         data.spectator_mode = steamutils.IsSpectator(lobby)
         data:DefinePlayers(lobby)
 
-        
+
         local local_seed = data.random.range(100, 10000000)
 
         GlobalsSetValue("local_seed", tostring(local_seed))
@@ -183,23 +186,23 @@ ArenaMode = {
         local unique_seed = data.random.range(100, 10000000)
         GlobalsSetValue("unique_seed", tostring(unique_seed))
 
-        if(steamutils.IsOwner(lobby))then
+        if (steamutils.IsOwner(lobby)) then
             local unique_game_id = data.random.range(100, 10000000)
             steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
         end
 
         gameplay_handler.GetGameData(lobby, data)
 
-        if(player_entity == nil)then
+        if (player_entity == nil) then
             gameplay_handler.LoadPlayer(lobby, data)
         end
 
         gameplay_handler.LoadLobby(lobby, data, true, true)
 
-        if(playermenu ~= nil)then
-            playermenu:Destroy() 
+        if (playermenu ~= nil) then
+            playermenu:Destroy()
         end
-                
+
         playermenu = playerinfo_menu:New()
 
 
@@ -210,8 +213,7 @@ ArenaMode = {
 
     end,]]
     update = function(lobby)
-
-        if(data == nil)then
+        if (data == nil) then
             return
         end
 
@@ -219,18 +221,17 @@ ArenaMode = {
 
         data.using_controller = GameGetIsGamepadConnected()
 
-        if(GameGetFrameNum() % 60 == 0)then
-
-            if(data ~= nil)then
+        if (GameGetFrameNum() % 60 == 0) then
+            if (data ~= nil) then
                 local unique_game_id = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
                 steamutils.SetLocalLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
             end
 
             local members = steamutils.getLobbyMembers(lobby)
-            for k, member in pairs(members)do
-                if(member.id ~= steam.user.getSteamID())then
+            for k, member in pairs(members) do
+                if (member.id ~= steam.user.getSteamID()) then
                     local name = steam.friends.getFriendPersonaName(member.id)
-                    if(name ~= nil)then
+                    if (name ~= nil) then
                         lobby_member_names[tostring(member.id)] = name
                     end
                 end
@@ -248,43 +249,40 @@ ArenaMode = {
 
             local unique_seed = data.random.range(100, 10000000)
             GlobalsSetValue("unique_seed", tostring(unique_seed))
-
         end
-        
+
         local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")
-        if(update_seed == nil)then
+        if (update_seed == nil) then
             update_seed = "0"
         end
 
         GlobalsSetValue("update_seed", update_seed)
 
-        if(data ~= nil)then
-
+        if (data ~= nil) then
             gameplay_handler.Update(lobby, data)
-            if(not IsPaused())then
-                if(playermenu ~= nil)then
+            if (not IsPaused()) then
+                if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
                 end
             end
         end
 
-        
+
         local player_ent = player.Get()
 
-        if(player_ent ~= nil)then
+        if (player_ent ~= nil) then
             local controlsComp = EntityGetFirstComponentIncludingDisabled(player_ent, "ControlsComponent")
-            if(controlsComp ~= nil)then
+            if (controlsComp ~= nil) then
                 local kick = ComponentGetValue2(controlsComp, "mButtonDownKick")
                 local kick_frame = ComponentGetValue2(controlsComp, "mButtonFrameKick")
-                if(kick and kick_frame == GameGetFrameNum())then
-
+                if (kick and kick_frame == GameGetFrameNum()) then
                     -- REMOVE THIS
 
-                    --[[
+
                     local world_state = GameGetWorldStateEntity()
 
                     EntityKill(world_state)
-                    ]]
+
 
                     --[[
 
@@ -314,11 +312,11 @@ ArenaMode = {
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)
-        if(data == nil)then
+        if (data == nil) then
             return
         end
 
-        if(data ~= nil)then
+        if (data ~= nil) then
             gameplay_handler.LateUpdate(lobby, data)
         end
     end,
@@ -332,42 +330,46 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
-        if(data == nil)then
+        if (data == nil) then
             return
         end
-        
-        if(not data.players[tostring(user)])then
+
+        if (not data.players[tostring(user)]) then
             data:DefinePlayer(lobby, user)
         end
 
-        if(data ~= nil)then
-            if(not data.spectator_mode)then
-                if(networking.receive[event])then
+        if (data ~= nil) then
+            if (not data.spectator_mode) then
+                if (networking.receive[event]) then
                     networking.receive[event](lobby, message, user, data)
                 end
             else
-                if(spectator_networking.receive[event])then
+                if (spectator_networking.receive[event]) then
                     spectator_networking.receive[event](lobby, message, user, data)
                 end
             end
         end
     end,
-    on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
-        if(EntityHasTag(shooter_id, "client"))then
+    on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
+                                   send_message)
+        if (EntityHasTag(shooter_id, "client")) then
             EntityAddTag(shooter_id, "player_unit")
         end
 
-        if(data ~= nil)then
-            gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        if (data ~= nil) then
+            gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
+                target_x, target_y, send_message)
         end
     end,
-    on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
-        if(EntityHasTag(shooter_id, "client"))then
+    on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
+                                        send_message)
+        if (EntityHasTag(shooter_id, "client")) then
             EntityRemoveTag(shooter_id, "player_unit")
         end
 
-        if(data ~= nil)then
-            gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+        if (data ~= nil) then
+            gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
+                target_x, target_y, send_message)
         end
     end
 }
