@@ -20,12 +20,12 @@ async.run(function()
       if msg == "PING :tmi.twitch.tv" then
         sock:send("PONG :tmi.twitch.tv")
       end
-      print(msg)
+      mp_log:print(msg)
     else
       async.await_frames(1)
     end
   end
-  print("Socket closed: ", sock:last_message())
+  mp_log:print("Socket closed: ", sock:last_message())
 end)
 
 -- example http get:
@@ -33,14 +33,14 @@ async.run(function()
   local sock = pollnet.http_get("https://www.example.com")
   while sock:poll() do
     if sock:last_message() then
-      print("HTTP STATUS: ", sock:last_message())
+      mp_log:print("HTTP STATUS: ", sock:last_message())
       break
     end
     async.await_frames(1)
   end
   while sock:poll() do
     if sock:last_message() then
-      print("HTTP BODY: ", sock:last_message())
+      mp_log:print("HTTP BODY: ", sock:last_message())
       break
     end
     async.await_frames(1)
@@ -223,7 +223,7 @@ function socket_mt:poll()
     if self._on_connection then
       self._on_connection(client_sock, client_addr)
     else
-      print("No connection handler! All incoming connections will be closed!")
+      mp_log:print("No connection handler! All incoming connections will be closed!")
       client_sock:close()
     end
     return true

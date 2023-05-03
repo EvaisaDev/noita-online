@@ -73,7 +73,7 @@ end
 
 function handleBanCheck(user)
 	if(banned_members[tostring(user)] ~= nil)then
-		print("Disconnected member: "..tostring(user))
+		mp_log:print("Disconnected member: "..tostring(user))
 		steam.matchmaking.kickUserFromLobby(lobby_code, user, "You are banned from this lobby.")	
 	end
 end
@@ -100,8 +100,8 @@ function handleGamemodeVersionCheck(lobbycode)
 	local gamemode_version = steam.matchmaking.getLobbyData(lobbycode, "gamemode_version")
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobbycode, "gamemode"))
 	--local gamemode = steam.matchmaking.getLobbyData(lobbycode, "gamemode")
-	print("Gamemode: "..tostring(active_mode.id))
-	print("Version: "..tostring(gamemode_version))
+	mp_log:print("Gamemode: "..tostring(active_mode.id))
+	mp_log:print("Version: "..tostring(gamemode_version))
 	if(active_mode ~= nil and gamemode_version ~= nil)then
 		if(active_mode ~= nil)then
 			if(active_mode.version > tonumber(gamemode_version))then
@@ -213,7 +213,7 @@ function getLobbyUserData(lobby, userid)
 	if(player_mod_data ~= nil)then
 		--print("Getting mod data: "..player_mod_data)
 		local data_received = json.parse(player_mod_data)
-		print(player_mod_data)
+		mp_log:print(player_mod_data)
 		return data_received
 	end
 	return nil

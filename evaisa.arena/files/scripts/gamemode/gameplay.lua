@@ -541,7 +541,7 @@ ArenaGameplay = {
         end
     end,
     GetWins = function(lobby, user)
-        return tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user).."_wins")) or "0")
+        return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user).."_wins")) or 0
     end,
     WinnerCheck = function(lobby, data)
 
@@ -1325,68 +1325,70 @@ ArenaGameplay = {
                 e = keys_down["e"],
             }
 
-            if(keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d)then
-                data.selected_player = nil
-                data.selected_player_name = nil
-            end
-
-            if(keys_pressed.q)then
-               -- GamePrint("Q pressed")
-                local players = ArenaGameplay.GetAlivePlayers(lobby, data)
-                local player_count = #players
-                if(player_count > 0)then
-                    local selected_index = 1
-                    if(data.selected_player ~= nil)then
-                        for k, v in ipairs(players)do
-                            if(v.entity == data.selected_player)then
-                                selected_index = k
-                                break
-                            end
-                        end
-                    end
-                    selected_index = selected_index - 1
-                    if(selected_index < 1)then
-                        selected_index = player_count
-                    end
-                    data.selected_player = players[selected_index].entity
-                    print("Spectating player: "..EntityGetName(data.selected_player))
-
-                    local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
-
-                    data.selected_player_name = "Unknown Player"
-                    if(player ~= nil)then
-                        data.selected_player_name = steam.friends.getFriendPersonaName(player)
-                    end
-                    
+            if(not GameHasFlagRun("chat_input_hovered"))then
+                if(keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d)then
+                    data.selected_player = nil
+                    data.selected_player_name = nil
                 end
-            end
 
-            if(keys_pressed.e)then
-               -- GamePrint("E pressed")
-                local players = ArenaGameplay.GetAlivePlayers(lobby, data)
-                local player_count = #players
-                if(player_count > 0)then
-                    local selected_index = 1
-                    if(data.selected_player ~= nil)then
-                        for k, v in ipairs(players)do
-                            if(v.entity == data.selected_player)then
-                                selected_index = k
-                                break
+                if(keys_pressed.q)then
+                -- GamePrint("Q pressed")
+                    local players = ArenaGameplay.GetAlivePlayers(lobby, data)
+                    local player_count = #players
+                    if(player_count > 0)then
+                        local selected_index = 1
+                        if(data.selected_player ~= nil)then
+                            for k, v in ipairs(players)do
+                                if(v.entity == data.selected_player)then
+                                    selected_index = k
+                                    break
+                                end
                             end
                         end
-                    end
-                    selected_index = selected_index + 1
-                    if(selected_index > player_count)then
-                        selected_index = 1
-                    end
-                    data.selected_player = players[selected_index].entity
-                    print("Spectating player: "..EntityGetName(data.selected_player))
+                        selected_index = selected_index - 1
+                        if(selected_index < 1)then
+                            selected_index = player_count
+                        end
+                        data.selected_player = players[selected_index].entity
+                        print("Spectating player: "..EntityGetName(data.selected_player))
 
-                    local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
+                        local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
 
-                    data.selected_player_name = "Unknown Player"
-                    if(player ~= nil)then
-                        data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                        data.selected_player_name = "Unknown Player"
+                        if(player ~= nil)then
+                            data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                        end
+                        
+                    end
+                end
+
+                if(keys_pressed.e)then
+                -- GamePrint("E pressed")
+                    local players = ArenaGameplay.GetAlivePlayers(lobby, data)
+                    local player_count = #players
+                    if(player_count > 0)then
+                        local selected_index = 1
+                        if(data.selected_player ~= nil)then
+                            for k, v in ipairs(players)do
+                                if(v.entity == data.selected_player)then
+                                    selected_index = k
+                                    break
+                                end
+                            end
+                        end
+                        selected_index = selected_index + 1
+                        if(selected_index > player_count)then
+                            selected_index = 1
+                        end
+                        data.selected_player = players[selected_index].entity
+                        print("Spectating player: "..EntityGetName(data.selected_player))
+
+                        local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
+
+                        data.selected_player_name = "Unknown Player"
+                        if(player ~= nil)then
+                            data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                        end
                     end
                 end
             end

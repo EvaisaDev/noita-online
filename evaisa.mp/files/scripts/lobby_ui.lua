@@ -58,7 +58,7 @@ function CreateLobby(type, max_players, callback)
 		if(tostring(e.result) == "1")then
 			callback(e.lobby)
 		else
-			print("CreateLobby failed: " .. tostring(e.result))
+			mp_log:print("CreateLobby failed: " .. tostring(e.result))
 		end
 	end )
 end
@@ -489,9 +489,9 @@ local windows = {
 							if(GuiButton(menu_gui, NewID("Invite"), 0, 0, "[Invite] "))then
 								if(lobby_code ~= nil)then
 									if(steam.matchmaking.inviteUserToLobby(lobby_code, v.id))then
-										print("Invited "..v.name.." to lobby")
+										mp_log:print("Invited "..v.name.." to lobby")
 									else
-										print("Failed to invite "..v.name.." to lobby")
+										mp_log:print("Failed to invite "..v.name.." to lobby")
 									end
 								end
 							end
@@ -698,13 +698,13 @@ local windows = {
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
 						for k, setting in ipairs(active_mode.settings or {})do
 							steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
-							print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
+							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 						end
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
 						steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
-						print("Updated limit: "..tostring(edit_lobby_max_players))
-						print("Updated name: "..tostring(edit_lobby_name))
-						print("Updated type: "..tostring(internal_types[edit_lobby_type]))
+						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
+						mp_log:print("Updated name: "..tostring(edit_lobby_name))
+						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
 					end
 
 					for i = 1, 40 do

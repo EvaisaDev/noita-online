@@ -119,6 +119,16 @@ if(lobby_code ~= nil)then
 			initial_text = input_text
 		end
 
+		if(input_hovered)then
+			if(not GameHasFlagRun("chat_input_hovered"))then
+				GameAddFlagRun("chat_input_hovered")
+			end
+		else
+			if(GameHasFlagRun("chat_input_hovered"))then
+				GameRemoveFlagRun("chat_input_hovered")
+			end
+		end
+
 		if(not was_input_hovered and input_hovered)then
 			LockPlayer()
 		elseif(was_input_hovered and not input_hovered)then

@@ -37,6 +37,7 @@ steam_utils.isInLobby = function(lobby_id, steam_id)
 	return false
 end
 
+-- BUG: does not work for private lobbies.
 steam_utils.doesLobbyExist = function(lobby_id, callback)
 	steam.matchmaking.addRequestLobbyListDistanceFilter(distance.worldwide)
 
@@ -64,6 +65,11 @@ local data_store = dofile("mods/evaisa.mp/lib/data_store.lua")
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
 	
+	if(key == "time_updated")then
+		mp_log:print("Illegal lobby key: time_updated")
+		return
+	end
+
     -- Compress the lobby ID
     lobby = steam.utils.compressSteamID(lobby)
 
@@ -81,21 +87,16 @@ steam_utils.SetLocalLobbyData = function(lobby, key, value)
     if(keys[tostring(lobby)] == nil) then
         -- Create an entry for lobby in keys table and set the key as true
         keys[tostring(lobby)] = {
-            [key] = true
+            [key] = true,
+			["time_updated"] = os.time(),
         }
     else
         -- If the lobby already exists in keys, set the key as true
         keys[tostring(lobby)][key] = true
-        
+		keys[tostring(lobby)]["time_updated"] = os.time()
     end
 
-    -- Store the updated keys in data_store with key "all_keys"
-
-	--print(json.stringify(keys))
-
 	local key_string = bitser.dumps(keys)
-
-	--print("key_string: "..tostring(key_string))
 
     data_store.Set("all_keys", key_string)
 end
@@ -116,43 +117,37 @@ end
 
 
 steam_utils.CheckLocalLobbyData = function()
-    -- destroy data for any lobbies which no longer exist
-
-    -- Get the saved list of "all_keys" from data_store
-	local key_string = data_store.Get("all_keys")
+    -- Get saved list of "all_keys" from data_store
+    local key_string = data_store.Get("all_keys")
     local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
-    -- Iterate through the lobby keys
-    for lob, lobby_keys in pairs(keys) do
-        -- Check if the lobby no longer exists
-		local decompressed_id = steam.utils.decompressSteamID(lob)
 
-		steam_utils.doesLobbyExist(decompressed_id, function(exists)
-			if(not exists)then
-					
-				print("Attempting to delete lobby data for lobby: "..tostring(lob))
+    -- Print current lobby data for debugging purposes
+    --mp_log:print("Checking lobby data: "..pretty.table(keys))
 
-				
+    -- Set a variable to represent 12 hours in seconds
+    local twelve_hours_sec = 60 --12 * 60 * 60
 
-				-- Iterate through the keys for the current lobby
-				for key, _ in pairs(lobby_keys) do
-					-- Remove each key-value pair for the current lobby
-					data_store.Remove(tostring(lob).."_"..key)
-				end
-				-- Remove the current lobby from the "all_keys" list
-				keys[lob] = nil
+    -- Iterate through all the saved lobbies
+    for lobby, lobby_keys in pairs(keys) do
+        -- Check if the lobby data is older than 12 hours
+        if os.time() - lobby_keys["time_updated"] > twelve_hours_sec then
+            -- If lobby data is older than 12 hours, remove the lobby entry from keys table
+            keys[lobby] = nil
 
-				--print("keys: "..json.stringify(keys))
-
-				-- Store the updated keys in data_store
-				data_store.Set("all_keys", bitser.dumps(keys))
-			end
-			
-			--print("Does lobby exist?: ("..tostring(decompressed_id).."): "..tostring(exists))
-		end)
-
+            -- Also remove the stored data for that lobby
+            for key, _ in pairs(lobby_keys) do
+                if key ~= "time_updated" then
+                    -- Remove the data with key "{lobby}_{key}" from data_store
+                    data_store.Remove(tostring(lobby).."_"..key)
+					mp_log:print("Removed old lobby data: "..tostring(lobby).."_"..key)
+                end
+            end
+        end
     end
 
-
+    -- Update the "all_keys" entry in data_store with the current keys table
+    local updated_key_string = bitser.dumps(keys)
+    data_store.Set("all_keys", updated_key_string)
 end
 
 steam_utils.RemoveLocalLobbyData = function(lobby, key)

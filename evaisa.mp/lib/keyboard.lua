@@ -9,13 +9,13 @@ hack_type = function()
 end
 
 if not require then
-	print("No require? Urgh.")
+	mp_log:print("No require? Urgh.")
 	return
 end
 
 local ffi = require('ffi')
 if not ffi then
-	print("No FFI? Well that's a pain.")
+	mp_log:print("No FFI? Well that's a pain.")
 	return
 end
 

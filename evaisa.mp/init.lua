@@ -27,13 +27,15 @@ table.insert(package.loaders, 2, load)
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
 dofile("data/scripts/lib/coroutines.lua")
+logger = require("logger")("noita_online_logs")
+mp_log = logger.init("noita-online.log")
 
 np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.43
+MP_VERSION = 1.432
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
@@ -44,7 +46,7 @@ Spawned = false
 
 disable_print = false
 
-dev_mode = true
+dev_mode = false
 
 base64 = require("base64")
 
@@ -52,9 +54,18 @@ msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
 
+if(not HasFlagPersistent("lobby_data_bug_repaired"))then
+	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "").."\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
+	-- remove the folder
+	os.execute('del /q "' .. data_folder_name.. '\\*.*"')
+	mp_log:print("Repaired data folder.")
+	GamePrint("Repairing data folder")
+	AddFlagPersistent("lobby_data_bug_repaired")
+end
 
 local application_id = 943584660334739457LL
 
+np.InstallShootProjectileFiredCallbacks()
 np.EnableGameSimulatePausing(false)
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 
@@ -66,6 +77,8 @@ steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 json = dofile_once("mods/evaisa.mp/lib/json.lua")
 
 pretty = require("pretty_print")
+
+
 --local pollnet = require("pollnet")
 
 --GamePrint("Making api call")
@@ -81,8 +94,9 @@ if(not (ModIsEnabled("evaisa.betterlogger") and extended_logging_enabled))then
 		if not disable_print then
 			local content = ...
 			local source = debug.getinfo(2).source
+			local line = debug.getinfo(2).currentline
 		
-			old_print("["..source.."]: "..tostring(content))
+			old_print("["..source..":"..tostring(line).."]: "..tostring(content))
 
 		end
 	end
@@ -272,7 +286,7 @@ function OnWorldPreUpdate()
 						active_members[k] = nil
 						member_message_frames[k] = nil
 						steam.networking.closeSession(v)
-						print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+						mp_log:print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 					end
 				end
 			end
@@ -415,13 +429,13 @@ function steam.matchmaking.onLobbyEnter(data)
 		active_members[k] = nil
 		member_message_frames[k] = nil
 		steam.networking.closeSession(v)
-		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+		mp_log:print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 	end
 	in_game = false
 	game_in_progress = false
 	if(data.response ~= 2)then
 		lobby_code = data.lobbyID
-		print("Code set to: "..tostring(lobby_code).."["..type(lobby_code).."]")
+		mp_log:print("Code set to: "..tostring(lobby_code).."["..type(lobby_code).."]")
 		ModSettingSet("last_lobby_code", tostring(lobby_code))
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
@@ -491,7 +505,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		}
 	]]
 
-	print(tostring(data.message))
+	mp_log:print(tostring(data.message))
 
 	handleDisconnect(data)
 	handleChatMessage(data)
@@ -573,18 +587,18 @@ end
 ]]
 
 function steam.networking.onSessionRequest(steamID)
-	print("Session request from ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]")
+	mp_log:print("Session request from ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]")
 	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
 		local success = steam.networking.acceptSession(steamID)
-		print("Session accepted: "..tostring(success))
+		mp_log:print("Session accepted: "..tostring(success))
 	end
 end
 
 function steam.networking.onSessionFailed(steamID, endReason, endDebug, connectionDescription)
 	if(lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID))then
-		print("Session failed with ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]: "..tostring(endReason))
-		print("Debug: "..tostring(endDebug))
-		print("Connection description: "..tostring(connectionDescription))
+		mp_log:print("Session failed with ["..tostring(steam.friends.getFriendPersonaName(steamID)).."]: "..tostring(endReason))
+		mp_log:print("Debug: "..tostring(endDebug))
+		mp_log:print("Connection description: "..tostring(connectionDescription))
 	end
 end
 
@@ -598,7 +612,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
 	if(response ~= nil)then
 		Checksum_passed = response.body == Version_string
-		print("Checksum passed: "..tostring(response.body))
+		mp_log:print("Checksum passed: "..tostring(response.body))
 	end
 
 --[[
@@ -607,7 +621,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		Checksum_passed = data == Version_string
 
 		if(Checksum_passed)then
-			print("Checksum passed: "..tostring(data))
+			mp_log:print("Checksum passed: "..tostring(data))
 		end
 	end)]]
 end

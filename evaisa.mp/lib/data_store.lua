@@ -16,14 +16,14 @@ function data_store.Set(key, value)
     local file = io.open(file_path, "w")
     -- Check if the file is successfully opened
     if file then
-       -- print("Writing to file: " .. file_path)
+       -- mp_log:print("Writing to file: " .. file_path)
         -- Write the value to the file
         file:write(value)
         -- Close the file
         file:close()
     else
         -- Print an error message if the file cannot be opened
-        print("Error: Could not open the file for writing.")
+        mp_log:print("Error: Could not open the file for writing.")
     end
 end
 
@@ -43,8 +43,8 @@ function data_store.Get(key)
         return content
     else
         -- Print an error message if the file cannot be opened
-        print("Error: Could not open the file ["..file_path.."] for reading.")
-        print(tostring(err))
+        mp_log:print("Error: Could not open the file ["..file_path.."] for reading.")
+        mp_log:print(tostring(err))
         -- Return nil to indicate an error
         return nil
     end

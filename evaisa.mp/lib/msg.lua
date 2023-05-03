@@ -11,7 +11,7 @@ msg.log = function (...)
 			str = str .. tostring(v)
 		end
 	end
-	print("[evaisa.mp] "..str)
+	mp_log:print("[evaisa.mp] "..str)
 	GamePrint("[evaisa.mp] "..str)
 end
 
