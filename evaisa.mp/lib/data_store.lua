@@ -13,7 +13,7 @@ function data_store.Set(key, value)
     -- Create the file path by joining the folder path and key
     local file_path = data_folder_name .. "\\" .. key
     -- Open or create the file for writing
-    local file = io.open(file_path, "w")
+    local file = io.open(file_path, "wb")
     -- Check if the file is successfully opened
     if file then
        -- mp_log:print("Writing to file: " .. file_path)
@@ -32,7 +32,7 @@ function data_store.Get(key)
     -- Create the file path by joining the folder path and key
     local file_path = data_folder_name .. "\\" .. key
     -- Open the file for reading
-    local file, err = io.open(file_path, "r")
+    local file, err = io.open(file_path, "rb")
     -- Check if the file is successfully opened
     if file then
         -- Read the content of the file

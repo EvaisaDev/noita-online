@@ -122,10 +122,10 @@ steam_utils.CheckLocalLobbyData = function()
     local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
 
     -- Print current lobby data for debugging purposes
-    --mp_log:print("Checking lobby data: "..pretty.table(keys))
+    mp_log:print("Checking lobby data: "..pretty.table(keys))
 
     -- Set a variable to represent 12 hours in seconds
-    local twelve_hours_sec = 60 --12 * 60 * 60
+    local twelve_hours_sec = 10 --12 * 60 * 60
 
     -- Iterate through all the saved lobbies
     for lobby, lobby_keys in pairs(keys) do
@@ -148,6 +148,7 @@ steam_utils.CheckLocalLobbyData = function()
     -- Update the "all_keys" entry in data_store with the current keys table
     local updated_key_string = bitser.dumps(keys)
     data_store.Set("all_keys", updated_key_string)
+	
 end
 
 steam_utils.RemoveLocalLobbyData = function(lobby, key)
@@ -170,29 +171,6 @@ steam_utils.RemoveLocalLobbyData = function(lobby, key)
 		end
 	end
 end
-
-
---[[
-steam_utils.CheckLocalLobbyData = function()
-	-- destroy data for any lobbies which no longer exist
-	local data_store = ModSettingGet("lobby_data_store")
-	local lobby_data
-	if(data_store == nil or data_store == "")then
-		lobby_data = {}
-	else
-		lobby_data =  json.parse(data_store)
-	end
-
-	for k, v in pairs(lobby_data)do
-		local lobby_id = steam.utils.decompressSteamID(k)
-		if(not steam.matchmaking.requestLobbyData(lobby_id))then
-			lobby_data[k] = nil
-		end
-	end
-
-	ModSettingSet("lobby_data_store", json.stringify(lobby_data))
-end
-]]
 
 steam_utils.messageTypes = {
 	AllPlayers = 0,

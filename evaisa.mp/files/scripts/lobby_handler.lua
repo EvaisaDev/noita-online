@@ -151,7 +151,6 @@ end
 
 function ModData()
     local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
-	local bitser = dofile("mods/evaisa.mp/lib/bitser.lua")
     local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "").."\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
 
 	local things = {}
@@ -164,14 +163,19 @@ function ModData()
     if file then
         local content = file:read("*all")
 
-        local data = {}
+        local data = {	
+		}
+
+		if(StreamingGetIsConnected())then
+			table.insert(data, {workshop_item_id = "0", name = "[Vanilla] Twitch Integration", description = "Noita's built-in Twitch integration.", enabled = true})
+		end
 
         local parsedModData = nxml.parse(content)
         for elem in parsedModData:each_child() do
             if(elem.name == "Mod")then
                 local modID = elem.attr.name
                 local steamID = elem.attr.workshop_item_id
-    
+
 				if(things[modID])then
 
 					local infoFile = "mods/"..modID.."/mod.xml"
@@ -184,9 +188,10 @@ function ModData()
 						local content2 = file2:read("*all")
 						local parsedModInfo = nxml.parse(content2)
 
-						if(elem.attr.enabled == "1")then
+						local download_link = parsedModInfo.attr.download_link
 
-							table.insert(data, {workshop_item_id = steamID, id = modID, name = parsedModInfo.attr.name, description = parsedModInfo.attr.description, settings_fold_open = (elem.attr.settings_fold_open == "1" and true or false), enabled = (elem.attr.enabled == "1" and true or false)})
+						if(elem.attr.enabled == "1")then
+							table.insert(data, {workshop_item_id = steamID, id = modID, name = parsedModInfo.attr.name, description = parsedModInfo.attr.description, download_link = download_link, settings_fold_open = (elem.attr.settings_fold_open == "1" and true or false), enabled = (elem.attr.enabled == "1" and true or false)})
 						end
 					end
 
@@ -213,7 +218,7 @@ function getLobbyUserData(lobby, userid)
 	if(player_mod_data ~= nil)then
 		--print("Getting mod data: "..player_mod_data)
 		local data_received = json.parse(player_mod_data)
-		mp_log:print(player_mod_data)
+		--mp_log:print(player_mod_data)
 		return data_received
 	end
 	return nil

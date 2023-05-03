@@ -3,7 +3,9 @@ local default_folder_path = "logger"
 
 local function create_logger(output_path, filename, overwrite)
     -- ensure/create the directory for the logger files
-    os.execute("mkdir \"" .. output_path .. "\" 2>nul")
+    if not os.rename(output_path, output_path) then
+        os.execute("mkdir \"" .. output_path .. "\" 2>nul")
+    end
 
     local file_path = output_path .. "/" .. filename
 

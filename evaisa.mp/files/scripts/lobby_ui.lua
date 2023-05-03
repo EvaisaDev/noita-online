@@ -518,25 +518,103 @@ local windows = {
 					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
 
 					local mod_count = 0
+					
+					-- Define a Lua function to sanitize a URL input
+					function sanitize_url(url)
+						-- Initialize an empty string to store the sanitized URL
+						local sanitized_url = ""
 
+						-- Check if the URL starts with "https://"
+						if url:sub(1, 8) ~= "https://" then
+							-- Inform user if the URL is not allowed
+							mp_log:print("Invalid input URL: '"..url.."', Must start with 'https://'.")
+							-- Return empty string
+							return sanitized_url
+						end
+
+						-- Add "https://" to the sanitized URL
+						sanitized_url = "https://"
+
+						-- Iterate over each character in the input URL (starting from position 9, after "https://")
+						for i = 9, #url do
+							-- Extract the current character
+							local char = url:sub(i, i)
+
+							-- Check if the character is part of the whitelist (i.e., only alphanumeric, dash, underscore, period, colon, slash,
+							-- question mark, equal sign, plus sign, ampersand, or percent sign)
+							if char:match("[%w%-%_%.%:%/%?%=%+&%%]") then
+								-- If the character is part of the whitelist, append it to the sanitized URL
+								sanitized_url = sanitized_url .. char
+							end
+						end
+
+						mp_log:print("Sanitized URL: " .. sanitized_url)
+
+						-- Return the sanitized URL
+						return sanitized_url
+					end
+										
+	
 
 					for k, v in pairs(player_mod_data) do
+						local description_truncated = v.description
+
+						-- remove anything after a /n (newline)
+						local newline_pos = string.find(description_truncated, "\\n")
+						if(newline_pos ~= nil)then
+							description_truncated = description_truncated:sub(1, newline_pos - 1)
+						end
+						if(#description_truncated > 100)then
+							description_truncated = description_truncated:sub(1, 100) .. "..."
+						end
+
 						GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
 						GuiZSetForNextWidget(menu_gui, -5510)
 						--GamePrint(tostring(v.workshop_item_id))
 						if(v.workshop_item_id ~= 0 and v.workshop_item_id ~= "0")then
-							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. " ( "..v.id.." )"))then
+							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")))then
 								--steam.utils.openWorkshopItem(v.workshop_item_id)
-								os.execute("start steam://openurl/https://steamcommunity.com/sharedfiles/filedetails/?id="..v.workshop_item_id)
-							end
-						--[[elseif(v.download_link ~= nil and v.download_link ~= "")then
-							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. " ( "..v.id.." )"))then
-								--steam.utils.openWorkshopItem(v.workshop_item_id)
+								popup.create("open_steam_url", v.name, "Are you sure you want to open the workshop page for this mod in steam?", {
+									{
+										text="Yes", 
+										callback = function() 
+											os.execute("start steam://openurl/https://steamcommunity.com/sharedfiles/filedetails/?id="..v.workshop_item_id)
+										end
+									},
+									{
+										text="No", 
+										callback = function() 
+										end
+									}
+								}, -20000)
 
-								os.execute("start "..v.workshop_item_id)
-							end]]
+							end
+							GuiTooltip(menu_gui, "Press to go to workshop page.", description_truncated)
+						elseif(v.download_link ~= nil and v.download_link ~= "")then
+							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")))then
+								--os.execute("start "..v.workshop_item_id)
+								local url = sanitize_url(v.download_link)
+								
+
+								popup.create("open_mod_download_page", v.name, "Are you sure you want to open this URL?\n\""..url.."\"", {
+									{
+										text="Yes", 
+										callback = function() 
+											os.execute("start explorer \""..url.."\"")
+										end
+									},
+									{
+										text="No", 
+										callback = function() 
+										end
+									}
+								}, -20000)
+
+							end
+							GuiTooltip(menu_gui, "Press to go to download page.",  description_truncated)
 						else
-							GuiText(menu_gui, 0, 0, v.name .. " ( "..v.id.." )")
+							GuiText(menu_gui, 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or ""))
+							GuiTooltip(menu_gui,  description_truncated, "")
 						end
 						mod_count = mod_count + 1
 					end

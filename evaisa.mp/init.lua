@@ -35,7 +35,10 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
+popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
+
 MP_VERSION = 1.432
+noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
@@ -46,7 +49,7 @@ Spawned = false
 
 disable_print = false
 
-dev_mode = false
+dev_mode = true
 
 base64 = require("base64")
 
@@ -229,6 +232,8 @@ local function ReceiveMessages(gamemode)
 	end
 end
 
+local spawned_popup = false
+
 function OnWorldPreUpdate()
 	local pressed, shift_held = hack_update_keys()
 
@@ -241,8 +246,29 @@ function OnWorldPreUpdate()
 	wake_up_waiting_threads(1)
 	--math.randomseed( os.time() )
 
+	if(not IsPaused())then
+		popup.update()
+	end
+
 	if(steam and not Checksum_passed and Spawned)then
-		GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
+		
+		if(not spawned_popup)then
+			GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
+			spawned_popup = true
+			popup.create("update_message", "Noita Online Outdated", "The Noita Online version you are running is outdated or no longer valid", {
+				{
+					text="Get updated version", 
+					callback = function() 
+						os.execute("start explorer \""..noita_online_download.."\"")
+					end
+				},
+				{
+					text="Close", 
+					callback = function() 
+					end
+				}
+			}, -6000)
+		end
 	end
 
 	if steam and Checksum_passed then 
@@ -642,6 +668,9 @@ function OnPlayerSpawned(player)
 	--local file = io.open("mods/evaisa.forcerestart/filechange.txt", "w")
 	--file:write(math.random(0, 10000000))
 	--file:close()
+
+	--mp_log:print(bitser.loads(""))
+
 	Spawned = true
 
 	local lastCode = ModSettingGet("last_lobby_code")
