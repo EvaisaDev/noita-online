@@ -1,4 +1,4 @@
-local minhook = dofile("mods/evaisa.mp/lib/minhook.lua")()
+local minhook = dofile("mods/evaisa.mp/lib/minhook.lua")("mods/evaisa.mp/bin")
 minhook.initialize()
 
 local SDL = dofile("mods/evaisa.mp/lib/sdl2_ffi.lua")

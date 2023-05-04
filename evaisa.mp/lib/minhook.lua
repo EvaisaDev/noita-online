@@ -1,8 +1,10 @@
-function load_minhook()
+function load_minhook(path)
     local minhook = {}
     local ffi = require("ffi")
 
-    local lib = ffi.load(package.searchpath("luajit_minhook", package.cpath))
+    local dll_path = path .. "/luajit_minhook.dll"
+
+    local lib = ffi.load(dll_path)
     minhook.lib = lib
 
     ffi.cdef([[
