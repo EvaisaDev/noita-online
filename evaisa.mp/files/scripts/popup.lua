@@ -15,7 +15,6 @@ GuiOptionsAdd( chat_gui, GUI_OPTION.NoPositionTween )
 
 local screen_width, screen_height = GuiGetScreenDimensions( chat_gui );
 ]]
-
 active_popups = active_popups or {}
 
 local popups = {}
@@ -41,7 +40,7 @@ popups.create = function(id, name, description, options, z_index)
     -- if active popups already contains popup with same id, remove it and GuiDestroy
     for i = #active_popups, 1, -1 do
         local active_popup = active_popups[i]
-        if(active_popup.id == popup.id)then
+        if (active_popup.id == popup.id) then
             table.remove(active_popups, i)
             GuiDestroy(active_popup.gui)
         end
@@ -52,7 +51,7 @@ end
 
 popups.update = function()
     local to_destroy = {}
-    
+
     -- iterate in reverse
     for i = #active_popups, 1, -1 do
         local popup = active_popups[i]
@@ -62,33 +61,33 @@ popups.update = function()
         local screen_width, screen_height = GuiGetScreenDimensions(popup.gui)
 
         local z_index = popup.z_index - (i + 10)
-        
-        print("z_index: "..tostring(z_index))
+
+        print("z_index: " .. tostring(z_index))
         print(pretty.table(popup))
 
         GuiBeginAutoBox(popup.gui)
         GuiLayoutBeginVertical(popup.gui, 0, 0)
-        if(popup.name)then
+        if (popup.name) then
             GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 1)
             local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.name)
             GuiZSetForNextWidget(popup.gui, z_index - 1)
             GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
             GuiText(popup.gui, (screen_width / 2), (screen_height / 2) - (text_height / 2), popup.name)
         end
-        if(popup.description)then
+        if (popup.description) then
             GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
             local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.description)
             GuiZSetForNextWidget(popup.gui, z_index - 1)
             GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
             GuiText(popup.gui, (screen_width / 2), 0, popup.description)
         end
-        
+
 
         local final_options = {}
         for j, option in ipairs(popup.options) do
             local id = popup:new_id()
             local text_width, text_height = GuiGetTextDimensions(popup.gui, option.text)
-            table.insert(final_options, {id = id, option = option, width = text_width})
+            table.insert(final_options, { id = id, option = option, width = text_width })
         end
 
         GuiLayoutBeginHorizontal(popup.gui, 0, 0, false, 0, 0)
@@ -96,7 +95,7 @@ popups.update = function()
         local total_width = 0
         for j, option in ipairs(final_options) do
             total_width = total_width + option.width
-            if(j ~= #final_options)then
+            if (j ~= #final_options) then
                 total_width = total_width + 20
             end
         end
@@ -104,7 +103,7 @@ popups.update = function()
         for j, option in ipairs(final_options) do
             GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 1)
             GuiZSetForNextWidget(popup.gui, z_index - 1)
-            if(GuiButton(popup.gui, option.id, j == 1 and x or 20, 4, option.option.text))then
+            if (GuiButton(popup.gui, option.id, j == 1 and x or 20, 4, option.option.text)) then
                 table.remove(active_popups, i)
                 table.insert(to_destroy, popup.gui)
                 option.option.callback()

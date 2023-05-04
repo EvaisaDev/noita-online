@@ -120,7 +120,7 @@ steam_utils.CheckLocalLobbyData = function()
 	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string) or {}
 
 	-- Print current lobby data for debugging purposes
-	mp_log:print("Checking lobby data: " .. pretty.table(keys))
+	--mp_log:print("Checking lobby data: " .. pretty.table(keys))
 
 	-- Set a variable to represent 12 hours in seconds
 	local twelve_hours_sec = 12 * 60 * 60
