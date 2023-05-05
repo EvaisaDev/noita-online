@@ -26,7 +26,7 @@ end
 
 local SDL_PollEvent_hook
 SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
-    pcall(function()
+    local success, result = pcall(function()
         local ret = SDL_PollEvent_hook.original(event)
         if ret == 0 then
             return 0
@@ -56,6 +56,13 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
 
         return ret
     end)
+
+    if success then
+        return result
+    end
+
+    print("Input error: " .. result)
+    return 0
 end)
 
 minhook.enable(SDL.SDL_PollEvent)
