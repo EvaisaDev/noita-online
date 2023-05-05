@@ -265,6 +265,7 @@ function handleChatMessage(data)
 		--print("Chat message received: "..data.message)
 		-- add remainder of data to chat_log table
 		-- reverse loop through table
+		local buffer = {}
 		for i = 1, #split_data do
 			if (i ~= 1) then
 				--table.insert(chat_log, split_data[i])
@@ -300,9 +301,15 @@ function handleChatMessage(data)
 					end
 
 					-- put new messages at the top of the chat
-					table.insert(chat_log, 1, split_data[i])
+					--table.insert(chat_log, 1, split_data[i])
+					table.insert(buffer, split_data[i])
 					new_chat_message = true
 				end
+			end
+		end
+		if(reverse_chat_direction)then
+			for i = #buffer, 1, -1 do
+				table.insert(chat_log, 1, buffer[i])
 			end
 		end
 	end

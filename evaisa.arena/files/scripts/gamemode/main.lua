@@ -278,10 +278,11 @@ ArenaMode = {
                 if (kick and kick_frame == GameGetFrameNum()) then
                     -- REMOVE THIS
 
-
+                    --[[
                     local world_state = GameGetWorldStateEntity()
 
                     EntityKill(world_state)
+                    ]]
 
 
                     --[[

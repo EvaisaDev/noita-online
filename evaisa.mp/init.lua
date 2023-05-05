@@ -32,6 +32,7 @@ dofile("mods/evaisa.mp/lib/timeofday.lua")
 dofile("data/scripts/lib/coroutines.lua")
 logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
+local utf8 = require 'lua-utf8'
 
 np = require("noitapatcher")
 bitser = require("bitser")
@@ -234,6 +235,7 @@ local function ReceiveMessages(gamemode)
 end
 
 local spawned_popup = false
+local init_cleanup = false
 
 function OnWorldPreUpdate()
 
@@ -271,6 +273,25 @@ function OnWorldPreUpdate()
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
 		if(input == nil)then
 			input = dofile_once("mods/evaisa.mp/lib/input.lua")
+		end
+
+		if(init_cleanup == false)then
+			local lastCode = ModSettingGet("last_lobby_code")
+			--print("Code: "..tostring(lastCode))
+			if (steam) then
+				if (lastCode ~= nil and lastCode ~= "") then
+					local lobCode = steam.extra.parseUint64(lastCode)
+					if (tostring(lobCode) ~= "0") then
+						if (steam.extra.isSteamIDValid(lobCode)) then
+							gamemode_settings = {}
+							steam.matchmaking.leaveLobby(lobCode)
+						end
+					end
+					ModSettingRemove("last_lobby_code")
+					lobby_code = nil
+				end
+			end
+			init_cleanup = true
 		end
 
 		--pretty.table(steam.networking)
@@ -672,20 +693,4 @@ function OnPlayerSpawned(player)
 	--mp_log:print(bitser.loads(""))
 
 	Spawned = true
-
-	local lastCode = ModSettingGet("last_lobby_code")
-	--print("Code: "..tostring(lastCode))
-	if (steam) then
-		if (lastCode ~= nil and lastCode ~= "") then
-			local lobCode = steam.extra.parseUint64(lastCode)
-			if (tostring(lobCode) ~= "0") then
-				if (steam.extra.isSteamIDValid(lobCode)) then
-					gamemode_settings = {}
-					steam.matchmaking.leaveLobby(lobCode)
-				end
-			end
-			ModSettingRemove("last_lobby_code")
-			lobby_code = nil
-		end
-	end
 end

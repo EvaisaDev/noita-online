@@ -27,15 +27,15 @@ end
 local SDL_PollEvent_hook
 SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
     local success, result = pcall(function()
-        local ret = SDL_PollEvent_hook.original(event)
-        if ret == 0 then
-            frame_finished = true
-            return 0
+        if(input.frame_finished)then
+            input:Reset()
+            input.frame_finished = false
         end
 
-        if(frame_finished)then
-            input:Reset()
-            frame_finished = false
+        local ret = SDL_PollEvent_hook.original(event)
+        if ret == 0 then
+            input.frame_finished = true
+            return 0
         end
 
         if event.type == SDL.SDL_TEXTINPUT then
@@ -43,7 +43,7 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
             --print(char)
             table.insert(input.chars, char)
         elseif event.type == SDL.SDL_KEYDOWN then
-            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
+            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym)):lower()
 
             --print(key_name)
 
@@ -54,7 +54,7 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
             end
             input.held[key_name] = GameGetFrameNum()
         elseif event.type == SDL.SDL_KEYUP then
-            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
+            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym)):lower()
             if(input.held[key_name] and input.held[key_name] ~= GameGetFrameNum())then
                 input.released[key_name] = true
                 input.held[key_name] = nil

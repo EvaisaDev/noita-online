@@ -123,10 +123,11 @@ if (lobby_code ~= nil) then
 			end, "chat_window")
 		GuiLayoutBeginHorizontal(chat_gui, 0, 0, true, 0, 0)
 
-		initial_text = initial_text or ""
+		chat_input = chat_input or text_input.create(chat_gui, 2, screen_height - 16, window_width + 1, initial_text, 100, nil, ";", 0)
 
-		chat_input = chat_input or text_input.create(chat_gui, 2, screen_height - 16, window_width + 1, initial_text, 100, nil, 0)
-
+		input_text = input_text or ""
+		
+		chat_input.text = input_text
 		chat_input:transform(2, screen_height - 16, window_width + 1)
 		chat_input:update()
 		chat_input:draw()
@@ -166,55 +167,36 @@ if (lobby_code ~= nil) then
 			UnlockPlayer()
 		end
 
-		if (hit_enter) then
-			-- check if input text is not a empty string or entirely made of spaces
-			if (#input_text > 0 and not input_text:match("^%s*$")) then
-				local username = steam.friends.getPersonaName()
-				local message = username .. ": " .. input_text
+		local sendMessage = function()
+			if (utf8.len(input_text) > 0 and not input_text:match("^%s*$")) then
+				if (#input_text > 0 and not input_text:match("^%s*$")) then
+					local username = steam.friends.getPersonaName()
+					local message = username .. ": " .. input_text
 
-				local message_final = "chat;"
-				local chunk_count = math.ceil(#message / 50)
-				for i = 1, chunk_count do
-					local start_index = (i - 1) * 50 + 1
-					local end_index = i * 50
-					if (end_index > #message) then
-						end_index = #message
+					local message_final = "chat;"
+					local chunk_count = math.ceil(utf8.len(message) / 50)
+					for i = 1, chunk_count do
+						local start_index = (i - 1) * 50 + 1
+						local end_index = i * 50
+						if (end_index > utf8.len(message)) then
+							end_index = utf8.len(message)
+						end
+						message_final = message_final .. utf8.sub(message, start_index, end_index) .. ";"
 					end
-					message_final = message_final .. string.sub(message, start_index, end_index) .. ";"
-				end
 
-				steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+					steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+				end
 			end
-			initial_text = ""
+			input_text = ""
+
+		end
+
+		if (hit_enter) then
+			sendMessage()
 		end
 
 		if (GuiImageButton(chat_gui, NewID("Chatting"), -2, screen_height - 16, "", "mods/evaisa.mp/files/gfx/ui/send.png")) then
-			if (#input_text > 0) then
-				local username = steam.friends.getPersonaName()
-				local message = username .. ": " .. input_text
-
-				local message_final = "chat;"
-				local chunk_count = math.ceil(#message / 50)
-				for i = 1, chunk_count do
-					local start_index = (i - 1) * 50 + 1
-					local end_index = i * 50
-					if (end_index > #message) then
-						end_index = #message
-					end
-					message_final = message_final .. string.sub(message, start_index, end_index) .. ";"
-				end
-
-				steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
-
-				--[[
-				table.insert(chat_log, 1, input_text)
-				if(#chat_log > 50)then
-					-- remove last item
-					table.remove(chat_log, #chat_log)
-				end
-				]]
-			end
-			initial_text = ""
+			sendMessage()
 		end
 
 		GuiLayoutEnd(chat_gui)
