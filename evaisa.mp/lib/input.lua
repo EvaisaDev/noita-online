@@ -13,14 +13,14 @@ local input = {
     inputs = {},
     released = {},
     held = {},
-    chars = {}
+    chars = {},
+    frame_finished = false
 }
 
 input.Reset = function(self)
     self.pressed = {}
     self.inputs = {}
     self.released = {}
-    self.held = {}
     self.chars = {}
 end
 
@@ -29,7 +29,13 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
     local success, result = pcall(function()
         local ret = SDL_PollEvent_hook.original(event)
         if ret == 0 then
+            frame_finished = true
             return 0
+        end
+
+        if(frame_finished)then
+            input:Reset()
+            frame_finished = false
         end
 
         if event.type == SDL.SDL_TEXTINPUT then
@@ -44,6 +50,7 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
             input.inputs[key_name] = GameGetFrameNum()
             if not input.held[key_name] then
                 input.pressed[key_name] = GameGetFrameNum()
+                print(key_name)
             end
             input.held[key_name] = GameGetFrameNum()
         elseif event.type == SDL.SDL_KEYUP then

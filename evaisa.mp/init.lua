@@ -181,7 +181,7 @@ gamemode_settings = gamemode_settings or {}
 dofile("mods/evaisa.mp/files/scripts/lobby_handler.lua")
 dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
-input = dofile_once("mods/evaisa.mp/lib/input.lua")
+input = nil 
 
 dofile("mods/evaisa.mp/data/gamemodes.lua")
 
@@ -238,7 +238,7 @@ local spawned_popup = false
 function OnWorldPreUpdate()
 
 	--input:Update()
-	input:Reset()
+
 
 	wake_up_waiting_threads(1)
 	--math.randomseed( os.time() )
@@ -268,7 +268,11 @@ function OnWorldPreUpdate()
 		end
 	end
 
-	if steam and Checksum_passed then
+	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
+		if(input == nil)then
+			input = dofile_once("mods/evaisa.mp/lib/input.lua")
+		end
+
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
