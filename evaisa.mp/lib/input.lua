@@ -26,36 +26,36 @@ end
 
 local SDL_PollEvent_hook
 SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
-
-    local ret = SDL_PollEvent_hook.original(event)
-    if ret == 0 then
-        return 0
-    end
-
-    if event.type == SDL.SDL_TEXTINPUT then
-        local char = ffi.string(event.text.text)
-        print(char)
-        table.insert(input.chars, char)
-    elseif event.type == SDL.SDL_KEYDOWN then
-        local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
-
-        print(key_name)
-
-        input.inputs[key_name] = GameGetFrameNum()
-        if not input.held[key_name] then
-            input.pressed[key_name] = GameGetFrameNum()
+    pcall(function()
+        local ret = SDL_PollEvent_hook.original(event)
+        if ret == 0 then
+            return 0
         end
-        input.held[key_name] = GameGetFrameNum()
-    elseif event.type == SDL.SDL_KEYUP then
-        local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
-        if(input.held[key_name] and input.held[key_name] ~= GameGetFrameNum())then
-            input.released[key_name] = true
-            input.held[key_name] = nil
+
+        if event.type == SDL.SDL_TEXTINPUT then
+            local char = ffi.string(event.text.text)
+            --print(char)
+            table.insert(input.chars, char)
+        elseif event.type == SDL.SDL_KEYDOWN then
+            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
+
+            --print(key_name)
+
+            input.inputs[key_name] = GameGetFrameNum()
+            if not input.held[key_name] then
+                input.pressed[key_name] = GameGetFrameNum()
+            end
+            input.held[key_name] = GameGetFrameNum()
+        elseif event.type == SDL.SDL_KEYUP then
+            local key_name = ffi.string(SDL.SDL_GetKeyName(event.key.keysym.sym))
+            if(input.held[key_name] and input.held[key_name] ~= GameGetFrameNum())then
+                input.released[key_name] = true
+                input.held[key_name] = nil
+            end
         end
-    end
 
-    return ret
-
+        return ret
+    end)
 end)
 
 minhook.enable(SDL.SDL_PollEvent)

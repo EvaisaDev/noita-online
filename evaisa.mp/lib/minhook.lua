@@ -6,6 +6,7 @@ function load_minhook(path)
 
     local lib = ffi.load(dll_path)
     minhook.lib = lib
+    _G["__minhook_dont_unload"] = lib
 
     ffi.cdef([[
     bool mh_initialize();

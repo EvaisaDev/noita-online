@@ -60,6 +60,7 @@ msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
 
+--[[
 if (not HasFlagPersistent("lobby_data_bug_repaired")) then
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
@@ -69,6 +70,7 @@ if (not HasFlagPersistent("lobby_data_bug_repaired")) then
 	GamePrint("Repairing data folder")
 	AddFlagPersistent("lobby_data_bug_repaired")
 end
+]]
 
 local application_id = 943584660334739457LL
 

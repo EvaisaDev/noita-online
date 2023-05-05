@@ -54,6 +54,7 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
             self.cursor_visible = not self.cursor_visible
         end
 
+        print(json.stringify(input:GetChars()))
         
         if(input:GetInput("space"))then
             self.text = self.text .. " "
@@ -84,6 +85,7 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
             local chars = input:GetChars() or {}
 
             for k, v in ipairs(chars)do
+                print("Char: " .. tostring(v))
                 if (#(self.allowed_characters == 0) or self.allowed_characters[v]) then
                     self.text = string.sub(self.text, 1, self.cursor_pos) .. v .. string.sub(self.text, self.cursor_pos + 1)
                     self.cursor_pos = self.cursor_pos + 1
