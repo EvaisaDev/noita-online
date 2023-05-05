@@ -338,7 +338,7 @@ function refreshLobbies()
 	end
 
 	steam.matchmaking.addRequestLobbyListStringFilter("System", activeSystem, "Equal")
-
+	
 
 	for _, lobby in ipairs(getFriendLobbies()) do
 		if (lobby ~= nil) then
