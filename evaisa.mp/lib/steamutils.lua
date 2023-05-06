@@ -22,6 +22,11 @@ steam_utils.IsOwner = function(lobby_id)
 	return steam.matchmaking.getLobbyOwner(lobby_id) == steam.user.getSteamID()
 end
 
+steam_utils.IsSpectator = function(lobby_id)
+	local spectating = steam.matchmaking.getLobbyData(lobby_id, tostring(steam.user.getSteamID()).."_spectator") == "true"
+	return spectating
+end
+
 steam_utils.isInLobby = function(lobby_id, steam_id)
 	local list = steam_utils.getLobbyMembers(lobby_id)
 	for i = 1, #list do
@@ -199,6 +204,7 @@ steam_utils.messageTypes = {
 	OtherPlayers = 1,
 	Clients = 2,
 	Host = 3,
+	Spectators = 4,
 }
 
 message_handlers = {
@@ -285,6 +291,29 @@ message_handlers = {
 			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
 		else
 			bytes_sent = bytes_sent + size
+		end
+	end,
+	[steam_utils.messageTypes.Spectators] = function (data, lobby, reliable)
+		local members = steamutils.getLobbyMembers(lobby)
+		for k, member in pairs(members)do
+			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id).."_spectator") == "true"
+			if(member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby) and spectating)then
+				local success, size = 0, 0
+
+				if(reliable)then
+					success, size = steam.networking.sendString(member.id, data)
+				else
+					success, size = steam.networking.sendStringUnreliable(member.id, data)
+				end
+
+				success = tonumber(tostring(success))
+				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
+				if(success ~= 1)then
+					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				else
+					bytes_sent = bytes_sent + size
+				end
+			end
 		end
 	end,
 }

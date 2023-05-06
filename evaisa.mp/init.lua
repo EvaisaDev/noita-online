@@ -33,12 +33,13 @@ bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
-MP_VERSION = 1.42
+MP_VERSION = 1.432
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
 
 Checksum_passed = false
+in_game = false
 Spawned = false
 
 disable_print = false
@@ -54,6 +55,7 @@ local ffi = require "ffi"
 
 local application_id = 943584660334739457LL
 
+np.InstallShootProjectileFiredCallbacks()
 np.EnableGameSimulatePausing(false)
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 
@@ -109,10 +111,10 @@ function OnPausedChanged(paused, is_wand_pickup)
 
 	if(paused)then
 		GameAddFlagRun("game_paused")
-		GamePrint("paused")
+		--GamePrint("paused")
 	else
 		GameRemoveFlagRun("game_paused")
-		GamePrint("unpaused")
+		--GamePrint("unpaused")
 	end
 end
 
@@ -301,6 +303,7 @@ function OnWorldPreUpdate()
 
 			byte_rate_gui = byte_rate_gui or GuiCreate()
 			GuiStartFrame(byte_rate_gui)
+			
 			local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
 
 			local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
@@ -321,6 +324,8 @@ function OnWorldPreUpdate()
 
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
+
+				
 				--print("e")
 				if(owner == steam.user.getSteamID())then
 					if(GameGetFrameNum() % 2 == 0)then
@@ -413,7 +418,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		steam.networking.closeSession(v)
 		print("Closed session with " .. steam.friends.getFriendPersonaName(v))
 	end
-
+	in_game = false
 	game_in_progress = false
 	if(data.response ~= 2)then
 		lobby_code = data.lobbyID
@@ -424,11 +429,12 @@ function steam.matchmaking.onLobbyEnter(data)
 		if handleVersionCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if(lobby_gamemode)then
-					game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+					--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 					if(game_in_progress)then
 						gui_closed = true
-					end
+					end]]
 					lobby_gamemode.enter(lobby_code)
+					
 
 
 					defineLobbyUserData(lobby_code)
@@ -491,16 +497,32 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 	handleDisconnect(data)
 	handleChatMessage(data)
 
-	if(data.fromOwner and data.message == "start")then
+	local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
+
+	if(data.fromOwner and data.message == "start" or data.message == "restart")then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		
 		if handleVersionCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if(lobby_gamemode)then
-					if(lobby_gamemode.start)then
-						lobby_gamemode.start(lobby_code)
+					local user = data.userID
+
+					spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
+
+					if(spectating)then
+						if(lobby_gamemode.spectate ~= nil)then
+							lobby_gamemode.spectate(lobby_code)
+						end
+					else
+						if(lobby_gamemode.start ~= nil)then
+							lobby_gamemode.start(lobby_code)
+						end
 					end
+
+					in_game = true
 					game_in_progress = true
+					
 					gui_closed = true
 				else
 					disconnect({
@@ -510,25 +532,6 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				end
 			end
 		end
-	elseif(data.fromOwner and data.message == "restart")then
-		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-		
-		if handleVersionCheck() then
-			if handleGamemodeVersionCheck(lobby_code) then
-				if(lobby_gamemode)then
-					if(lobby_gamemode.start)then
-						lobby_gamemode.start(lobby_code, false)
-					end
-					game_in_progress = true
-					gui_closed = true
-				else
-					disconnect({
-						lobbyID = lobby_code,
-						message = "Gamemode missing: "..tostring(lobby_gamemode.id)
-					})
-				end
-			end
-		end	
 	elseif(data.fromOwner and data.message == "refresh")then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
@@ -552,6 +555,10 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				end
 			end
 		end
+	elseif(owner == steam.user.getSteamID())then
+		local user = data.userID
+		local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user).."_spectator") == "true"
+		steam.matchmaking.setLobbyData(lobby_code, tostring(user).."_spectator", spectating and "false" or "true")
 	end
 end
 

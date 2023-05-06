@@ -17,6 +17,10 @@ status = {
 }
 
 GuiOptionsAdd( menu_gui, GUI_OPTION.NoPositionTween )
+if(GameGetIsGamepadConnected())then
+	GuiOptionsAdd(menu_gui, GUI_OPTION.NonInteractive)
+end
+
 
 gui_closed = gui_closed or false
 invite_menu_open = invite_menu_open or false
@@ -270,6 +274,7 @@ local windows = {
 					if(active_mode)then
 						active_mode.leave(lobby_code)
 					end
+					gui_closed = false
 					gamemode_settings = {}
 					steam.matchmaking.leaveLobby(lobby_code)
 					initial_refreshes = 10
@@ -292,7 +297,23 @@ local windows = {
 					invite_menu_open = false
 				end
 
+				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
+				if(active_mode and active_mode.spectate ~= nil)then
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and "Stop spectating" or "Spectator Mode"))then
+						if(owner == steam.user.getSteamID())then
+							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
+						else
+							steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+						end
+					end
+				end
+
+				GuiText(menu_gui, 0, -6, " ")
+
+
 				if(owner == steam.user.getSteamID())then
+
 					local start_string = "Start Game"
 					if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
 						start_string = "Restart Game"
@@ -309,6 +330,35 @@ local windows = {
 						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
 					end
 				end
+
+				spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
+
+				--print(tostring(spectating))
+
+				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+				if(lobby_in_progress and not in_game)then
+					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Enter Game") then
+						
+						if(active_mode)then
+							if(spectating)then
+								if(active_mode.spectate ~= nil)then
+									active_mode.spectate(lobby_code, true)
+								end
+							else
+								if(active_mode.start ~= nil)then
+									active_mode.start(lobby_code, true)
+								end
+							end
+
+							in_game = true
+							game_in_progress = true
+							
+							gui_closed = true
+
+						end
+					end
+				end
+
 
 				GuiText(menu_gui, 2, 0, "--------------------")
 				local players = steam_utils.getLobbyMembers(lobby_code)
@@ -479,6 +529,12 @@ local windows = {
 								--steam.utils.openWorkshopItem(v.workshop_item_id)
 								os.execute("start steam://openurl/https://steamcommunity.com/sharedfiles/filedetails/?id="..v.workshop_item_id)
 							end
+						--[[elseif(v.download_link ~= nil and v.download_link ~= "")then
+							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. " ( "..v.id.." )"))then
+								--steam.utils.openWorkshopItem(v.workshop_item_id)
+
+								os.execute("start "..v.workshop_item_id)
+							end]]
 						else
 							GuiText(menu_gui, 0, 0, v.name .. " ( "..v.id.." )")
 						end
