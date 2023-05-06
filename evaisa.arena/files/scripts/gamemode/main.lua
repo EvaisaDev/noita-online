@@ -14,6 +14,7 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
+spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
@@ -38,7 +39,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "Arena",
-    version = 0.45,
+    version = 0.46,
     settings = {
         {
             id = "damage_cap",
@@ -126,13 +127,17 @@ ArenaMode = {
 
         GlobalsSetValue( "TEMPLE_PERK_REROLL_COUNT", "0" )
 
+        --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
             ArenaMode.start(lobby, true)
         end
+        ]]
         --message_handler.send.Handshake(lobby)
     end,
     start = function(lobby, was_in_progress)
+
+        print("Start called!!!")
 
         if(data ~= nil)then
             ArenaGameplay.GracefulReset(lobby, data)
@@ -167,6 +172,7 @@ ArenaMode = {
 
         data = data_holder:New()
         data.state = "lobby"
+        data.spectator_mode = steamutils.IsSpectator(lobby)
         data:DefinePlayers(lobby)
 
         
@@ -200,9 +206,18 @@ ArenaMode = {
 
         --message_handler.send.Handshake(lobby)
     end,
+    --[[spectate = function(lobby, was_in_progress)
+
+    end,]]
     update = function(lobby)
 
+        if(data == nil)then
+            return
+        end
 
+        data.spectator_mode = steamutils.IsSpectator(lobby)
+
+        data.using_controller = GameGetIsGamepadConnected()
 
         if(GameGetFrameNum() % 60 == 0)then
 
@@ -299,6 +314,10 @@ ArenaMode = {
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)
+        if(data == nil)then
+            return
+        end
+
         if(data ~= nil)then
             gameplay_handler.LateUpdate(lobby, data)
         end
@@ -313,14 +332,23 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
-
+        if(data == nil)then
+            return
+        end
+        
         if(not data.players[tostring(user)])then
             data:DefinePlayer(lobby, user)
         end
 
         if(data ~= nil)then
-            if(networking.receive[event])then
-                networking.receive[event](lobby, message, user, data)
+            if(not data.spectator_mode)then
+                if(networking.receive[event])then
+                    networking.receive[event](lobby, message, user, data)
+                end
+            else
+                if(spectator_networking.receive[event])then
+                    spectator_networking.receive[event](lobby, message, user, data)
+                end
             end
         end
     end,

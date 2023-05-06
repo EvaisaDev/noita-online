@@ -90,12 +90,12 @@ function spawn_all_shopitems( x, y )
 	if( random.range( 0, 100 ) <= 50 ) then
 		for i=1,count do
 			if( i == sale_item_i ) then
-				generate_shop_item( x + (i-1)*item_width, y, true, round, true )
+				generate_shop_item( x + (i-1)*item_width, y, true, round, false )
 			else
-				generate_shop_item( x + (i-1)*item_width, y, false, round, true )
+				generate_shop_item( x + (i-1)*item_width, y, false, round, false )
 			end
 			
-			generate_shop_item( x + (i-1)*item_width, y - 30, false, round, true )
+			generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
 			LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
 		end
 	else

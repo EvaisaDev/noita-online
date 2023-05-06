@@ -12,6 +12,12 @@ function data:New()
         countdown = nil,
         spectator_gui_entity = nil,
         spectator_gui = nil,
+        arena_spectator = false,
+        selected_player = nil,
+        selected_player_name = nil,
+        ----- spectator mode -----
+        spectator_mode = false,
+        
         big_font = font_helper.NewFont("mods/evaisa.arena/files/font/Daydream_128.xml"),
         client = {
             ready = false,
@@ -43,9 +49,6 @@ function data:New()
             perks = {},
         },
         state = "lobby",
-        spectator_mode = false,
-        selected_player = nil,
-        selected_player_name = nil,
         preparing = false,
         players_loaded = false,
         deaths = 0,
