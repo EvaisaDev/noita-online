@@ -79,6 +79,8 @@ local UnlockPlayer = function()
 	end
 end
 
+chat_opened_with_bind = chat_opened_with_bind or false
+
 if (lobby_code ~= nil) then
 	--local pressed, shift_held = hack_update_keys()
 
@@ -87,15 +89,17 @@ if (lobby_code ~= nil) then
 	if input:WasKeyPressed("enter") or input:WasKeyPressed("return") then
 		hit_enter = true
 	end
-	--[[
+
 	if (input:WasKeyPressed("t")) then
 		if (chat_open == false) then
 			chat_open = true
-		elseif (was_input_hovered == false) then
+			chat_opened_with_bind = true
+		elseif (chat_input ~= nil and not chat_input.focus) then
 			chat_open = false
+			chat_opened_with_bind = false
 		end
 	end
-	]]
+
 	--end
 
 	if (not chat_open) then
@@ -123,14 +127,18 @@ if (lobby_code ~= nil) then
 			end, "chat_window")
 		GuiLayoutBeginHorizontal(chat_gui, 0, 0, true, 0, 0)
 
-		chat_input = chat_input or text_input.create(chat_gui, 2, screen_height - 16, window_width + 1, initial_text, 100, nil, ";", 0)
+		chat_input = chat_input or text_input.create(chat_gui, 2, screen_height - 16, window_width + 2, "", 100, nil, ";", 0)
 
 		input_text = input_text or ""
 		
 		chat_input.text = input_text
-		chat_input:transform(2, screen_height - 16, window_width + 1)
+		chat_input:transform(2, screen_height - 16, window_width + 2)
 		chat_input:update()
 		chat_input:draw()
+		if(chat_opened_with_bind)then
+			chat_opened_with_bind = false
+			chat_input.focus = true
+		end
 
 
 		input_text = chat_input.text
@@ -149,7 +157,7 @@ if (lobby_code ~= nil) then
 		]]
 
 		--input_text = ""
-		input_hovered = false
+		input_hovered = chat_input.focus
 
 		if (input_hovered) then
 			if (not GameHasFlagRun("chat_input_hovered")) then
@@ -168,34 +176,24 @@ if (lobby_code ~= nil) then
 		end
 
 		local sendMessage = function()
+			chat_input.cursor_pos = 0
 			if (utf8.len(input_text) > 0 and not input_text:match("^%s*$")) then
-				if (#input_text > 0 and not input_text:match("^%s*$")) then
-					local username = steam.friends.getPersonaName()
-					local message = username .. ": " .. input_text
 
-					local message_final = "chat;"
-					local chunk_count = math.ceil(utf8.len(message) / 50)
-					for i = 1, chunk_count do
-						local start_index = (i - 1) * 50 + 1
-						local end_index = i * 50
-						if (end_index > utf8.len(message)) then
-							end_index = utf8.len(message)
-						end
-						message_final = message_final .. utf8.sub(message, start_index, end_index) .. ";"
-					end
+				local username = steam.friends.getPersonaName()
+				local message = username .. ": " .. input_text
 
-					steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
-				end
+				local message_final = "chat;" .. message
+				steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+
 			end
 			input_text = ""
-
 		end
 
 		if (hit_enter) then
 			sendMessage()
 		end
 
-		if (GuiImageButton(chat_gui, NewID("Chatting"), -2, screen_height - 16, "", "mods/evaisa.mp/files/gfx/ui/send.png")) then
+		if (GuiImageButton(chat_gui, NewID("Chatting"), 3, screen_height - 16, "", "mods/evaisa.mp/files/gfx/ui/send2.png")) then
 			sendMessage()
 		end
 
@@ -213,6 +211,7 @@ if (lobby_code ~= nil) then
 	GuiZSetForNextWidget(chat_gui, 0)
 	if (GuiImageButton(chat_gui, NewID("MenuButton"), screen_width - 40, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/chat.png")) then
 		chat_open = not chat_open
+		chat_opened_with_bind = false
 		GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 	end
 

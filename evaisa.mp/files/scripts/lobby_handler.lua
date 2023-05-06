@@ -240,6 +240,33 @@ end
 local reverse_chat_direction = ModSettingGet("evaisa.mp.flip_chat_direction")
 
 
+local function split_message(msg)
+	local words = {}
+	local index = 1
+	for word in string.gmatch(msg, "%S+") do
+		words[index] = word
+		index = index + 1
+	end
+
+	local chunks = {}
+	local chunk = ""
+	for i, word in ipairs(words) do
+		if utf8.len(chunk .. " " .. word) <= 50 then
+			if chunk == "" then
+				chunk = word
+			else
+				chunk = chunk .. " " .. word
+			end
+		else
+			table.insert(chunks, chunk)
+			chunk = word
+		end
+	end
+	table.insert(chunks, chunk)
+
+	return chunks
+end
+
 function handleChatMessage(data)
 	--[[
 		example data:
@@ -253,62 +280,59 @@ function handleChatMessage(data)
 			message = "chat;evaisa: hello there how are you today?; I am great!; Yeah!"
 		}
 	]]
-	-- split message by ;
+
 	local message = data.message
 	local split_data = {}
 	for token in string.gmatch(message, "[^;]+") do
 		table.insert(split_data, token)
 	end
 
-	-- check if first item is "chat"
 	if (#split_data > 1 and split_data[1] == "chat") then
-		--print("Chat message received: "..data.message)
-		-- add remainder of data to chat_log table
-		-- reverse loop through table
 		local buffer = {}
 		for i = 1, #split_data do
 			if (i ~= 1) then
-				--table.insert(chat_log, split_data[i])
-				-- loop through chat_log and find the first index that matches a empty string ""
 
+				local msg = split_data[i]
 
-				if (not reverse_chat_direction) then
-					local was_found = false
-					for j = 1, #chat_log do
-						if (chat_log[j] == " ") then
-							chat_log[j] = split_data[i]
-							new_chat_message = true
-							was_found = true
-							break
+				local chunks = split_message(msg)
+
+				for h = 1, #chunks do
+					if (not reverse_chat_direction) then
+						local was_found = false
+						for j = 1, #chat_log do
+							if (chat_log[j] == " ") then
+								chat_log[j] = chunks[h]
+								new_chat_message = true
+								was_found = true
+								break
+							end
 						end
-					end
-					if (not was_found) then
-						-- insert at end
-						table.insert(chat_log, split_data[i])
+						if (not was_found) then
+							table.insert(chat_log, chunks[h])
+							new_chat_message = true
+						end
+					else
+						local empty_index = nil
+						for j = 1, #chat_log do
+							if (chat_log[j] == " ") then
+								empty_index = j
+								break
+							end
+						end
+						if (empty_index ~= nil) then
+							table.remove(chat_log, empty_index)
+						end
+
+						table.insert(buffer, chunks[h])
 						new_chat_message = true
 					end
-				else
-					-- remove the first empty string from chat log
-					local empty_index = nil
-					for j = 1, #chat_log do
-						if (chat_log[j] == " ") then
-							empty_index = j
-							break
-						end
-					end
-					if (empty_index ~= nil) then
-						table.remove(chat_log, empty_index)
-					end
-
-					-- put new messages at the top of the chat
-					--table.insert(chat_log, 1, split_data[i])
-					table.insert(buffer, split_data[i])
-					new_chat_message = true
 				end
+
 			end
 		end
 		if(reverse_chat_direction)then
 			for i = #buffer, 1, -1 do
+				print("inserting "..buffer[i].." at 1")
 				table.insert(chat_log, 1, buffer[i])
 			end
 		end

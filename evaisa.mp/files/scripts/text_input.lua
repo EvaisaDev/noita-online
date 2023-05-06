@@ -46,7 +46,6 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
     end
 
     input_instance.start_frame = function(self)
-        GuiStartFrame(self.gui)
         self.id = 0
     end
 
@@ -57,6 +56,22 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
     end
 
     input_instance.update = function(self)
+
+        local mouse_x, mouse_y = input:GetUIMousePos(self.gui)
+        local left_clicked = input:WasMousePressed("left")
+
+        -- check if we are clicking on the input
+        if(left_clicked and mouse_x >= self.x + 2 and mouse_x <= (self.x + 2) + (self.width - 4) and mouse_y >= self.y + 2 and mouse_y <= self.y + 12)then
+            self.focus = true
+            mp_log:print("Chat input selected.")
+        elseif(left_clicked)then
+            self.focus = false
+        end
+
+        if(not self.focus)then
+            return
+        end
+
         -- calculate cursor visibility
         self.cursor_timer = self.cursor_timer + 1
         if (self.cursor_timer > 30) then
@@ -66,6 +81,18 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
 
         --print(json.stringify(input:GetChars()))
         
+        --[[
+        if(left_clicked)then
+            -- calculate the cursor position
+            local cursor_x = mouse_x - (self.x + 2)
+            local cursor_pos = 0
+            local text_width = 0
+
+
+        end
+        ]]
+
+
         if(input:GetInput("space"))then
 
             -- make sure we are not over the character limit
@@ -83,6 +110,28 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
             self.cursor_pos = math.max(0, self.cursor_pos - 1)
         elseif(input:GetInput("delete"))then
             self.text = utf8.sub(self.text, 1, self.cursor_pos) .. utf8.sub(self.text, self.cursor_pos + 2)
+        elseif(input:GetInput("left") and (input:IsKeyDown("left ctrl") or input:IsKeyDown("right ctrl")))then
+            -- skip back one word
+            local new_cursor_pos = self.cursor_pos
+            while(new_cursor_pos > 0)do
+                new_cursor_pos = new_cursor_pos - 1
+                local char = utf8.sub(self.text, new_cursor_pos, new_cursor_pos)
+                if(char == " ")then
+                    break
+                end
+            end
+            self.cursor_pos = new_cursor_pos
+        elseif(input:GetInput("right") and (input:IsKeyDown("left ctrl") or input:IsKeyDown("right ctrl")))then
+            -- skip forward one word
+            local new_cursor_pos = self.cursor_pos
+            while(new_cursor_pos < utf8.len(self.text))do
+                new_cursor_pos = new_cursor_pos + 1
+                local char = utf8.sub(self.text, new_cursor_pos, new_cursor_pos)
+                if(char == " ")then
+                    break
+                end
+            end
+            self.cursor_pos = new_cursor_pos
         elseif(input:GetInput("left"))then
             self.cursor_pos = math.max(0, self.cursor_pos - 1)
         elseif(input:GetInput("right"))then
@@ -99,6 +148,9 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
 
                 --print("Char: " .. tostring(v))
                 if (#(self.allowed_characters) == 0 or self.allowed_characters[v]) then
+                    if (self.banned_characters[v]) then
+                        return
+                    end
                     self.text = utf8.sub(self.text, 1, self.cursor_pos) .. v .. utf8.sub(self.text, self.cursor_pos + 1)
                     self.cursor_pos = self.cursor_pos + 1
                 end
@@ -130,16 +182,21 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
 
         GuiLayoutBeginHorizontal(self.gui, -text_offset_x, -1, true)
 
-        -- draw text before cursor
-        GuiText(self.gui, 0, 0, text_before_cursor)
+        if(self.focus)then
+            -- draw text before cursor
+            GuiText(self.gui, 0, 0, text_before_cursor)
 
-        -- draw cursor
-        GuiImage(self.gui, self:new_id(), -2, 1, "mods/evaisa.mp/files/gfx/ui/input_cursor.png", self.cursor_visible and 1 or 0, 1, 1)
+            -- draw cursor
+            GuiImage(self.gui, self:new_id(), -2, 1, "mods/evaisa.mp/files/gfx/ui/input_cursor.png", self.cursor_visible and 1 or 0, 1, 1)
 
-        -- draw text after cursor
-        GuiText(self.gui, -2, 0, text_after_cursor)
-
+            -- draw text after cursor
+            GuiText(self.gui, -2, 0, text_after_cursor)
+        else
+            GuiText(self.gui, 0, 0, self.text)
+        end
         GuiLayoutEnd(self.gui)
+
+
 
         GuiEndScrollContainer(self.gui)
     end

@@ -1289,12 +1289,12 @@ ArenaGameplay = {
             end
 
             local keys_pressed = {
-                w = keys_down["w"],
-                a = keys_down["a"],
-                s = keys_down["s"],
-                d = keys_down["d"],
-                q = keys_down["q"],
-                e = keys_down["e"],
+                w = input:WasKeyPressed("w"),
+                a = input:WasKeyPressed("a"),
+                s = input:WasKeyPressed("s"),
+                d = input:WasKeyPressed("d"),
+                q = input:WasKeyPressed("q"),
+                e = input:WasKeyPressed("e"),
             }
 
             if (not GameHasFlagRun("chat_input_hovered")) then
