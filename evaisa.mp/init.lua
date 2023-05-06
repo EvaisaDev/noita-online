@@ -42,6 +42,7 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
 MP_VERSION = 1.44
+serialization_version = "2"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
 
@@ -62,14 +63,14 @@ pretty = require("pretty_print")
 local ffi = require "ffi"
 
 
-if (not HasFlagPersistent("lobby_data_bug_repaired")) then
+if (GlobalsGetValue("last_serialization_version", "1") ~= serialization_version) then
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
 	-- remove the folder
 	os.execute('del /q "' .. data_folder_name .. '\\*.*"')
 	mp_log:print("Repaired data folder.")
 	GamePrint("Repairing data folder")
-	AddFlagPersistent("lobby_data_bug_repaired")
+	GlobalsSetValue("last_serialization_version", serialization_version)
 end
 
 local application_id = 943584660334739457LL
