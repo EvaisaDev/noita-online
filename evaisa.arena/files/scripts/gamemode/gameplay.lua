@@ -86,9 +86,13 @@ ArenaGameplay = {
         if (data.spectator_gui) then
             GuiDestroy(data.spectator_gui)
             data.spectator_gui = nil
+            if(data.spectator_text_gui)then
+                GuiDestroy(data.spectator_text_gui)
+                data.spectator_text_gui = nil
+            end
 
             if (data.spectator_gui_entity and EntityGetIsAlive(data.spectator_gui_entity)) then
-                EntityKill(data.sspectator_gui_entity)
+                EntityKill(data.spectator_gui_entity)
             end
         end
         if (data.countdown) then
@@ -536,6 +540,11 @@ ArenaGameplay = {
         return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
     end,
     WinnerCheck = function(lobby, data)
+
+        if(true)then
+            return
+        end
+
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
         for k, v in pairs(data.players) do
@@ -1237,13 +1246,29 @@ ArenaGameplay = {
                 EntitySetTransform(data.spectator_gui_entity, 0, 0, 0, 0.25, 0.25)
             end
 
+            if (data.spectator_text_gui == nil) then
+                data.spectator_text_gui = GuiCreate()
+            end
+
             if (data.spectator_gui == nil) then
                 data.spectator_gui = GuiCreate()
             end
 
             local camera_x, camera_y = GameGetCameraPos()
+            GuiStartFrame(data.spectator_gui)
+
+            --GuiOptionsAdd(data.spectator_gui, GUI_OPTION.NonInteractive)
+            --GuiOptionsAdd(data.spectator_gui, GUI_OPTION.NoPositionTween)
+
+            local id = 39582
+            local function new_id()
+                id = id + 1
+                return id
+            end
 
             local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
+
+            local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
 
             local text = "Spectating"
 
@@ -1258,7 +1283,7 @@ ArenaGameplay = {
                 "SpriteComponent")
 
             ComponentSetValue2(text_sprite_component, "text", text)
-            ComponentSetValue2(text_sprite_component, "transform_offset", screen_width / 2 - font_width / 2, 0)
+            ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, 0)
 
             EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
 
@@ -1360,6 +1385,81 @@ ArenaGameplay = {
                         if (player ~= nil) then
                             data.selected_player_name = steam.friends.getFriendPersonaName(player)
                         end
+                    end
+                end
+
+                if(input:IsKeyDown("space"))then
+                    local circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection-2.png"
+                    --local inner_circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection_inner.png"
+                    local circle_width, circle_height = GuiGetImageDimensions(data.spectator_gui, circle_image)
+                    local circle_x = screen_width / 2 - circle_width / 2
+                    local circle_y = screen_height / 2 - circle_height / 2
+                    GuiImage(data.spectator_gui, new_id(), circle_x, circle_y, circle_image, 0.2, 1, 1)
+                    --GuiImage(data.spectator_gui, new_id(), circle_x, circle_y, inner_circle_image, 0.4, 1, 1)
+
+                    local marker_distance_from_center = 16
+
+                    local camera_x, camera_y = GameGetCameraPos()
+                    local mouse_x, mouse_y = DEBUG_GetMouseWorld()
+                    
+                    -- get mouse direction
+                    local x_diff = mouse_x - camera_x
+                    local y_diff = mouse_y - camera_y
+                    local dist = math.sqrt(x_diff * x_diff + y_diff * y_diff)
+                    local aim_x, aim_y = x_diff / dist, y_diff / dist
+                    
+
+                    local player_marker = "mods/evaisa.arena/files/sprites/ui/spectator/marker-2.png"
+                    local selected_player_marker = "mods/evaisa.arena/files/sprites/ui/spectator/marker-selected.png"
+                    local players = ArenaGameplay.GetAlivePlayers(lobby, data)
+                    local player_count = #players
+                    if (player_count > 0) then
+                        local closest_player = nil
+                        local highest_dot_product = -1
+                        local selected_marker_x = nil
+                        local selected_marker_y = nil
+                        for k, v in ipairs(players) do
+                            if(v.entity ~= data.selected_player)then
+                                local x, y = EntityGetTransform(v.entity)
+                                if (x ~= nil and y ~= nil) then
+                                    local x_diff = x - camera_x
+                                    local y_diff = y - camera_y
+                                    local dist = math.sqrt(x_diff * x_diff + y_diff * y_diff)
+                                    local to_player_x, to_player_y = x_diff / dist, y_diff / dist
+                        
+                                    local dot_product = aim_x * to_player_x + aim_y * to_player_y
+                        
+                                    if dot_product > highest_dot_product then
+                                        highest_dot_product = dot_product
+                                        closest_player = v
+                                    end
+
+                                    local angle = math.atan2(y_diff, x_diff)
+                                    local marker_x = screen_width / 2 + math.cos(angle) * marker_distance_from_center
+                                    local marker_y = screen_height / 2 + math.sin(angle) * marker_distance_from_center
+                                    GuiImage(data.spectator_gui, new_id(), marker_x - 3.5, marker_y - 3.5, player_marker, 0.8, 1, 1)
+                        
+                                    selected_marker_x = marker_x
+                                    selected_marker_y = marker_y
+                                end
+                            end
+                        end
+                        
+                        if(closest_player ~= nil)then
+                            GuiImage(data.spectator_gui, new_id(), selected_marker_x - 3.5, selected_marker_y - 3.5, selected_player_marker, 0.8, 1, 1)
+                            if(input:WasMousePressed("left"))then
+                                data.selected_player = closest_player.entity
+                                arena_log:print("Spectating player: " .. EntityGetName(data.selected_player))
+
+                                local player = ArenaGameplay.FindUser(lobby, EntityGetName(data.selected_player))
+
+                                data.selected_player_name = "Unknown Player"
+                                if (player ~= nil) then
+                                    data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                                end
+                            end
+                        end
+                        
                     end
                 end
             end

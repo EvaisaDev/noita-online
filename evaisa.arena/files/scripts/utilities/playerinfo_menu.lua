@@ -88,6 +88,8 @@ function playerinfo_menu:New()
             GuiOptionsAdd(self.gui, GUI_OPTION.NonInteractive)
         end
 
+        GuiOptionsAdd(self.gui, GUI_OPTION.NoPositionTween)
+
         GuiZSetForNextWidget(self.gui, 1000)
 
         local current_x = -(self.width - (self.width * self.current_offset_percentage))

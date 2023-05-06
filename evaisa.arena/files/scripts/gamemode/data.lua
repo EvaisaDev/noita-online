@@ -12,6 +12,7 @@ function data:New()
         countdown = nil,
         spectator_gui_entity = nil,
         spectator_gui = nil,
+        spectator_text_gui = nil,
         arena_spectator = false,
         selected_player = nil,
         selected_player_name = nil,
