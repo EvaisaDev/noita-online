@@ -42,7 +42,6 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
 MP_VERSION = 1.44
-serialization_version = "2"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
 
@@ -62,7 +61,7 @@ msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
 
-
+local serialization_version = "2"
 if (GlobalsGetValue("last_serialization_version", "1") ~= serialization_version) then
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
