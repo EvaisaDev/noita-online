@@ -540,10 +540,11 @@ ArenaGameplay = {
         return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
     end,
     WinnerCheck = function(lobby, data)
-
+        --[[
         if(true)then
             return
         end
+        ]]
 
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
