@@ -24,6 +24,16 @@ set_content = ModTextFileSetContent
 
 table.insert(package.loaders, 2, load)
 
+
+------ TRANSLATIONS -------
+
+dofile("mods/evaisa.mp/lib/translations.lua")
+
+register_localizations("mods/evaisa.mp/translations.csv", 2)
+
+---------------------------
+
+
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
@@ -32,6 +42,7 @@ dofile("mods/evaisa.mp/lib/timeofday.lua")
 dofile("data/scripts/lib/coroutines.lua")
 logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
+debug_log = logger.init("debugging.log")
 local utf8 = require 'lua-utf8'
 
 np = require("noitapatcher")
@@ -333,7 +344,7 @@ function OnWorldPreUpdate()
 						active_members[k] = nil
 						member_message_frames[k] = nil
 						steam.networking.closeSession(v)
-						mp_log:print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+						mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 					end
 				end
 			end
@@ -476,7 +487,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		active_members[k] = nil
 		member_message_frames[k] = nil
 		steam.networking.closeSession(v)
-		mp_log:print("Closed session with " .. steam.friends.getFriendPersonaName(v))
+		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 	end
 	in_game = false
 	game_in_progress = false
@@ -632,7 +643,7 @@ function steam.networking.onP2PSessionConnectFail(data)
 end
 ]]
 function steam.networking.onSessionRequest(steamID)
-	mp_log:print("Session request from [" .. tostring(steam.friends.getFriendPersonaName(steamID)) .. "]")
+	mp_log:print("Session request from [" .. tostring(steamutils.getTranslatedPersonaName(steamID)) .. "]")
 	if (lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID)) then
 		local success = steam.networking.acceptSession(steamID)
 		mp_log:print("Session accepted: " .. tostring(success))
@@ -642,13 +653,16 @@ end
 function steam.networking.onSessionFailed(steamID, endReason, endDebug, connectionDescription)
 	if (lobby_code ~= nil and steamutils.isInLobby(lobby_code, steamID)) then
 		mp_log:print("Session failed with [" ..
-			tostring(steam.friends.getFriendPersonaName(steamID)) .. "]: " .. tostring(endReason))
+			tostring(steamutils.getTranslatedPersonaName(steamID)) .. "]: " .. tostring(endReason))
 		mp_log:print("Debug: " .. tostring(endDebug))
 		mp_log:print("Connection description: " .. tostring(connectionDescription))
 	end
 end
 
 function OnMagicNumbersAndWorldSeedInitialized()
+
+	debug_log:print(ModTextFileGetContent("data/translations/common.csv"))
+
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 	steam.init()
 	steam.friends.setRichPresence("status", "Noita Online - Menu")

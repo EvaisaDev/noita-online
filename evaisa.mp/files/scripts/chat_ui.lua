@@ -179,7 +179,7 @@ if (lobby_code ~= nil) then
 			chat_input.cursor_pos = 0
 			if (utf8.len(input_text) > 0 and not input_text:match("^%s*$")) then
 
-				local username = steam.friends.getPersonaName()
+				local username = steamutils.getTranslatedPersonaName()
 				local message = username .. ": " .. input_text
 
 				local message_final = "chat;" .. message

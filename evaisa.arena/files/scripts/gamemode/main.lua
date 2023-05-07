@@ -230,7 +230,7 @@ ArenaMode = {
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members) do
                 if (member.id ~= steam.user.getSteamID()) then
-                    local name = steam.friends.getFriendPersonaName(member.id)
+                    local name = steamutils.getTranslatedPersonaName(member.id)
                     if (name ~= nil) then
                         lobby_member_names[tostring(member.id)] = name
                     end

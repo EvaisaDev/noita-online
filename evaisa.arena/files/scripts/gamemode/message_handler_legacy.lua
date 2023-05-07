@@ -118,7 +118,7 @@ ArenaMessageHandler = {
             else
                 local killer_id = gameplay_handler.FindUser(lobby, killer)
                 if(killer_id ~= nil)then
-                    GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
+                    GamePrint(tostring(username) .. " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
                 else
                     GamePrint(tostring(username) .. " died.")
                 end
@@ -857,7 +857,7 @@ ArenaMessageHandler = {
             data:DefinePlayer(lobby, user)
         end
 
-        local username = steam.friends.getFriendPersonaName(user)
+        local username = steamutils.getTranslatedPersonaName(user)
 
         --GamePrint("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)
         --print("ARENA: [RECEIVED MESSAGE] " .. message.type .. " FROM " .. username)

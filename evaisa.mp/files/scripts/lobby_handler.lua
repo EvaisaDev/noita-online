@@ -74,7 +74,7 @@ end
 function handleBanCheck(user)
 	if (banned_members[tostring(user)] ~= nil) then
 		mp_log:print("Disconnected member: " .. tostring(user))
-		steam.matchmaking.kickUserFromLobby(lobby_code, user, "You are banned from this lobby.")
+		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_banned_warning"))
 	end
 end
 
@@ -83,13 +83,13 @@ function handleVersionCheck()
 	if (version > tostring(MP_VERSION)) then
 		disconnect({
 			lobbyID = lobby_code,
-			message = "You are using an outdated version of Noita Online"
+			message = GameTextGetTranslatedOrNot("$mp_client_outdated")
 		})
 		return false
 	elseif (version < tostring(MP_VERSION)) then
 		disconnect({
 			lobbyID = lobby_code,
-			message = "The host is using an outdated version of Noita Online"
+			message = GameTextGetTranslatedOrNot("$mp_host_outdated")
 		})
 		return false
 	end
@@ -107,20 +107,20 @@ function handleGamemodeVersionCheck(lobbycode)
 			if (active_mode.version > tonumber(gamemode_version)) then
 				disconnect({
 					lobbyID = lobbycode,
-					message = "The host is using an outdated version of the gamemode: " .. active_mode.name
+					message = string.format(GameTextGetTranslatedOrNot("$mp_host_gamemode_outdated"), active_mode.name)
 				})
 				return false
 			elseif (active_mode.version < tonumber(gamemode_version)) then
 				disconnect({
 					lobbyID = lobbycode,
-					message = "You are using an outdated version of the gamemode: " .. active_mode.name
+					message = string.format(GameTextGetTranslatedOrNot("$mp_client_gamemode_outdated"), active_mode.name)
 				})
 				return false
 			end
 		else
 			disconnect({
 				lobbyID = lobbycode,
-				message = "Gamemode missing: " .. active_mode.name
+				message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), active_mode.name)
 			})
 			return false
 		end
@@ -170,8 +170,8 @@ function ModData()
 			table.insert(data,
 				{
 					workshop_item_id = "0",
-					name = "[Vanilla] Twitch Integration",
-					description = "Noita's built-in Twitch integration.",
+					name = GameTextGetTranslatedOrNot("$mp_mod_twitch_integration_name"),
+					description = GameTextGetTranslatedOrNot("$mp_mod_twitch_integration_description"),
 					enabled = true
 				})
 		end

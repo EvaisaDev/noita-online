@@ -196,7 +196,7 @@ local windows = {
 		end
 	},
 	{
-		name = "Lobby",
+		name = GameTextGetTranslatedOrNot("$mp_lobby"),
 		func = function()
 			local window_width = 200
 			local window_height = 180
@@ -218,14 +218,14 @@ local windows = {
 			DrawWindow(menu_gui, -5000, screen_width / 2, screen_height / 2, window_width, window_height, function() 
 
 				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.3 )
-				GuiText(menu_gui, 0, 0, "Lobby - ("..((not show_lobby_code) and censorString(steam.utils.compressSteamID(lobby_code)) or steam.utils.compressSteamID(lobby_code))..")")
+				GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_lobby").." - ("..((not show_lobby_code) and censorString(steam.utils.compressSteamID(lobby_code)) or steam.utils.compressSteamID(lobby_code))..")")
 
 				GuiColorSetForNextWidget( menu_gui, (74 / 2) / 255, (62 / 2) / 255, (46 / 2) / 255, 0.5 )
 				GuiImage(menu_gui, NewID("Lobby"), 1, 1.5, (show_lobby_code) and "mods/evaisa.mp/files/gfx/ui/hide.png" or "mods/evaisa.mp/files/gfx/ui/show.png", 0.5, 1)
 				
 
 				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.5 )
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, show_lobby_code and " Hide" or " Show"))then
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, show_lobby_code and " "..GameTextGetTranslatedOrNot("$mp_hide") or " "..GameTextGetTranslatedOrNot("$mp_show")))then
 					show_lobby_code = not show_lobby_code
 				end
 				
@@ -235,7 +235,7 @@ local windows = {
 						GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
 						--GuiText(menu_gui, 0, 0, "Hide Code")
 						GuiZSetForNextWidget(menu_gui, -5110)
-						GuiText(menu_gui, 0, 0, "Hide the lobby code")
+						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_hide_tooltip"))
 					end, -5100, -60, -20)
 				else
 					CustomTooltip(menu_gui, function() 
@@ -243,7 +243,7 @@ local windows = {
 						GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
 						--GuiText(menu_gui, 0, 0, "Show Code")
 						GuiZSetForNextWidget(menu_gui, -5110)
-						GuiText(menu_gui, 0, 0, "Show the lobby code")
+						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_show_tooltip"))
 					end, -5100, -68, -20)
 				end
 
@@ -251,7 +251,7 @@ local windows = {
 				GuiImage(menu_gui, NewID("Lobby"), 6, 1.5, "mods/evaisa.mp/files/gfx/ui/copy.png", 0.5, 1)
 
 				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.5 )
-				if(GuiButton(menu_gui, NewID("Lobby"), -1, 0, " Copy"))then
+				if(GuiButton(menu_gui, NewID("Lobby"), -1, 0, " "..GameTextGetTranslatedOrNot("$mp_copy")))then
 					steam.utils.setClipboard(steam.utils.compressSteamID(lobby_code))
 				end
 
@@ -260,7 +260,7 @@ local windows = {
 					GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
 					--GuiText(menu_gui, 0, 0, "Show Code")
 					GuiZSetForNextWidget(menu_gui, -5110)
-					GuiText(menu_gui, 0, 0, "Copy the lobby code to your clipboard.")
+					GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_copy_tooltip"))
 				end, -5100, -150, -20)
 				
 			end, true, function()
@@ -269,7 +269,7 @@ local windows = {
 
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Leave lobby"))then
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_leave_lobby")))then
 					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 					if(active_mode)then
 						active_mode.leave(lobby_code)
@@ -286,13 +286,14 @@ local windows = {
 					return
 				end
 
-	
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, invite_menu_open and "< Invite players" or "> Invite players"))then
+				local invite_translation = GameTextGetTranslatedOrNot("$mp_invite_players")
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, invite_menu_open and "< "..invite_translation or "> "..invite_translation))then
 					invite_menu_open = not invite_menu_open
 					lobby_settings_open = false
 				end
 
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, lobby_settings_open and "< Lobby Settings" or "> Lobby Settings"))then
+				local lobby_settings_translation = GameTextGetTranslatedOrNot("$mp_lobby_settings")
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, lobby_settings_open and "< "..lobby_settings_translation or "> "..lobby_settings_translation))then
 					lobby_settings_open = not lobby_settings_open
 					invite_menu_open = false
 				end
@@ -300,7 +301,7 @@ local windows = {
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
 				if(active_mode and active_mode.spectate ~= nil)then
-					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and "Stop spectating" or "Spectator Mode"))then
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
 						else
@@ -314,9 +315,9 @@ local windows = {
 
 				if(owner == steam.user.getSteamID())then
 
-					local start_string = "Start Game"
+					local start_string = GameTextGetTranslatedOrNot("$mp_start_game")
 					if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
-						start_string = "Restart Game"
+						start_string = GameTextGetTranslatedOrNot("$mp_restart_game")
 					end
 
 					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, start_string ))then
@@ -337,7 +338,7 @@ local windows = {
 
 				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 				if(lobby_in_progress and not in_game)then
-					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, "Enter Game") then
+					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
 						
 						if(active_mode)then
 							if(spectating)then
@@ -367,15 +368,15 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 	
 					if(v.id ~= steam.user.getSteamID() and owner == steam.user.getSteamID())then
-						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, "[Kick]"))then
-							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, "You were kicked from the lobby.")
+						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
+							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_kick_notification"))
 						end
-						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "[Ban]"))then
-							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, "You were banned from the lobby.")	
+						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_ban")))then
+							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
 							steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 							banned_members[tostring(v.id)] = true
 						end
-						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, "[Owner]"))then
+						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_owner")))then
 							steam.matchmaking.setLobbyOwner(lobby_code, v.id)
 							banned_members = {}
 						end
@@ -510,7 +511,7 @@ local windows = {
 			end
 
 			if(selected_player ~= nil)then
-				local selected_player_name = steam.friends.getFriendPersonaName(selected_player)
+				local selected_player_name = steamutils.getTranslatedPersonaName(selected_player)
 
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, "Mods ("..selected_player_name..")", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -815,7 +816,7 @@ local windows = {
 
 			lobby_max_players = lobby_max_players or default_max_players
 
-			local default_lobby_name = steam.friends.getPersonaName()
+			local default_lobby_name = steamutils.getTranslatedPersonaName()
 
 			-- if default lobby name ends with "s" add ' otherwise add 's
 
@@ -932,7 +933,7 @@ local windows = {
 						end)
 					end
 				else
-					GuiText(menu_gui, 2, 0, "No gamemodes installed!")
+					GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_no_gamemodes"))
 				end
 
 				for i = 1, 40 do

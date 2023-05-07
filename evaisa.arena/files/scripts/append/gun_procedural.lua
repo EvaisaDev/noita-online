@@ -31,7 +31,7 @@ generate_gun = function( cost, level, force_unshuffle )
 	local x, y = EntityGetTransform( entity_id )
 
 	random_seed = math.abs(math.floor(tonumber(GlobalsGetValue("unique_seed", tostring(GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()))) * x * y / 3))
-	print("Gun random seed: "..tostring(random_seed))
+	--print("Gun random seed: "..tostring(random_seed))
 
 	random = rng.new(random_seed)
 

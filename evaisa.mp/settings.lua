@@ -24,8 +24,8 @@ mod_settings =
 			},]]
 			{
 				id = "flip_chat_direction",
-				ui_name = "Flip Chat Direction",
-				ui_description = "Makes up for the lack of auto scrolling by putting new messages at the top.",
+				ui_name = "$mp_flip_chat_direction_name",
+				ui_description = "$mp_flip_chat_direction_description",
 				value_default = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},

@@ -555,7 +555,7 @@ ArenaGameplay = {
             end
         end
         if (alive == 1) then
-            GamePrintImportant(steam.friends.getFriendPersonaName(winner) .. " won this round!",
+            GamePrintImportant(steamutils.getTranslatedPersonaName(winner) .. " won this round!",
                 "Prepare for the next round in your holy mountain.")
 
             -- if we are owner, add win to tally
@@ -575,14 +575,14 @@ ArenaGameplay = {
     KillCheck = function(lobby, data)
         if (GameHasFlagRun("player_died")) then
             local killer = ModSettingGet("killer");
-            local username = steam.friends.getFriendPersonaName(steam.user.getSteamID())
+            local username = steamutils.getTranslatedPersonaName(steam.user.getSteamID())
 
             if (killer == nil) then
                 GamePrint(tostring(username) .. " died.")
             else
                 local killer_id = ArenaGameplay.FindUser(lobby, killer)
                 if (killer_id ~= nil) then
-                    GamePrint(tostring(username) .. " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
+                    GamePrint(tostring(username) .. " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
                 else
                     GamePrint(tostring(username) .. " died.")
                 end
@@ -882,7 +882,7 @@ ArenaGameplay = {
 
             ArenaGameplay.LoadClientPlayers(lobby, data)
 
-            GamePrint("Loading arena")
+            --GamePrint("Loading arena")
 
             GameAddFlagRun("can_save_player")
         end)
@@ -1044,7 +1044,7 @@ ArenaGameplay = {
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", -1000, -1000)
         EntitySetName(client, tostring(user))
         local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
-        local name = steam.friends.getFriendPersonaName(user)
+        local name = steamutils.getTranslatedPersonaName(user)
         ComponentSetValue2(usernameSprite, "text", name)
         ComponentSetValue2(usernameSprite, "offset_x", string.len(name) * (1.8))
         data.players[tostring(user)].entity = client
@@ -1121,7 +1121,7 @@ ArenaGameplay = {
                     data.preparing = false
 
 
-                    GamePrint("Spawned!!")
+                    --GamePrint("Spawned!!")
 
                     if (not steamutils.IsOwner(lobby)) then
                         networking.send.arena_loaded(lobby)
@@ -1210,7 +1210,7 @@ ArenaGameplay = {
             if (playerid == nil) then
                 v:Clean(lobby)
                 data.players[k] = nil
-                --local name = steam.friends.getFriendPersonaName(playerid)
+                --local name = steamutils.getTranslatedPersonaName(playerid)
                 GamePrint("Player " .. tostring(lobby_member_names[k]) .. " left the game")
 
                 -- if we are the last player, unready
@@ -1354,7 +1354,7 @@ ArenaGameplay = {
 
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
-                            data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                            data.selected_player_name = steamutils.getTranslatedPersonaName(player)
                         end
                     end
                 end
@@ -1384,7 +1384,7 @@ ArenaGameplay = {
 
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
-                            data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                            data.selected_player_name = steamutils.getTranslatedPersonaName(player)
                         end
                     end
                 end
@@ -1456,7 +1456,7 @@ ArenaGameplay = {
 
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
-                                    data.selected_player_name = steam.friends.getFriendPersonaName(player)
+                                    data.selected_player_name = steamutils.getTranslatedPersonaName(player)
                                 end
                             end
                         end

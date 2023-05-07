@@ -135,7 +135,7 @@ function playerinfo_menu:New()
 
         ------------- DRAW OUR OWN CARD ---------------
         local player_id = steam.user.getSteamID()
-        local username = steam.friends.getFriendPersonaName(player_id)
+        local username = steamutils.getTranslatedPersonaName(player_id)
 
         local hp = data.client.hp or 100
         local max_hp = data.client.max_hp or 100
@@ -240,7 +240,7 @@ function playerinfo_menu:New()
                         v.max_health = 100
                     end
     
-                    local username = v.name or steam.friends.getFriendPersonaName(playerid)
+                    local username = v.name or steamutils.getTranslatedPersonaName(playerid)
                     GuiZSetForNextWidget(self.gui, 900)
                     local color = game_funcs.ID2Color(playerid)
                     if(color == nil)then

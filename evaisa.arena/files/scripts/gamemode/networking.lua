@@ -17,7 +17,7 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 networking = {
     receive = {
         ready = function(lobby, message, user, data)
-            local username = steam.friends.getFriendPersonaName(user)
+            local username = steamutils.getTranslatedPersonaName(user)
 
             if (message[1]) then
                 data.players[tostring(user)].ready = true
@@ -43,7 +43,7 @@ networking = {
             end
         end,
         arena_loaded = function(lobby, message, user, data)
-            local username = steam.friends.getFriendPersonaName(user)
+            local username = steamutils.getTranslatedPersonaName(user)
 
             data.players[tostring(user)].loaded = true
 
@@ -197,7 +197,7 @@ networking = {
                     end
 
                     if (message[1] ~= nil) then
-                        local username = steam.friends.getFriendPersonaName(user)
+                        local username = steamutils.getTranslatedPersonaName(user)
 
                         arena_log:print("User [" ..
                             username .. "] received inventory: " .. tostring(json.stringify(message[1])))
@@ -564,7 +564,7 @@ networking = {
         end,
         death = function(lobby, message, user, data)
             if (data.state == "arena") then
-                local username = steam.friends.getFriendPersonaName(user)
+                local username = steamutils.getTranslatedPersonaName(user)
 
                 local killer = message[1]
                 -- iterate data.tweens backwards and remove tweens belonging to the dead player
@@ -587,7 +587,7 @@ networking = {
                     local killer_id = gameplay_handler.FindUser(lobby, killer)
                     if (killer_id ~= nil) then
                         GamePrint(tostring(username) ..
-                            " was killed by " .. steam.friends.getFriendPersonaName(killer_id))
+                            " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
                     else
                         GamePrint(tostring(username) .. " died.")
                     end

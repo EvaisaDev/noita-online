@@ -1,10 +1,33 @@
 steam_utils = {}
 
+unidecode = require('unicorndecode')
+
+steam_utils.getTranslatedPersonaName = function(steam_id)
+	local name = "Unknown"
+	if(steam_id == nil)then
+		name = steam.friends.getPersonaName()
+	else
+		name = steam.friends.getFriendPersonaName(steam_id)
+	end
+	
+	if (name == nil or name == "") then
+		return "[Name Invalid]"
+	end
+	
+	local decoded = unidecode.decode(name)
+
+	if(decoded == name)then
+		return name
+	end
+
+	return decoded .. "(" .. tostring(name) .. ")"
+end
+
 steam_utils.getSteamFriends = function()
 	local list = {}
 	for i = 1, steam.friends.getFriendCount(0x04) do
 		local h = steam.friends.getFriendByIndex(i - 1, 0x04)
-		table.insert(list, { id = h, name = steam.friends.getFriendPersonaName(h) })
+		table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
 	end
 	return list
 end
@@ -13,7 +36,7 @@ steam_utils.getLobbyMembers = function(lobby_id)
 	local list = {}
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
-		table.insert(list, { id = h, name = steam.friends.getFriendPersonaName(h) })
+		table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
 	end
 	return list
 end
@@ -371,8 +394,7 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 
 		success = tonumber(tostring(success))
 		if (success ~= 1) then
-			GamePrint("Failed to send message to " ..
-				steam.friends.getFriendPersonaName(player) .. " (" .. tostring(success) .. ")")
+			GamePrint("Failed to send message to " .. steamutils.getTranslatedPersonaName(player) .. " (" .. tostring(success) .. ")")
 		else
 			bytes_sent = bytes_sent + size
 		end
