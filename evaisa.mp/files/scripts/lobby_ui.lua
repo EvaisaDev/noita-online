@@ -21,6 +21,11 @@ if(GameGetIsGamepadConnected())then
 	GuiOptionsAdd(menu_gui, GUI_OPTION.NonInteractive)
 end
 
+local lobby_types = {
+	GameTextGetTranslatedOrNot("$mp_public"),
+	GameTextGetTranslatedOrNot("$mp_private"),
+	GameTextGetTranslatedOrNot("$mp_friends_only"),
+}
 
 gui_closed = gui_closed or false
 invite_menu_open = invite_menu_open or false
@@ -83,25 +88,25 @@ local windows = {
 			local window_width = 200
 			local window_height = 180
 		
-			local window_text = "Create or Join Lobby"
+			local window_text = GameTextGetTranslatedOrNot("$mp_lobby_list_header")
 		
 			DrawWindow(menu_gui, -4000, screen_width / 2, screen_height / 2, window_width, window_height, window_text, true, function()
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
-				if(GuiButton(menu_gui, NewID(), 0, 0, "Create lobby"))then
+				if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_create_lobby")))then
 					menu_status = status.creating_lobby
 				end
 
-				if(GuiButton(menu_gui, NewID(), 0, 0, "Join lobby with code"))then
+				if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_join_with_code")))then
 					menu_status = status.joining_lobby
 				end
 
 				GuiText(menu_gui, 2, 0, " ")
-				if(GuiButton(menu_gui, NewID(), 0, 0, "Refresh lobby list"))then
+				if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_refresh_lobby_list")))then
 					refreshLobbies()
 				end
 				GuiText(menu_gui, 2, 0, " ")
-				GuiText(menu_gui, 2, 0, "----- Friend Lobbies -----")
+				GuiText(menu_gui, 2, 0, "----- "..GameTextGetTranslatedOrNot("$mp_friend_lobbies").." -----")
 				if(#lobbies.friend > 0)then
 					for k, v in ipairs(lobbies.friend)do
 						if(steam.matchmaking.requestLobbyData(v))then
@@ -114,7 +119,7 @@ local windows = {
 
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 							if(not IsCorrectVersion(v))then
-								if(GuiButton(menu_gui, NewID(), 0, 0, "[Version Mismatch] "..lobby_name))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
 									steam.matchmaking.leaveLobby(v)
 									steam.matchmaking.joinLobby(v, function(e)
 									end)
@@ -127,7 +132,7 @@ local windows = {
 										end)
 									end
 								else
-									if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id.."[Missing])("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..""..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 										steam.matchmaking.leaveLobby(v)
 										steam.matchmaking.joinLobby(v, function(e)
 										end)
@@ -140,10 +145,10 @@ local windows = {
 						end
 					end
 				else
-					GuiText(menu_gui, 2, 0, "No lobbies found")
+					GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_no_lobbies_found"))
 				end
 				GuiText(menu_gui, 2, 0, " ")
-				GuiText(menu_gui, 2, 0, "----- Public Lobbies -----")
+				GuiText(menu_gui, 2, 0, "----- "..GameTextGetTranslatedOrNot("$mp_public_lobbies").." -----")
 				if(#lobbies.public > 0)then
 					for k, v in ipairs(lobbies.public)do
 						local lobby_mode_id = steam.matchmaking.getLobbyData(v, "gamemode")
@@ -156,7 +161,7 @@ local windows = {
 
 						GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 						if(not IsCorrectVersion(v))then
-							if(GuiButton(menu_gui, NewID(), 0, 0, "[Version Mismatch] "..lobby_name))then
+							if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
 								steam.matchmaking.leaveLobby(v)
 								steam.matchmaking.joinLobby(v, function(e)
 								end)
@@ -169,7 +174,7 @@ local windows = {
 									end)
 								end
 							else
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id.."[Missing])("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 
 								end
 							end
@@ -178,7 +183,7 @@ local windows = {
 						GuiLayoutEnd(menu_gui)
 					end
 				else
-					GuiText(menu_gui, 2, 0, "No lobbies found")
+					GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_no_lobbies_found"))
 				end
 					
 				
@@ -196,7 +201,7 @@ local windows = {
 		end
 	},
 	{
-		name = GameTextGetTranslatedOrNot("$mp_lobby"),
+		name = "Lobby",
 		func = function()
 			local window_width = 200
 			local window_height = 180
@@ -451,23 +456,28 @@ local windows = {
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 					local friends = steamutils.getSteamFriends();
 
-					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_ingame and "[X] Show only in-game" or "[ ] Show only in-game"))then
+					local only_ingame = GameTextGetTranslatedOrNot("$mp_invite_only_ingame")
+					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_ingame and "[X] "..only_ingame or "[ ] "..only_ingame))then
 						friendfilters_ingame = not friendfilters_ingame
 					end
 
-					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_inlobby and "[X] Show in lobby" or "[ ] Show in lobby"))then
+					local show_in_lobby = GameTextGetTranslatedOrNot("$mp_invite_in_lobby")
+					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_inlobby and "[X] "..show_in_lobby or "[ ] "..show_in_lobby))then
 						friendfilters_inlobby = not friendfilters_inlobby
 					end
 
-					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_offline and "[X] Show offline" or "[ ] Show offline"))then
+					local show_offline = GameTextGetTranslatedOrNot("$mp_invite_offline")
+					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_offline and "[X] "..show_offline or "[ ] "..show_offline))then
 						friendfilters_offline = not friendfilters_offline
 					end
 
-					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_busy and "[X] Show busy" or "[ ] Show busy"))then
+					local show_busy = GameTextGetTranslatedOrNot("$mp_invite_busy")
+					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_busy and "[X] "..show_busy or "[ ] "..show_busy))then
 						friendfilters_busy = not friendfilters_busy
 					end
 
-					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_away and "[X] Show away" or "[ ] Show away"))then
+					local show_away = GameTextGetTranslatedOrNot("$mp_invite_away")
+					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_away and "[X] "..show_away or "[ ] "..show_away))then
 						friendfilters_away = not friendfilters_away
 					end
 
@@ -487,7 +497,7 @@ local windows = {
 
 						if(online_filter_pass and ingame_filter_pass and inlobby_filter_pass)then
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-							if(GuiButton(menu_gui, NewID("Invite"), 0, 0, "[Invite] "))then
+							if(GuiButton(menu_gui, NewID("Invite"), 0, 0, GameTextGetTranslatedOrNot("$mp_invite").." "))then
 								if(lobby_code ~= nil)then
 									if(steam.matchmaking.inviteUserToLobby(lobby_code, v.id))then
 										mp_log:print("Invited "..v.name.." to lobby")
@@ -513,7 +523,7 @@ local windows = {
 			if(selected_player ~= nil)then
 				local selected_player_name = steamutils.getTranslatedPersonaName(selected_player)
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, "Mods ("..selected_player_name..")", true, function()
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 					
 					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
@@ -575,7 +585,7 @@ local windows = {
 						if(v.workshop_item_id ~= 0 and v.workshop_item_id ~= "0")then
 							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")))then
 								--steam.utils.openWorkshopItem(v.workshop_item_id)
-								popup.create("open_steam_url", v.name, "Are you sure you want to open the workshop page for this mod in steam?", {
+								popup.create("open_steam_url", v.name, GameTextGetTranslatedOrNot("$mp_open_steam_url_warning"), {
 									{
 										text="Yes", 
 										callback = function() 
@@ -590,14 +600,14 @@ local windows = {
 								}, -20000)
 
 							end
-							GuiTooltip(menu_gui, "Press to go to workshop page.", description_truncated)
+							GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_open_steam_url_tooltip"), description_truncated)
 						elseif(v.download_link ~= nil and v.download_link ~= "")then
 							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")))then
 								--os.execute("start "..v.workshop_item_id)
 								local url = sanitize_url(v.download_link)
 								
 
-								popup.create("open_mod_download_page", v.name, "Are you sure you want to open this URL?\n\""..url.."\"", {
+								popup.create("open_mod_download_page", v.name, string.format(GameTextGetTranslatedOrNot("$mp_open_download_page_warning"), "\""..url.."\""), {
 									{
 										text="Yes", 
 										callback = function() 
@@ -612,7 +622,7 @@ local windows = {
 								}, -20000)
 
 							end
-							GuiTooltip(menu_gui, "Press to go to download page.",  description_truncated)
+							GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_open_download_page_tooltip"),  description_truncated)
 						else
 							GuiText(menu_gui, 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or ""))
 							GuiTooltip(menu_gui,  description_truncated, "")
@@ -632,12 +642,6 @@ local windows = {
 
 
 			if(lobby_settings_open)then
-				local lobby_types = {
-					"Public",
-					"Private",
-					"Friends Only"
-				}
-
 				
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
@@ -659,10 +663,10 @@ local windows = {
 
 				edit_lobby_seed = owner == steam.user.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, "Lobby Settings", true, function()
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 	
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Lobby type: "..lobby_types[edit_lobby_type]))then
+					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type]))then
 						edit_lobby_type = edit_lobby_type + 1
 						if(edit_lobby_type > #lobby_types and owner == steam.user.getSteamID())then
 							edit_lobby_type = 1
@@ -681,11 +685,11 @@ local windows = {
 						end
 					end]]
 					
-					GuiText(menu_gui, 2, 1, "Gamemode: "..active_mode.name)
-					GuiTooltip(menu_gui, "Can not change gamemode while in a lobby", "")
+					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..active_mode.name)
+					GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 1, "Lobby name: ")
+					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
 					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
 					if(lobby_name_value ~= edit_lobby_name and owner == steam.user.getSteamID())then
 						edit_lobby_name = lobby_name_value
@@ -693,7 +697,7 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 					
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 3, "Max players: ")
+					GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot("$mp_max_players")..": ")
 					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
 					if(slider_value ~= edit_lobby_max_players and owner == steam.user.getSteamID())then
 						edit_lobby_max_players = slider_value
@@ -701,7 +705,7 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 4, "World seed: ")
+					GuiText(menu_gui, 2, 4, GameTextGetTranslatedOrNot("$mp_world_seed")..": ")
 					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 120, 10, "1234567890")
 					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam.user.getSteamID())then
 						edit_lobby_seed = edit_lobby_seed_value
@@ -749,7 +753,7 @@ local windows = {
 							previous_type = "enum"
 							
 						elseif(setting.type == "bool")then
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, setting.name..": "..(gamemode_settings[setting.id] and "Enabled" or "Disabled")))then
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, setting.name..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 								gamemode_settings[setting.id] = not gamemode_settings[setting.id]
 							end
 							GuiTooltip(menu_gui, "", setting.description)
@@ -771,7 +775,7 @@ local windows = {
 
 					GuiText(menu_gui, 2, 6, "--------------------")
 
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, "Update Lobby Settings") and owner == steam.user.getSteamID())then
+					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings")) and owner == steam.user.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
@@ -805,7 +809,7 @@ local windows = {
 			local window_width = 200
 			local window_height = 180
 		
-			local window_text = "Create lobby"
+			local window_text = GameTextGetTranslatedOrNot("$mp_create_lobby")
 
 			lobby_type = lobby_type or 1
 			gamemode_index = gamemode_index or 1
@@ -821,9 +825,24 @@ local windows = {
 			-- if default lobby name ends with "s" add ' otherwise add 's
 
 			if(string.sub(default_lobby_name, -1) == "s")then
-				default_lobby_name = default_lobby_name.."' Lobby"
+				default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name.."'")
 			else
-				default_lobby_name = default_lobby_name.."'s Lobby"
+				local alphabet = "abcdefghijklmnopqrtuvwxyz"
+
+				local last_letter = string.sub(default_lobby_name, -1)
+
+				local found = false
+				for i = 1, #alphabet do
+					if(string.sub(alphabet, i, i) == last_letter)then
+						default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name.."'s")
+						found = true
+						break
+					end
+				end
+				
+				if(not found)then
+					default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name)
+				end
 			end
 
 			lobby_name = lobby_name or default_lobby_name
@@ -832,7 +851,7 @@ local windows = {
 			DrawWindow(menu_gui, -6000, screen_width / 2, screen_height / 2, window_width, window_height, window_text, true, function()
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
-				if(GuiButton(menu_gui, NewID("CreateLobby"), 0, 0, "Return to menu"))then
+				if(GuiButton(menu_gui, NewID("CreateLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
 						steam.matchmaking.leaveLobby(lobby_code)
 						lobby_code = nil
@@ -849,15 +868,9 @@ local windows = {
 
 				if(#gamemodes > 0)then
 
-					local lobby_types = {
-						"Public",
-						"Private",
-						"Friends Only",
-					}
-
 					local internal_types = { "Public", "Private", "FriendsOnly",}
 
-					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Lobby type: "..lobby_types[lobby_type]))then
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[lobby_type]))then
 						lobby_type = lobby_type + 1
 						if(lobby_type > #lobby_types)then
 							lobby_type = 1
@@ -865,7 +878,7 @@ local windows = {
 					end
 
 
-					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, "Gamemode: "..gamemodes[gamemode_index].name))then
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..gamemodes[gamemode_index].name))then
 						gamemode_index = gamemode_index + 1
 						if(gamemode_index > #gamemodes)then
 							gamemode_index = 1
@@ -873,7 +886,7 @@ local windows = {
 					end
 
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 1, "Lobby name: ")
+					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
 					local lobby_name_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 1, lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
 					if(lobby_name_value ~= lobby_name)then
 						lobby_name = lobby_name_value
@@ -881,7 +894,7 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 					
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 3, "Max players: ")
+					GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot("$mp_max_players")..": ")
 					local slider_value = GuiSlider(menu_gui, NewID("CreateLobby"), 0, 4, "", lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
 					if(slider_value ~= lobby_max_players)then
 						lobby_max_players = slider_value
@@ -889,7 +902,7 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 4, "World seed: ")
+					GuiText(menu_gui, 2, 4, GameTextGetTranslatedOrNot("$mp_world_seed")..": ")
 					local lobby_seed_value = GuiTextInput(menu_gui, NewID("CreateLobby"), 2, 4, lobby_seed, 120, 10, "1234567890")
 					if(lobby_seed_value ~= lobby_seed)then
 						lobby_seed = lobby_seed_value
@@ -898,7 +911,7 @@ local windows = {
 
 					GuiText(menu_gui, 2, 0, " ")
 
-					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, "Create lobby"))then
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_create_lobby")))then
 						CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
 							msg.log("Created new lobby!")
 							
@@ -956,7 +969,7 @@ local windows = {
 			local window_width = 200
 			local window_height = 180
 		
-			local window_text = "Join lobby"
+			local window_text = GameTextGetTranslatedOrNot("$mp_join_lobby")
 
 			lobby_code_input = lobby_code_input or ""
 
@@ -965,7 +978,7 @@ local windows = {
 			DrawWindow(menu_gui, -6000, screen_width / 2, screen_height / 2, window_width, window_height, window_text, true, function()
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
-				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, "Return to menu"))then
+				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
 						steam.matchmaking.leaveLobby(lobby_code)
 						lobby_code = nil
@@ -980,7 +993,7 @@ local windows = {
 				GuiText(menu_gui, 2, 0, "--------------------")
 				
 
-				if(GuiButton(menu_gui, NewID("JoinLobby"), 2, 0, "Paste code from clipboard"))then
+				if(GuiButton(menu_gui, NewID("JoinLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_paste_code")))then
 					-- Check if code only contains capital letters and is 25 characters or less
 					local code = steam.utils.getClipboard()
 					if(code ~= nil and code:match("^[%u]+$") and #code <= 25)then
@@ -990,7 +1003,7 @@ local windows = {
 				end
 
 				GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-				GuiText(menu_gui, 2, 1, "Lobby Code: ")
+				GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_code")..": ")
 				local lobby_code_value = GuiTextInput(menu_gui, NewID("JoinLobby"), 2, 1, lobby_code_input, 120, 25, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 				if(lobby_code_input ~= lobby_code_value)then
 					lobby_code_input = lobby_code_value
@@ -1000,7 +1013,7 @@ local windows = {
 
 				GuiText(menu_gui, 2, 0, " ")
 
-				if(GuiButton(menu_gui, NewID("JoinLobby"), 2, 0, "Join lobby"))then
+				if(GuiButton(menu_gui, NewID("JoinLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_join_lobby")))then
 					if(lobby_code_input ~= "" and #lobby_code_input > 5)then
 						lobby_code_decompressed = steam.utils.decompressSteamID(lobby_code_input)
 						steam.matchmaking.joinLobby(lobby_code_decompressed, function(data)
@@ -1034,7 +1047,7 @@ local windows = {
 			local window_width = 200
 			local window_height = 180
 		
-			local window_text = "Disconnected"
+			local window_text = GameTextGetTranslatedOrNot("$mp_disconnected")
 
 			lobby_code_input = lobby_code_input or ""
 
@@ -1042,7 +1055,7 @@ local windows = {
 
 			DrawWindow(menu_gui, -6000, screen_width / 2, screen_height / 2, window_width, window_height, window_text, true, function()
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
-				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, "Return to menu"))then
+				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
 						steam.matchmaking.leaveLobby(lobby_code)
 						lobby_code = nil
@@ -1057,8 +1070,8 @@ local windows = {
 				GuiText(menu_gui, 2, 0, "--------------------")
 				GuiText(menu_gui, 2, 0, " ")
 
-				GuiText(menu_gui, 2, 0, "Disconnected.")
-				GuiText(menu_gui, 2, 0, "Reason: "..disconnect_message)
+				GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_disconnected"))
+				GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_reason")..": "..disconnect_message)
 
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")

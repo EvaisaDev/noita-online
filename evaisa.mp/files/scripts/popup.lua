@@ -62,8 +62,8 @@ popups.update = function()
 
         local z_index = popup.z_index - (i + 10)
 
-        print("z_index: " .. tostring(z_index))
-        print(pretty.table(popup))
+        --print("z_index: " .. tostring(z_index))
+        --print(pretty.table(popup))
 
         GuiBeginAutoBox(popup.gui)
         GuiLayoutBeginVertical(popup.gui, 0, 0)

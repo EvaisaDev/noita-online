@@ -73,14 +73,14 @@ pretty = require("pretty_print")
 local ffi = require "ffi"
 
 local serialization_version = "2"
-if (GlobalsGetValue("last_serialization_version", "1") ~= serialization_version) then
+if ((ModSettingGet("last_serialization_version") or "1") ~= serialization_version) then
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
 	-- remove the folder
 	os.execute('del /q "' .. data_folder_name .. '\\*.*"')
-	mp_log:print("Repaired data folder.")
+	print("Repaired data folder.")
 	GamePrint("Repairing data folder")
-	GlobalsSetValue("last_serialization_version", serialization_version)
+	ModSettingSet("last_serialization_version", serialization_version)
 end
 
 local application_id = 943584660334739457LL
@@ -246,6 +246,7 @@ end
 
 local spawned_popup = false
 local init_cleanup = false
+local connection_popup_open = false
 
 function OnWorldPreUpdate()
 
@@ -263,16 +264,16 @@ function OnWorldPreUpdate()
 		if (not spawned_popup) then
 			GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
 			spawned_popup = true
-			popup.create("update_message", "Noita Online Outdated",
-				"The Noita Online version you are running is outdated or no longer valid", {
+			popup.create("update_message", GameTextGetTranslatedOrNot("$mp_outdated_warning_title"),
+				GameTextGetTranslatedOrNot("$mp_outdated_warning_description"), {
 					{
-						text = "Get updated version",
+						text = GameTextGetTranslatedOrNot("$mp_get_updated_version"),
 						callback = function()
 							os.execute("start explorer \"" .. noita_online_download .. "\"")
 						end
 					},
 					{
-						text = "Close",
+						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
 						callback = function()
 						end
 					}
@@ -281,6 +282,24 @@ function OnWorldPreUpdate()
 	end
 
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
+
+		if(not steam.utils.loggedOn())then
+			GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
+			if(not connection_popup_open)then
+				connection_popup_open = true
+				popup.create("update_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
+				GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
+					{
+						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+						callback = function()
+							connection_popup_open = false
+						end
+					}
+				}, -6000)
+			end
+		end
+
+
 		if(input == nil)then
 			input = dofile_once("mods/evaisa.mp/lib/input.lua")
 		end
@@ -596,7 +615,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				else
 					disconnect({
 						lobbyID = lobby_code,
-						message = "Gamemode missing: " .. tostring(lobby_gamemode.id)
+						message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))
 					})
 				end
 			end
@@ -620,7 +639,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				else
 					disconnect({
 						lobbyID = lobby_code,
-						message = "Gamemode missing: " .. tostring(lobby_gamemode.id)
+						message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))--"Gamemode missing: " .. tostring(lobby_gamemode.id)
 					})
 				end
 			end
