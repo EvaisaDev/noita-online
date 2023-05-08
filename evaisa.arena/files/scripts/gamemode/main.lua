@@ -40,32 +40,32 @@ lobby_member_names = {}
 
 ArenaMode = {
     id = "arena",
-    name = "Arena",
+    name = "$arena_gamemode_name",
     version = 0.5,
     settings = {
         {
             id = "damage_cap",
-            name = "Damage Cap",
-            description = "One shot protection, how much damage can be dealt to a player at once.",
+            name = "$arena_settings_damage_cap_name",
+            description = "$arena_settings_damage_cap_description",
             type = "enum",
-            options = { { "0.25", "25% of max" }, { "0.5", "50% of max" }, { "0.75", "75% of max" },
-                { "disabled", "Disabled" } },
+            options = { { "0.25", "$arena_settings_damage_cap_25" }, { "0.5", "$arena_settings_damage_cap_50" }, { "0.75", "$arena_settings_damage_cap_75" },
+                { "disabled", "$arena_settings_damage_cap_disabled" } },
             default = "0.25"
         },
         {
             id = "zone_shrink",
-            name = "Zone Mode",
-            description = "How the damage zone shrinks over time.",
+            name = "$arena_settings_zone_shrink_name",
+            description = "$arena_settings_zone_shrink_description",
             type = "enum",
-            options = { { "disabled", "Disabled" }, { "static", "Static" }, { "shrinking_Linear", "Linear Shrinking" },
-                { "shrinking_step", "Stepped Shrinking" } },
+            options = { { "disabled", "$arena_settings_zone_shrink_disabled" }, { "static", "$arena_settings_zone_shrink_static" }, { "shrinking_Linear", "$arena_settings_zone_shrink_linear" },
+                { "shrinking_step", "$arena_settings_zone_shrink_stepped" } },
             default = "static"
         },
         {
             id = "zone_speed",
-            name = "Zone Speed",
-            description = "How fast the damage zone shrinks over time. \nPixels per step or pixels per minute.",
-            type = "slider",
+            name = "$arena_settings_zone_speed_name",
+            description = "$arena_settings_zone_speed_description",
+            type = "slider",    
             min = 1,
             max = 100,
             default = 30,
@@ -75,8 +75,8 @@ ArenaMode = {
         },
         {
             id = "zone_step_interval",
-            name = "Zone Interval",
-            description = "Seconds between zone shrinks. \n(Only used in Stepped Shrinking mode)",
+            name = "$arena_settings_zone_step_interval_name",
+            description = "$arena_settings_zone_step_interval_description",
             type = "slider",
             min = 1,
             max = 90,
@@ -128,6 +128,8 @@ ArenaMode = {
         end
 
         --print("WE GOOD???")
+
+        debug_log:print(GameTextGetTranslatedOrNot("$arena_predictive_netcode_name"))
 
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
 

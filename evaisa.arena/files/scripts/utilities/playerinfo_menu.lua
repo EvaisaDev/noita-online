@@ -152,14 +152,14 @@ function playerinfo_menu:New()
         local a = 1
         GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
 
-        GuiText(self.gui, 0, 0, username.." (You)")
+        GuiText(self.gui, 0, 0, username.." ("..GameTextGetTranslatedOrNot("$arena_playerinfo_you")..")")
 
         local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
         scroll_offset = scroll_y - self.offset_y - 2
 
         GuiZSetForNextWidget(self.gui, 900)
         GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-        GuiText(self.gui, 0, 0, "Wins: "..tostring(wins))
+        GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
 
         local health_ratio = hp / max_hp
         local health_bar_width = 90
@@ -252,16 +252,16 @@ function playerinfo_menu:New()
                     GuiText(self.gui, 0, 0, username)
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, "Ping: "..tostring(v.ping).."ms")
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, "Delay: "..tostring(v.delay_frames).." frames")
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames))--[["Delay: "..tostring(v.delay_frames).." frames"]])
 
                     local wins = ArenaGameplay.GetWins(lobby, playerid)
                     
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, "Wins: "..tostring(wins))
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins))--[["Wins: "..tostring(wins)]])
                     
                     local health_ratio = v.health / v.max_health
                     local health_bar_width = 90
@@ -375,7 +375,7 @@ function playerinfo_menu:New()
                 end
             else
                 GuiZSetForNextWidget(self.gui, 800)
-                GuiText(self.gui, perk_draw_x, draw_pos, "No perks")
+                GuiText(self.gui, perk_draw_x, draw_pos, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
             end
             GuiZSetForNextWidget(self.gui, 850)
 

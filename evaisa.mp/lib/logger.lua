@@ -30,7 +30,12 @@ local function create_logger(output_path, filename, overwrite)
         for i = 1, #args do
             args[i] = tostring(args[i])
         end
-        local message = table.concat(args, ", ")
+        local message = args[1]
+        if(#args > 1)then
+            for i = 2, #args do
+                message = message .. " " .. args[i]
+            end
+        end
 
         -- Get the current timestamp
         local timestamp = os.date("%Y-%m-%d %H:%M:%S")

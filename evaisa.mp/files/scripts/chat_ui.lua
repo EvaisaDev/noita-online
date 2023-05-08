@@ -113,7 +113,7 @@ if (lobby_code ~= nil) then
 		local window_width = 200
 		local window_height = 100
 
-		local window_text = "Chat"
+		local window_text = GameTextGetTranslatedOrNot("$mp_chat")
 		--GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
 		DrawWindow(chat_gui, 0, 4 + (window_width / 2), screen_height - ((window_height / 2) + 30), window_width,
 			window_height, window_text, true, function()

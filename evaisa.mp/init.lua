@@ -24,6 +24,9 @@ set_content = ModTextFileSetContent
 
 table.insert(package.loaders, 2, load)
 
+logger = require("logger")("noita_online_logs")
+mp_log = logger.init("noita-online.log")
+debug_log = logger.init("debugging.log")
 
 ------ TRANSLATIONS -------
 
@@ -40,9 +43,7 @@ dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 
 dofile("mods/evaisa.mp/lib/timeofday.lua")
 dofile("data/scripts/lib/coroutines.lua")
-logger = require("logger")("noita_online_logs")
-mp_log = logger.init("noita-online.log")
-debug_log = logger.init("debugging.log")
+
 local utf8 = require 'lua-utf8'
 
 np = require("noitapatcher")
@@ -194,8 +195,6 @@ dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 input = nil 
 
-dofile("mods/evaisa.mp/data/gamemodes.lua")
-
 bytes_sent = 0
 last_bytes_sent = 0
 bytes_received = 0
@@ -203,6 +202,8 @@ last_bytes_received = 0
 active_members = {}
 member_message_frames = {}
 gamemode_index = 1
+
+gamemodes = {}
 
 function FindGamemode(id)
 	for k, v in pairs(gamemodes) do
@@ -680,9 +681,19 @@ end
 
 function OnMagicNumbersAndWorldSeedInitialized()
 
-	debug_log:print(ModTextFileGetContent("data/translations/common.csv"))
+	-- write to file
+	-- ModTextFileGetContent("data/translations/common.csv")
+	-- using io library to write to "noita_online_logs/translations.csv"
+	local file = io.open("noita_online_logs/translations.csv", "w")
+	local translations_content = ModTextFileGetContent("data/translations/common.csv")
+	file:write(translations_content)
+	file:close()
+	
+	print(translations_content)
 
+	__loaded["mods/evaisa.mp/data/gamemodes.lua"] = nil
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
+
 	steam.init()
 	steam.friends.setRichPresence("status", "Noita Online - Menu")
 	mod_data = ModData()

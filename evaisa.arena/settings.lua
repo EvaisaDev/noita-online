@@ -11,13 +11,13 @@ mod_settings =
 		ui_name = "",
 		ui_description = "",
 		settings = {
-			{
+			--[[{
 				id = "predictive_netcode",
-				ui_name = "Predictive Netcode",
-				ui_description = "Predict player movement using latency \n[Not Implemented]",
+				ui_name = "$arena_predictive_netcode_name",
+				ui_description = "$arena_predictive_netcode_description",
 				value_default = false,
 				scope = MOD_SETTING_SCOPE_RUNTIME,
-			},
+			},]]
 		},
 	},
 }

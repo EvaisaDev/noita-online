@@ -107,20 +107,20 @@ function handleGamemodeVersionCheck(lobbycode)
 			if (active_mode.version > tonumber(gamemode_version)) then
 				disconnect({
 					lobbyID = lobbycode,
-					message = string.format(GameTextGetTranslatedOrNot("$mp_host_gamemode_outdated"), active_mode.name)
+					message = string.format(GameTextGetTranslatedOrNot("$mp_host_gamemode_outdated"), GameTextGetTranslatedOrNot(active_mode.name))
 				})
 				return false
 			elseif (active_mode.version < tonumber(gamemode_version)) then
 				disconnect({
 					lobbyID = lobbycode,
-					message = string.format(GameTextGetTranslatedOrNot("$mp_client_gamemode_outdated"), active_mode.name)
+					message = string.format(GameTextGetTranslatedOrNot("$mp_client_gamemode_outdated"), GameTextGetTranslatedOrNot(active_mode.name))
 				})
 				return false
 			end
 		else
 			disconnect({
 				lobbyID = lobbycode,
-				message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), active_mode.name)
+				message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), GameTextGetTranslatedOrNot(active_mode.name))
 			})
 			return false
 		end

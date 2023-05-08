@@ -219,7 +219,7 @@ ArenaGameplay = {
         return amount
     end,
     ReadyCounter = function(lobby, data)
-        data.ready_counter = counter.create("Players ready: ", function()
+        data.ready_counter = counter.create(GameTextGetTranslatedOrNot("$arena_players_ready"), function()
             local playersReady = ArenaGameplay.ReadyAmount(data, lobby)
             local totalPlayers = ArenaGameplay.TotalPlayers(lobby)
 
@@ -380,7 +380,7 @@ ArenaGameplay = {
                         if (not IsPaused()) then
                             local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                            local text = "Zone is shrinking (" .. math.ceil(data.zone_size) .. "/" .. default_size .. ")"
+                            local text = GameTextGetTranslatedOrNot("$arena_zone_shrinking").." (" .. math.ceil(data.zone_size) .. "/" .. default_size .. ")"
 
                             local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
 
@@ -421,7 +421,7 @@ ArenaGameplay = {
                             if (not IsPaused()) then
                                 local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                                local text = "Zone is shrinking (" ..
+                                local text = GameTextGetTranslatedOrNot("$arena_zone_shrinking").." (" ..
                                     math.ceil(data.zone_size) .. "/" .. default_size .. ")"
 
                                 local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
@@ -481,7 +481,7 @@ ArenaGameplay = {
 
                         local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                        local text = "Zone is shrinking (" ..
+                        local text = GameTextGetTranslatedOrNot("$arena_zone_shrinking").." (" ..
                             tostring(math.ceil(data.zone_size)) .. "/" .. default_size .. ")"
 
                         -- GamePrint(text)
@@ -498,7 +498,7 @@ ArenaGameplay = {
                         if (data.shrink_time == 0) then
                             local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                            local text = "Zone is shrinking (" ..
+                            local text = GameTextGetTranslatedOrNot("$arena_zone_shrinking").." (" ..
                                 tostring(math.ceil(data.zone_size)) .. "/" .. default_size .. ")"
 
                             --GamePrint(text)
@@ -514,7 +514,7 @@ ArenaGameplay = {
                         else
                             local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                            local text = "Zone will shrink in " .. tostring(data.shrink_time) .. " seconds"
+                            local text = string.format("$arena_zone_shrink_countdown", tostring(data.shrink_time))--"Zone will shrink in " .. tostring(data.shrink_time) .. " seconds"
 
                             --GamePrint(text)
 
@@ -555,8 +555,7 @@ ArenaGameplay = {
             end
         end
         if (alive == 1) then
-            GamePrintImportant(steamutils.getTranslatedPersonaName(winner) .. " won this round!",
-                "Prepare for the next round in your holy mountain.")
+            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
 
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
@@ -567,7 +566,7 @@ ArenaGameplay = {
 
             ArenaGameplay.LoadLobby(lobby, data, false)
         elseif (alive == 0) then
-            GamePrintImportant("It was a tie!", "Prepare for the next round in your holy mountain.")
+            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
 
             ArenaGameplay.LoadLobby(lobby, data, false)
         end
@@ -578,19 +577,19 @@ ArenaGameplay = {
             local username = steamutils.getTranslatedPersonaName(steam.user.getSteamID())
 
             if (killer == nil) then
-                GamePrint(tostring(username) .. " died.")
+                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
             else
                 local killer_id = ArenaGameplay.FindUser(lobby, killer)
                 if (killer_id ~= nil) then
-                    GamePrint(tostring(username) .. " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_kill"), tostring(username), steamutils.getTranslatedPersonaName(killer_id))--[[tostring(username) .. " was killed by " .. steamutils.getTranslatedPersonaName(killer_id)]])
                 else
-                    GamePrint(tostring(username) .. " died.")
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
                 end
             end
 
             --if(data.deaths == 0)then
             GameAddFlagRun("first_death")
-            GamePrint("You will be compensated for dying.")
+            GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
             --end
 
             data.deaths = data.deaths + 1
@@ -601,7 +600,7 @@ ArenaGameplay = {
 
             GameRemoveFlagRun("player_died")
 
-            GamePrintImportant("You died!")
+            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_player_died"))
 
             GameSetCameraFree(true)
 
@@ -754,8 +753,8 @@ ArenaGameplay = {
             extra_gold = data.client.first_spawn_gold
         end
 
-        GamePrint("You were granted " ..
-            tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
+        --GamePrint("You were granted " ..tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
+        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
 
         arena_log:print("Loaded from data: " .. tostring(player_loaded_from_data))
 
@@ -806,7 +805,7 @@ ArenaGameplay = {
 
         -- show message
         if (show_message) then
-            GamePrintImportant("You have entered the holy mountain", "Prepare to enter the arena.")
+            GamePrintImportant("$arena_holymountain_enter", "$arena_holymountain_enter_sub")
         end
 
 
@@ -898,9 +897,9 @@ ArenaGameplay = {
         --print("SetReady called: "..tostring(ready))
 
         if (ready) then
-            GamePrint("You are ready")
+            GamePrint(GameTextGetTranslatedOrNot("$arena_self_ready"))
         else
-            GamePrint("You are no longer ready")
+            GamePrint(GameTextGetTranslatedOrNot("$arena_self_unready"))
             GameRemoveFlagRun("ready_check")
         end
 
@@ -1211,7 +1210,7 @@ ArenaGameplay = {
                 v:Clean(lobby)
                 data.players[k] = nil
                 --local name = steamutils.getTranslatedPersonaName(playerid)
-                GamePrint("Player " .. tostring(lobby_member_names[k]) .. " left the game")
+                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
 
                 -- if we are the last player, unready
                 if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
@@ -1271,10 +1270,12 @@ ArenaGameplay = {
 
             local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
 
-            local text = "Spectating"
+            local text = GameTextGetTranslatedOrNot("$arena_spectating_text")
 
             if (data.selected_player ~= nil and data.selected_player_name ~= nil) then
-                text = text .. " " .. data.selected_player_name
+                string.format(text, data.selected_player_name)
+            else
+                string.format(text, "")
             end
 
 

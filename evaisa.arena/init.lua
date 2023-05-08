@@ -13,19 +13,6 @@ post_final = string.gsub(post_final, "const bool ENABLE_LIGHTING	    		= 1>0;", 
 ModTextFileSetContent("data/shaders/post_final.frag", post_final)
 ]]
 
-if(ModIsEnabled("evaisa.mp"))then
-    ------ TRANSLATIONS -------
-
-    dofile("mods/evaisa.mp/lib/translations.lua")
-
-    register_localizations("mods/evaisa.arena/translations.csv", 2)
-
-    ---------------------------
-
-    ModLuaFileAppend("mods/evaisa.mp/data/gamemodes.lua", "mods/evaisa.arena/files/scripts/gamemode/main.lua")
-end
-
-
 ModMaterialsFileAdd("mods/evaisa.arena/files/materials.xml")
 ModMagicNumbersFileAdd("mods/evaisa.arena/files/magic.xml")
 ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")
@@ -60,10 +47,22 @@ local overrides = dofile_once("mods/evaisa.arena/data_override/override_list.lua
 parse_overrides(overrides)]]
 
 function OnModPreInit()
-    --ModTextFileSetContent("data/scripts/biome_modifiers.lua", "return function() end")
-    --ModTextFileSetContent("data/scripts/init.lua", "print(\"Prevented init.lua from loading.\")")
+    if(ModIsEnabled("evaisa.mp"))then
+        ------ TRANSLATIONS -------
+    
+        dofile("mods/evaisa.mp/lib/translations.lua")
+    
+        register_localizations("mods/evaisa.arena/translations.csv", 2)
+    
+        ---------------------------
+    end
 end
 
+function OnModPostInit()
+    if(ModIsEnabled("evaisa.mp"))then
+        ModLuaFileAppend("mods/evaisa.mp/data/gamemodes.lua", "mods/evaisa.arena/files/scripts/gamemode/main.lua")
+    end
+end
 
 function OnMagicNumbersAndWorldSeedInitialized()
 

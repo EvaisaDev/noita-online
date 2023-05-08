@@ -4,6 +4,10 @@ function register_localizations(translation_file, clear_count)
 
     local loc_content = ModTextFileGetContent("data/translations/common.csv") -- Gets the original translations of the game
 
+    if(debug_log)then
+        debug_log:print("loc_content: " .. loc_content)
+    end
+
     local append_content = ModTextFileGetContent(translation_file) -- Gets my own translations file
 
     -- Split the append_content into lines
@@ -20,8 +24,13 @@ function register_localizations(translation_file, clear_count)
     -- Reconstruct append_content after removing clear_count lines
     local new_append_content = table.concat(lines, "\n")
 
+    -- if loc_content does not end with a new line, add one
+    if not loc_content:match("\n$") then
+        loc_content = loc_content .. "\n"
+    end
+
     -- Concatenate loc_content and new_append_content without extra newline character
-    local new_content = loc_content .. new_append_content
+    local new_content = loc_content .. new_append_content .. "\n"
 
     -- Set the new content to the file
     ModTextFileSetContent("data/translations/common.csv", new_content)

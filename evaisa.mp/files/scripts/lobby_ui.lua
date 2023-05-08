@@ -126,7 +126,7 @@ local windows = {
 								end
 							else
 								if(active_mode ~= nil)then
-									if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 										steam.matchmaking.leaveLobby(v)
 										steam.matchmaking.joinLobby(v, function(e)
 										end)
@@ -168,7 +168,7 @@ local windows = {
 							end
 						else
 							if(active_mode ~= nil)then
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..active_mode.name..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 									steam.matchmaking.leaveLobby(v)
 									steam.matchmaking.joinLobby(v, function(e)
 									end)
@@ -685,7 +685,7 @@ local windows = {
 						end
 					end]]
 					
-					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..active_mode.name)
+					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(active_mode.name))
 					GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
@@ -741,28 +741,28 @@ local windows = {
 								offset = 5
 							end
 
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, setting.name..": "..selected_name))then
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
 								selected_index = selected_index + 1
 								if(selected_index > #setting.options)then
 									selected_index = 1
 								end
 								gamemode_settings[setting.id] = setting.options[selected_index][1]
 							end
-							GuiTooltip(menu_gui, "", setting.description)
+							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
 							previous_type = "enum"
 							
 						elseif(setting.type == "bool")then
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, setting.name..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 								gamemode_settings[setting.id] = not gamemode_settings[setting.id]
 							end
-							GuiTooltip(menu_gui, "", setting.description)
+							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
 							previous_type = "bool"
 						elseif(setting.type == "slider")then
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-							GuiText(menu_gui, 2, 3, setting.name..": ")
-							GuiTooltip(menu_gui, "", setting.description)
+							GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot(setting.name)..": ")
+							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 							local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, setting.width or 120)
 							if(slider_value ~= gamemode_settings[setting.id])then
 								gamemode_settings[setting.id] = slider_value
@@ -878,7 +878,7 @@ local windows = {
 					end
 
 
-					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..gamemodes[gamemode_index].name))then
+					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(gamemodes[gamemode_index].name)))then
 						gamemode_index = gamemode_index + 1
 						if(gamemode_index > #gamemodes)then
 							gamemode_index = 1
