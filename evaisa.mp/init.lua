@@ -22,6 +22,8 @@ end
 get_content = ModTextFileGetContent
 set_content = ModTextFileSetContent
 
+dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
+
 table.insert(package.loaders, 2, load)
 
 logger = require("logger")("noita_online_logs")
