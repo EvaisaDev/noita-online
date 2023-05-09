@@ -100,6 +100,15 @@ SpectatorMode = {
             data.spectator_quick_switch_trigger = right_trigger
 
             if (not GameHasFlagRun("chat_input_hovered")) then
+
+                local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
+                local movement_x = stick_x * (camera_speed + (right_trigger * 5))
+                local movement_y = stick_y * (camera_speed + (right_trigger * 5))
+
+                if(((stick_x + stick_y) / 2) >= 0.2)then
+                    GameSetCameraPos(camera_x + movement_x, camera_y + movement_y)
+                end
+
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or ((stick_x + stick_y) / 2) >= 0.2) then
                     data.selected_player = nil
                     data.selected_player_name = nil
