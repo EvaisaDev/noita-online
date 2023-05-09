@@ -100,16 +100,28 @@ SpectatorMode = {
             data.spectator_quick_switch_trigger = right_trigger
 
             if (not GameHasFlagRun("chat_input_hovered")) then
+                --[[
+                arena_log:print("stick_x: "..tostring(stick_x))
+                arena_log:print("stick_y: "..tostring(stick_y))
+                arena_log:print("r_stick_x: "..tostring(r_stick_x))
+                arena_log:print("r_stick_y: "..tostring(r_stick_y))
+                arena_log:print("left_trigger: "..tostring(left_trigger))
+                arena_log:print("right_trigger: "..tostring(right_trigger))
+                ]]
 
                 local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
-                local movement_x = stick_x * (camera_speed + (right_trigger * 5))
-                local movement_y = stick_y * (camera_speed + (right_trigger * 5))
+                local movement_x = (stick_x * (camera_speed * (1 + (right_trigger * 5))))
+                local movement_y = (stick_y * (camera_speed * (1 + (right_trigger * 5))))
 
-                if(((stick_x + stick_y) / 2) >= 0.2)then
+                local stick_average = ((stick_x + stick_y) / 2)
+
+                if(stick_average >= 0.1 or stick_average <= -0.1)then
+                    --arena_log:print("x_move: "..tostring(movement_x)..", y_move: "..tostring(movement_y))
+
                     GameSetCameraPos(camera_x + movement_x, camera_y + movement_y)
                 end
 
-                if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or ((stick_x + stick_y) / 2) >= 0.2) then
+                if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
                     data.selected_player_name = nil
                 end

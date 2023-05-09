@@ -183,7 +183,7 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
             end
         elseif event.type == SDL.SDL_CONTROLLERAXISMOTION then
             local axis = event.caxis.axis
-            local value = event.caxis.value
+            local value = event.caxis.value / 32767
             -- Depending on the axis, set the input for left or right thumbstick
             if axis == SDL.SDL_CONTROLLER_AXIS_LEFTX then
                 input.controller.left_stick.x = value
