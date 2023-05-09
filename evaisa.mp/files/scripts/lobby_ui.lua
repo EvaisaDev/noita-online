@@ -763,7 +763,14 @@ local windows = {
 							previous_type = "enum"
 							
 						elseif(setting.type == "bool")then
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
+
+							local offset = 1
+
+							if(previous_type == "text_input")then
+								offset = 5
+							end
+
+							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 								gamemode_settings[setting.id] = not gamemode_settings[setting.id]
 							end
 							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
