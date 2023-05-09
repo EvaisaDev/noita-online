@@ -825,24 +825,9 @@ local windows = {
 			-- if default lobby name ends with "s" add ' otherwise add 's
 
 			if(string.sub(default_lobby_name, -1) == "s")then
-				default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name.."'")
+				default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name_s"), default_lobby_name)
 			else
-				local alphabet = "abcdefghijklmnopqrtuvwxyz"
-
-				local last_letter = string.sub(default_lobby_name, -1)
-
-				local found = false
-				for i = 1, #alphabet do
-					if(string.sub(alphabet, i, i) == last_letter)then
-						default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name.."'s")
-						found = true
-						break
-					end
-				end
-				
-				if(not found)then
-					default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name)
-				end
+				default_lobby_name = string.format(GameTextGetTranslatedOrNot("$mp_default_lobby_name"), default_lobby_name)
 			end
 
 			lobby_name = lobby_name or default_lobby_name
