@@ -261,6 +261,7 @@
     special_scale_y="1"
     z_index="-10000"
     emissive="1"
+    visible="0"
   ></SpriteComponent>
 
   <SpriteStainsComponent>

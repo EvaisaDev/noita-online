@@ -230,6 +230,17 @@ ArenaGameplay = {
     end,
     LoadPlayer = function(lobby, data)
         local current_player = EntityLoad("data/entities/player.xml", 0, 0)
+
+        local aiming_reticle = EntityGetComponentIncludingDisabled(current_player, "SpriteComponent", "aiming_reticle") or {}
+
+        for k, v in ipairs(aiming_reticle)do
+            if(GameGetIsGamepadConnected())then
+                ComponentSetValue2(v, "visible", true)
+            else
+                ComponentSetValue2(v, "visible", false)
+            end
+        end
+
         game_funcs.SetPlayerEntity(current_player)
         np.RegisterPlayerEntityId(current_player)
 
