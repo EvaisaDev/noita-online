@@ -248,7 +248,7 @@
     ></HotspotComponent>
 
   </Entity>
-<!--
+
   <SpriteComponent 
     _tags="aiming_reticle" 
     alpha="1" 
@@ -262,7 +262,7 @@
     z_index="-10000"
     emissive="1"
   ></SpriteComponent>
--->
+
   <SpriteStainsComponent>
   </SpriteStainsComponent>
 

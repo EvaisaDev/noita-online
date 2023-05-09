@@ -18,6 +18,7 @@ message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handl
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
+spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
@@ -129,7 +130,9 @@ ArenaMode = {
 
         --print("WE GOOD???")
 
-        debug_log:print(GameTextGetTranslatedOrNot("$arena_predictive_netcode_name"))
+        --debug_log:print(GameTextGetTranslatedOrNot("$arena_predictive_netcode_name"))
+
+        arena_log:print("Enter called!!!")
 
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
 

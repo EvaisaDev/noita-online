@@ -26,7 +26,7 @@ table.insert(package.loaders, 2, load)
 
 logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
-debug_log = logger.init("debugging.log")
+--debug_log = logger.init("debugging.log")
 
 ------ TRANSLATIONS -------
 
@@ -509,6 +509,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		steam.networking.closeSession(v)
 		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 	end
+	input:Clear()
 	in_game = false
 	game_in_progress = false
 	if (data.response ~= 2) then
@@ -520,18 +521,16 @@ function steam.matchmaking.onLobbyEnter(data)
 		if handleVersionCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
+					defineLobbyUserData(lobby_code)
+					
 					--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 					if(game_in_progress)then
 						gui_closed = true
 					end]]
 					lobby_gamemode.enter(lobby_code)
-
-
-
-					defineLobbyUserData(lobby_code)
 				end
 			end
-		end
+		end	
 	else
 		msg.log("Invalid lobby ID")
 	end
@@ -645,7 +644,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				end
 			end
 		end
-	elseif (owner == steam.user.getSteamID()) then
+	elseif (owner == steam.user.getSteamID() and data.message == "spectate") then
 		local user = data.userID
 		local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user) .. "_spectator") == "true"
 		steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
@@ -689,13 +688,16 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	file:write(translations_content)
 	file:close()
 	
-	print(translations_content)
+	--print(translations_content)
 
 	__loaded["mods/evaisa.mp/data/gamemodes.lua"] = nil
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 
 	steam.init()
 	steam.friends.setRichPresence("status", "Noita Online - Menu")
+
+
+
 	mod_data = ModData()
 
 	local response = request.send("http://evaisa.dev/noita-online-checksum.txt")

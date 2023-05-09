@@ -4,9 +4,11 @@ function register_localizations(translation_file, clear_count)
 
     local loc_content = ModTextFileGetContent("data/translations/common.csv") -- Gets the original translations of the game
 
+    --[[
     if(debug_log)then
         debug_log:print("loc_content: " .. loc_content)
     end
+    ]]
 
     local append_content = ModTextFileGetContent(translation_file) -- Gets my own translations file
 

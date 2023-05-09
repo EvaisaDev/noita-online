@@ -196,6 +196,7 @@ local windows = {
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
+				selected_player = nil
 			end)
 
 		end
@@ -345,13 +346,22 @@ local windows = {
 				if(lobby_in_progress and not in_game)then
 					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
 						
+						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+						mp_log:print("Attempting to load into gamemode: "..(active_mode and active_mode.name or "UNKNOWN"))
+
 						if(active_mode)then
+							mp_log:print("Attempting to start gamemode")
 							if(spectating)then
+								mp_log:print("Checking if gamemode has spectate function")
 								if(active_mode.spectate ~= nil)then
+									mp_log:print("Starting gamemode in spectator mode")
 									active_mode.spectate(lobby_code, true)
 								end
 							else
+								mp_log:print("Checking if gamemode has start function")
 								if(active_mode.start ~= nil)then
+									mp_log:print("Starting gamemode")
 									active_mode.start(lobby_code, true)
 								end
 							end
@@ -842,6 +852,7 @@ local windows = {
 						lobby_code = nil
 					end
 					invite_menu_open = false
+					selected_player = nil
 					menu_status = status.main_menu
 					initial_refreshes = 10
 					return
@@ -941,7 +952,8 @@ local windows = {
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
-				invite_menu_open = false 
+				invite_menu_open = false
+				selected_player = nil 
 			end)
 
 		end
@@ -1005,6 +1017,7 @@ local windows = {
 							if(data.response == 2)then
 								steam.matchmaking.leaveLobby(data.lobbyID)
 								invite_menu_open = false
+								selected_player = nil
 								menu_status = status.joining_lobby
 								show_lobby_code = false
 								lobby_code = nil
@@ -1022,6 +1035,7 @@ local windows = {
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
+				selected_player = nil
 			end)
 
 		end
@@ -1046,6 +1060,7 @@ local windows = {
 						lobby_code = nil
 					end
 					invite_menu_open = false
+					selected_player = nil
 					lobby_code_input = ""
 					menu_status = status.main_menu
 					initial_refreshes = 10
@@ -1066,6 +1081,7 @@ local windows = {
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
+				selected_player = nil
 			end)
 		end
 	}
@@ -1075,6 +1091,7 @@ GuiZSetForNextWidget(menu_gui, 0)
 if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/menu.png"))then
 	gui_closed = not gui_closed
 	invite_menu_open = false 
+	selected_player = nil
 	GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 end
 

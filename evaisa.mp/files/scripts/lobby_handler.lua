@@ -161,6 +161,9 @@ function ModData()
 
 	local file, err = io.open(save_folder, 'rb')
 	if file then
+
+		mp_log:print("Reading mod config file")
+
 		local content = file:read("*all")
 
 		local data = {
@@ -214,21 +217,33 @@ function ModData()
 
 		file:close()
 
+		mp_log:print("Mod data: "..json.stringify(data))
+
 		return data
 	end
 	return nil
 end
 
 function defineLobbyUserData(lobby)
+	--mp_log:print("Defining lobby user data")
+	local mod_data = ModData()
 	if (mod_data ~= nil) then
-		--print("Setting mod data: "..mod_data)
+		mp_log:print("Setting mod data: "..json.stringify(mod_data))
 		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", json.stringify(mod_data))
 	end
 end
 
 function getLobbyUserData(lobby, userid)
+	if(lobby == nil) then
+		return nil
+	end
+	if(userid == nil)then
+		return nil
+	end 
 	local player_mod_data = steam.matchmaking.getLobbyMemberData(lobby, userid, "mod_data")
-	if (player_mod_data ~= nil) then
+	if (player_mod_data ~= nil and player_mod_data ~= "") then
+		local player_name = steam.friends.getFriendPersonaName(userid)
+		--mp_log:print(player_name.." mods: "..player_mod_data)
 		--print("Getting mod data: "..player_mod_data)
 		local data_received = json.parse(player_mod_data)
 		--mp_log:print(player_mod_data)
