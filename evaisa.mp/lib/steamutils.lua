@@ -32,11 +32,14 @@ steam_utils.getSteamFriends = function()
 	return list
 end
 
-steam_utils.getLobbyMembers = function(lobby_id)
+steam_utils.getLobbyMembers = function(lobby_id, include_spectators)
+	include_spectators = include_spectators or false
 	local list = {}
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
-		table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
+		if (include_spectators or steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") ~= "true") then
+			table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
+		end	
 	end
 	return list
 end

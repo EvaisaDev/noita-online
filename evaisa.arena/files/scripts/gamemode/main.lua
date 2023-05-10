@@ -263,6 +263,7 @@ ArenaMode = {
         end
 
         gameplay_handler.GetGameData(lobby, data)
+        spectator_handler.LoadLobby(lobby, data, true, true)
 
         if (playermenu ~= nil) then
             playermenu:Destroy()
@@ -318,7 +319,12 @@ ArenaMode = {
         GlobalsSetValue("update_seed", update_seed)
 
         if (data ~= nil) then
-            gameplay_handler.Update(lobby, data)
+            if(not data.spectator_mode)then
+                gameplay_handler.Update(lobby, data)
+            else
+                spectator_handler.Update(lobby, data)
+            end
+
             if (not IsPaused()) then
                 if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
@@ -376,8 +382,10 @@ ArenaMode = {
             return
         end
 
-        if (data ~= nil) then
+        if(not data.spectator_mode)then
             gameplay_handler.LateUpdate(lobby, data)
+        else
+            spectator_handler.LateUpdate(lobby, data)
         end
     end,
     leave = function(lobby)

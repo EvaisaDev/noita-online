@@ -50,6 +50,10 @@ ArenaGameplay = {
         local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
         local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
 
+        if(steamutils.GetLocalLobbyData(lobby, "reroll_count") == nil)then
+            data.rejoined = true
+        end
+
         data.client.reroll_count = rerollCount
 
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", tostring(rerollCount))
@@ -61,6 +65,7 @@ ArenaGameplay = {
             --data.client.serialized_player = bitser.dumps(playerData)
             arena_log:print("Player data: " .. data.client.serialized_player)
         end
+        
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = (ready_players_string ~= nil and ready_players_string ~= "null") and
             bitser.loads(ready_players_string) or nil
@@ -1250,7 +1255,7 @@ ArenaGameplay = {
         return alive_players
     end,
     Update = function(lobby, data)
-        SpectatorMode.ArenaUpdate(lobby, data)
+        SpectatorMode.SpectateUpdate(lobby, data)
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)
         --end

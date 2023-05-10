@@ -133,96 +133,101 @@ function playerinfo_menu:New()
         GuiLayoutBeginVertical(self.gui, 0, 0, true)
 
 
-        ------------- DRAW OUR OWN CARD ---------------
-        local player_id = steam.user.getSteamID()
-        local username = steamutils.getTranslatedPersonaName(player_id)
+        ------------- DRAW OUR OWN CARD (if not spectator) ---------------
 
-        local hp = data.client.hp or 100
-        local max_hp = data.client.max_hp or 100
+        local spectator = data.spectator_mode
 
-        local wins = ArenaGameplay.GetWins(lobby, player_id)
-                    
-        GuiZSetForNextWidget(self.gui, 900)
-
-        local color = game_funcs.ID2Color(player_id)
-        if(color == nil)then
-            color = {r = 255, g = 255, b = 255}
-        end
-        local r, g, b = color.r, color.g, color.b
-        local a = 1
-        GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
-
-        GuiText(self.gui, 0, 0, username.." ("..GameTextGetTranslatedOrNot("$arena_playerinfo_you")..")")
-
-        local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-        scroll_offset = scroll_y - self.offset_y - 2
-
-        GuiZSetForNextWidget(self.gui, 900)
-        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-        GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
-
-        local health_ratio = hp / max_hp
-        local health_bar_width = 90
-        local health_width = health_bar_width * health_ratio
-        local rest_width = health_bar_width - health_width
-
-        local health_percentage = health_width / health_bar_width
-        local rest_percentage = rest_width / health_bar_width
-
-        local health_bar_color = get_health_bar_color(hp, max_hp)
-
-        GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
-        GuiZSetForNextWidget(self.gui, 900)
-        GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
-        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
-        local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-        if(hp_hovered1)then
-            player_index = index
-            hovered_max_hp = max_hp
-            hovered_hp = hp
-            draw_hp_info = true
-        end
-
-
-        GuiZSetForNextWidget(self.gui, 900)
-        GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
-        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
-        local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-        if(hp_hovered2)then
-            player_index = index
-            hovered_max_hp = max_hp
-            hovered_hp = hp
-            draw_hp_info = true
-        end
-
-        GuiZSetForNextWidget(self.gui, 900)
-        GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
-        local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-        if(hovered)then
-            player_index = index
-            if(data.client.perks)then
-                for k, v in ipairs(data.client.perks)do
-                    local perk = v[1]
-                    local count = v[2]
+        if(not spectator)then
             
-                    local perk_sprite = perk_sprites[perk]
-                    
-                    if(perk_sprite)then
-                        for i = 1, count do
-                            
-                            table.insert(player_perk_sprites, perk_sprite)
+            local player_id = steam.user.getSteamID()
+            local username = steamutils.getTranslatedPersonaName(player_id)
+
+            local hp = data.client.hp or 100
+            local max_hp = data.client.max_hp or 100
+
+            local wins = ArenaGameplay.GetWins(lobby, player_id)
+                        
+            GuiZSetForNextWidget(self.gui, 900)
+
+            local color = game_funcs.ID2Color(player_id)
+            if(color == nil)then
+                color = {r = 255, g = 255, b = 255}
+            end
+            local r, g, b = color.r, color.g, color.b
+            local a = 1
+            GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
+
+            GuiText(self.gui, 0, 0, username.." ("..GameTextGetTranslatedOrNot("$arena_playerinfo_you")..")")
+
+            local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+            scroll_offset = scroll_y - self.offset_y - 2
+
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+            GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
+
+            local health_ratio = hp / max_hp
+            local health_bar_width = 90
+            local health_width = health_bar_width * health_ratio
+            local rest_width = health_bar_width - health_width
+
+            local health_percentage = health_width / health_bar_width
+            local rest_percentage = rest_width / health_bar_width
+
+            local health_bar_color = get_health_bar_color(hp, max_hp)
+
+            GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
+            GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
+            local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+            if(hp_hovered1)then
+                player_index = index
+                hovered_max_hp = max_hp
+                hovered_hp = hp
+                draw_hp_info = true
+            end
+
+
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
+            GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
+            local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+
+            if(hp_hovered2)then
+                player_index = index
+                hovered_max_hp = max_hp
+                hovered_hp = hp
+                draw_hp_info = true
+            end
+
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
+            local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+            if(hovered)then
+                player_index = index
+                if(data.client.perks)then
+                    for k, v in ipairs(data.client.perks)do
+                        local perk = v[1]
+                        local count = v[2]
+                
+                        local perk_sprite = perk_sprites[perk]
+                        
+                        if(perk_sprite)then
+                            for i = 1, count do
+                                
+                                table.insert(player_perk_sprites, perk_sprite)
+                            end
                         end
                     end
                 end
+                draw_perks = true
             end
-            draw_perks = true
+            perk_draw_x = draw_x
+            perk_draw_y = draw_y
+            GuiLayoutEnd(self.gui)
         end
-        perk_draw_x = draw_x
-        perk_draw_y = draw_y
-        GuiLayoutEnd(self.gui)
-        
         -----------------------------------------------
 
 
@@ -349,7 +354,7 @@ function playerinfo_menu:New()
         GuiEndScrollContainer(self.gui)
         
         local draw_pos = 0
-        if(player_index == 1)then
+        if((not spectator) and player_index == 1)then
             draw_pos = self.offset_y + 16
         else
             draw_pos = self.offset_y + 76 + (56 * (player_index - 2))
