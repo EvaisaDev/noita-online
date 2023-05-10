@@ -160,7 +160,8 @@ function spawn_all_shopitems( x, y )
 		print("just kidding, its not implemented yet, ha ha ha!")
 	-- "Random" shop type is basically vanilla and we default to this if no other shop type is match is found.
 	else
-		if( random.range( 0, 100 ) >= shop_wand_chance ) then
+		local shop_random_ratio = tonumber(GlobalsGetValue("shop_random_ratio", "50"))
+		if( random.range( 0, 100 ) >= shop_random_ratio ) then
 			for i=1,count do
 				if( i == sale_item_i ) then
 					generate_shop_item( x + (i-1)*item_width, y, true, round, false )

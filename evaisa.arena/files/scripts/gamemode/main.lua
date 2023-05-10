@@ -66,6 +66,18 @@ ArenaMode = {
 			width = 100
 		},
         {
+			id = "shop_random_ratio",
+			name = "$arena_settings_shop_random_ratio_name",
+			description = "$arena_settings_shop_random_ratio_description",
+			type = "slider",
+			min = 0,
+			max = 100,
+			default = 50;
+			display_multiplier = 1,
+			formatting_string = " $0%",
+			width = 100
+		},
+        {
             id = "damage_cap",
             name = "$arena_settings_damage_cap_name",
             description = "$arena_settings_damage_cap_description",
@@ -121,10 +133,16 @@ ArenaMode = {
 		GlobalsSetValue("shop_type", tostring(shop_type))
 
 		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")
-		if (shop_wand_chance == true) then
+		if (shop_wand_chance == nil) then
 			shop_wand_chance = 20
 		end
 		GlobalsSetValue("shop_wand_chance", tostring(shop_wand_chance))
+
+        local shop_random_ratio = steam.matchmaking.getLobbyData(lobby, "setting_shop_random_ratio")
+        if (shop_random_ratio == nil) then
+            shop_random_ratio = 50
+        end
+        GlobalsSetValue("shop_random_ratio", tostring(shop_random_ratio))
 
         local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
         if (damage_cap == nil) then
