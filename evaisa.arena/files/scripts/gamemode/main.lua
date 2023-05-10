@@ -51,7 +51,7 @@ ArenaMode = {
 			type = "enum",
 			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "mixed", "$arena_settings_shop_type_mixed" }, { "random", "$arena_settings_shop_type_random" },
 				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" } },
-			default = "mixed"
+			default = "random"
 		},
 		{
 			id = "shop_wand_chance",
@@ -115,8 +115,8 @@ ArenaMode = {
     },
     refresh = function(lobby)
 		local shop_type = steam.matchmaking.getLobbyData(lobby, "setting_shop_type")
-		if (shop_type == true) then
-			shop_type = "mixed"
+		if (shop_type == nil) then
+			shop_type = "random"
 		end
 		GlobalsSetValue("shop_type", tostring(shop_type))
 
