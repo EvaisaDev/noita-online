@@ -792,7 +792,7 @@ local windows = {
 
 								local text_width, text_height = GuiGetTextDimensions(menu_gui, GameTextGetTranslatedOrNot(setting.name)..": ")
 
-								GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot(setting.name)..": ")
+								GuiText(menu_gui, 2, offset - 1, GameTextGetTranslatedOrNot(setting.name)..": ")
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
 								local container_size = setting.width or 100
