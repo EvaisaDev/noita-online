@@ -307,7 +307,7 @@ local windows = {
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
 				if(active_mode and active_mode.spectate ~= nil)then
-					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")))then
+					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
 						else
