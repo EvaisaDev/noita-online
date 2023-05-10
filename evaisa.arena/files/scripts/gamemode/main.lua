@@ -55,6 +55,9 @@ ArenaMode = {
 		},
 		{
 			id = "shop_wand_chance",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") == "mixed"
+            end,
 			name = "$arena_settings_shop_wand_chance_name",
 			description = "$arena_settings_shop_wand_chance_description",
 			type = "slider",
