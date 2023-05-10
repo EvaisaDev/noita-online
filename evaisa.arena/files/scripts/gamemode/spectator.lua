@@ -79,6 +79,8 @@ SpectatorMode = {
 
         networking.send.request_perk_update(lobby)
 
+        data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
             "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
 
@@ -88,6 +90,19 @@ SpectatorMode = {
         -- set ready counter
         ArenaGameplay.ReadyCounter(lobby, data)
 
+        GameSetCameraFree(true)
+
+    end,
+    UpdateSpectatorEntity = function(lobby, data)
+        if(data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))then
+            data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+        end
+        
+        if(data.spectator_entity)then
+            local camera_x, camera_y = GameGetCameraPos()
+            EntitySetTransform(data.spectator_entity, camera_x, camera_y)
+            EntityApplyTransform(data.spectator_entity, camera_x, camera_y)
+        end
     end,
     SpectateUpdate = function(lobby, data)
         if (data.arena_spectator) then
@@ -106,6 +121,7 @@ SpectatorMode = {
             end
 
             local camera_x, camera_y = GameGetCameraPos()
+
             GuiStartFrame(data.spectator_gui)
 
             --GuiOptionsAdd(data.spectator_gui, GUI_OPTION.NonInteractive)
@@ -377,6 +393,7 @@ SpectatorMode = {
         end
     end,
     Update = function(lobby, data)
+        SpectatorMode.UpdateSpectatorEntity(lobby, data)
         SpectatorMode.SpectateUpdate(lobby, data)
     end,
     LateUpdate = function(lobby, data)
