@@ -140,7 +140,19 @@ end
 steam_utils.CheckLocalLobbyData = function()
 	-- Get saved list of "all_keys" from data_store
 	local key_string = data_store.Get("all_keys")
-	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string) or {}
+	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string)
+
+	-- if keys is nil, remove all data from data_store
+	if (keys == nil) then
+		if(RepairDataFolder ~= nil)then
+			RepairDataFolder()
+		end
+		return
+	end
+
+	if(type(keys) ~= "table")then
+		return
+	end 
 
 	-- Print current lobby data for debugging purposes
 	--mp_log:print("Checking lobby data: " .. pretty.table(keys))

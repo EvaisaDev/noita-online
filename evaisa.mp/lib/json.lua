@@ -187,7 +187,8 @@ function json.parse(str, pos, end_delim)
       if str:sub(pos, lit_end) == lit_str then return lit_val, lit_end + 1 end
     end
     local pos_info_str = 'position ' .. pos .. ': ' .. str:sub(pos, pos + 10)
-    error('Invalid json syntax starting at ' .. pos_info_str)
+    print('ERROR: Invalid json syntax starting at ' .. pos_info_str)
+    return nil
   end
 end
 
