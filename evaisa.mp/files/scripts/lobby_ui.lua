@@ -732,51 +732,62 @@ local windows = {
 
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
+							GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
 						end
-						if(setting.type == "enum")then
-							local selected_name = ""
-							local selected_index = nil
 
-							local selected_value = gamemode_settings[setting.id]
-							for k, v in ipairs(setting.options)do
-								if(v[1] == selected_value)then
-									selected_name = v[2]
-									selected_index = k
+						if(setting.require == nil or setting.require(setting))then
+							if(setting.type == "enum")then
+								local selected_name = ""
+								local selected_index = nil
+
+								local selected_value = gamemode_settings[setting.id]
+								for k, v in ipairs(setting.options)do
+									if(v[1] == selected_value)then
+										selected_name = v[2]
+										selected_index = k
+									end
 								end
-							end
 
-							local offset = 1
+								local offset = 1
 
-							if(previous_type == "text_input")then
-								offset = 5
-							end
-
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
-								selected_index = selected_index + 1
-								if(selected_index > #setting.options)then
-									selected_index = 1
+								if(previous_type == "text_input")then
+									offset = 5
 								end
-								gamemode_settings[setting.id] = setting.options[selected_index][1]
-							end
-							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
-							previous_type = "enum"
-							
-						elseif(setting.type == "bool")then
+								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
+									selected_index = selected_index + 1
+									if(selected_index > #setting.options)then
+										selected_index = 1
+									end
+									gamemode_settings[setting.id] = setting.options[selected_index][1]
+									GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
+								end
+								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
-							local offset = 1
+								previous_type = "enum"
+								
+							elseif(setting.type == "bool")then
 
-							if(previous_type == "text_input")then
-								offset = 5
-							end
+								local offset = 1
 
-							if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
-								gamemode_settings[setting.id] = not gamemode_settings[setting.id]
-							end
-							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
+								if(previous_type == "text_input")then
+									offset = 5
+								end
+
+								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
+									gamemode_settings[setting.id] = not gamemode_settings[setting.id]
+									GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+								end
+								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
 							previous_type = "bool"
 						elseif(setting.type == "slider")then
+   						local offset = 1
+
+							if(previous_type == "text_input")then
+									offset = 5
+							end               
+                  
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 
 							local text_width, text_height = GuiGetTextDimensions(menu_gui, GameTextGetTranslatedOrNot(setting.name)..": ")
@@ -791,13 +802,14 @@ local windows = {
 							end
 
 
-							local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, container_size)
+							local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, offset, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, container_size)
 							if(slider_value ~= gamemode_settings[setting.id])then
 								gamemode_settings[setting.id] = slider_value
 							end
 							GuiLayoutEnd(menu_gui)
 
-							previous_type = "slider"
+								previous_type = "slider"
+							end
 						end
 					end
 

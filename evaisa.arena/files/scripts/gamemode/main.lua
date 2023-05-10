@@ -44,6 +44,45 @@ ArenaMode = {
     name = "$arena_gamemode_name",
     version = 0.5,
     settings = {
+		{
+			id = "shop_type",
+			name = "$arena_settings_shop_type_name",
+			description = "$arena_settings_shop_type_description",
+			type = "enum",
+			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "random", "$arena_settings_shop_type_random" }, { "mixed", "$arena_settings_shop_type_mixed" },
+				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" } },
+			default = "random"
+		},
+		{
+			id = "shop_wand_chance",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") == "mixed"
+            end,
+			name = "$arena_settings_shop_wand_chance_name",
+			description = "$arena_settings_shop_wand_chance_description",
+			type = "slider",
+			min = 20,
+			max = 80,
+			default = 40;
+			display_multiplier = 1,
+			formatting_string = " $0%",
+			width = 100
+		},
+        {
+			id = "shop_random_ratio",
+			require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") == "random"
+            end,
+			name = "$arena_settings_shop_random_ratio_name",
+			description = "$arena_settings_shop_random_ratio_description",
+			type = "slider",
+			min = 10,
+			max = 90,
+			default = 50;
+			display_multiplier = 1,
+			formatting_string = " $0%",
+			width = 100
+		},
         {
             id = "damage_cap",
             name = "$arena_settings_damage_cap_name",
@@ -93,6 +132,24 @@ ArenaMode = {
         ready_players = "null",
     },
     refresh = function(lobby)
+		local shop_type = steam.matchmaking.getLobbyData(lobby, "setting_shop_type")
+		if (shop_type == nil) then
+			shop_type = "random"
+		end
+		GlobalsSetValue("shop_type", tostring(shop_type))
+
+		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")
+		if (shop_wand_chance == nil) then
+			shop_wand_chance = 20
+		end
+		GlobalsSetValue("shop_wand_chance", tostring(shop_wand_chance))
+
+        local shop_random_ratio = steam.matchmaking.getLobbyData(lobby, "setting_shop_random_ratio")
+        if (shop_random_ratio == nil) then
+            shop_random_ratio = 50
+        end
+        GlobalsSetValue("shop_random_ratio", tostring(shop_random_ratio))
+
         local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
         if (damage_cap == nil) then
             damage_cap = 0.25
