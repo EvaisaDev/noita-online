@@ -75,14 +75,18 @@ msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
 
-local serialization_version = "2"
-if ((ModSettingGet("last_serialization_version") or "1") ~= serialization_version) then
+function RepairDataFolder()
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data"
 	-- remove the folder
 	os.execute('del /q "' .. data_folder_name .. '\\*.*"')
 	print("Repaired data folder.")
 	GamePrint("Repairing data folder")
+end
+
+local serialization_version = "2"
+if ((ModSettingGet("last_serialization_version") or "1") ~= serialization_version) then
+	RepairDataFolder()
 	ModSettingSet("last_serialization_version", serialization_version)
 end
 

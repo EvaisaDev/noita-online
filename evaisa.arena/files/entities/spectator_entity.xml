@@ -1,0 +1,43 @@
+<Entity name="spectator" tags="spectator">
+    <StreamingKeepAliveComponent/>
+    <HitboxComponent
+        aabb_min_x="-500"
+        aabb_min_y="-500"
+        aabb_max_x="500"
+        aabb_max_y="500"
+    ></HitboxComponent>
+
+    <Entity>
+		<InheritTransformComponent/>
+	    <GameEffectComponent 
+	        effect="REMOVE_FOG_OF_WAR"
+	        frames="-1"
+	    >
+		</GameEffectComponent >
+	</Entity>
+<!--
+    <LightComponent 
+        r="255"
+        g="255"
+        b="255"
+        radius="350"
+        fade_out_time="5.0"
+    ></LightComponent>
+-->
+    <AudioListenerComponent
+        z="-60"
+    ></AudioListenerComponent>
+    <!--
+    <SpriteComponent 
+        alpha="1" 
+        image_file="mods/evaisa.arena/files/sprites/entities/spectator.png" 
+        next_rect_animation="" 
+        offset_x="3.5" 
+        offset_y="3.5" 
+        emissive="1"
+        additive="1"
+        rect_animation="" 
+        z_index="1"
+    ></SpriteComponent>
+    -->
+</Entity>

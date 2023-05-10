@@ -32,11 +32,14 @@ steam_utils.getSteamFriends = function()
 	return list
 end
 
-steam_utils.getLobbyMembers = function(lobby_id)
+steam_utils.getLobbyMembers = function(lobby_id, include_spectators)
+	include_spectators = include_spectators or false
 	local list = {}
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
-		table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
+		if (include_spectators or steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") ~= "true") then
+			table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
+		end	
 	end
 	return list
 end
@@ -140,7 +143,19 @@ end
 steam_utils.CheckLocalLobbyData = function()
 	-- Get saved list of "all_keys" from data_store
 	local key_string = data_store.Get("all_keys")
-	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string) or {}
+	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string)
+
+	-- if keys is nil, remove all data from data_store
+	if (keys == nil) then
+		if(RepairDataFolder ~= nil)then
+			RepairDataFolder()
+		end
+		return
+	end
+
+	if(type(keys) ~= "table")then
+		return
+	end 
 
 	-- Print current lobby data for debugging purposes
 	--mp_log:print("Checking lobby data: " .. pretty.table(keys))

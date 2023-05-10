@@ -271,9 +271,64 @@ ArenaMode = {
 
         --message_handler.send.Handshake(lobby)
     end,
-    --[[spectate = function(lobby, was_in_progress)
+    spectate = function(lobby, was_in_progress)
+        arena_log:print("Spectate called!!!")
 
-    end,]]
+        if (data ~= nil) then
+            ArenaGameplay.GracefulReset(lobby, data)
+        end
+        
+        if (not was_in_progress) then
+            steamutils.RemoveLocalLobbyData(lobby, "player_data")
+            steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        end
+
+        gameplay_handler.ResetEverything(lobby)
+
+        local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
+        local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
+
+        if (unique_game_id_server ~= unique_game_id_client) then
+            arena_log:print("Unique game id mismatch, removing player data")
+            steamutils.RemoveLocalLobbyData(lobby, "player_data")
+            steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        end
+
+        GameAddFlagRun("player_unloaded")
+
+        local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
+
+        SetWorldSeed(seed)
+
+        ArenaMode.refresh(lobby)
+
+        data = data_holder:New()
+        data.state = "lobby"
+        data.spectator_mode = steamutils.IsSpectator(lobby)
+        data:DefinePlayers(lobby)
+
+        local local_seed = data.random.range(100, 10000000)
+
+        GlobalsSetValue("local_seed", tostring(local_seed))
+
+        local unique_seed = data.random.range(100, 10000000)
+        GlobalsSetValue("unique_seed", tostring(unique_seed))
+
+        if (steamutils.IsOwner(lobby)) then
+            local unique_game_id = data.random.range(100, 10000000)
+            steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
+        end
+
+        gameplay_handler.GetGameData(lobby, data)
+        spectator_handler.LoadLobby(lobby, data, true, true)
+
+        if (playermenu ~= nil) then
+            playermenu:Destroy()
+        end
+
+        playermenu = playerinfo_menu:New()
+
+    end,
     update = function(lobby)
         if (data == nil) then
             return
@@ -321,7 +376,12 @@ ArenaMode = {
         GlobalsSetValue("update_seed", update_seed)
 
         if (data ~= nil) then
-            gameplay_handler.Update(lobby, data)
+            if(not data.spectator_mode)then
+                gameplay_handler.Update(lobby, data)
+            else
+                spectator_handler.Update(lobby, data)
+            end
+
             if (not IsPaused()) then
                 if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
@@ -379,8 +439,10 @@ ArenaMode = {
             return
         end
 
-        if (data ~= nil) then
+        if(not data.spectator_mode)then
             gameplay_handler.LateUpdate(lobby, data)
+        else
+            spectator_handler.LateUpdate(lobby, data)
         end
     end,
     leave = function(lobby)

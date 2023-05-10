@@ -780,24 +780,33 @@ local windows = {
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
-								previous_type = "bool"
-							elseif(setting.type == "slider")then
+							previous_type = "bool"
+						elseif(setting.type == "slider")then
+   						local offset = 1
 
-								local offset = 1
-
-								if(previous_type == "text_input")then
+							if(previous_type == "text_input")then
 									offset = 5
-								end
+							end               
+                  
+							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 
-								GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-								GuiText(menu_gui, 2, offset - 1, GameTextGetTranslatedOrNot(setting.name)..": ")
-								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
-								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, offset, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, setting.width or 120)
-								if(slider_value ~= gamemode_settings[setting.id])then
-									gamemode_settings[setting.id] = slider_value
-									GlobalsSetValue("setting_next_"..setting.id, tostring(slider_value))
-								end
-								GuiLayoutEnd(menu_gui)
+							local text_width, text_height = GuiGetTextDimensions(menu_gui, GameTextGetTranslatedOrNot(setting.name)..": ")
+
+							GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot(setting.name)..": ")
+							GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
+
+							local container_size = setting.width or 100
+
+							if(container_size + text_width > 150)then
+								container_size = 150 - text_width
+							end
+
+
+							local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, offset, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, setting.formatting_string, container_size)
+							if(slider_value ~= gamemode_settings[setting.id])then
+								gamemode_settings[setting.id] = slider_value
+							end
+							GuiLayoutEnd(menu_gui)
 
 								previous_type = "slider"
 							end

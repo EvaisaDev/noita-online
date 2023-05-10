@@ -1,7 +1,110 @@
 
 
 SpectatorMode = {
-    ArenaUpdate = function(lobby, data)
+    LoadLobby = function(lobby, data, show_message)
+        ArenaGameplay.GracefulReset(lobby, data)
+
+        data.selected_player = nil
+        data.selected_player_name = nil
+        GameRemoveFlagRun("can_save_player")
+        GameRemoveFlagRun("countdown_completed")
+        show_message = show_message or false
+
+        np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
+        np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
+        np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
+        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
+
+        ArenaGameplay.ClearWorld()
+
+        -- clean other player's data
+        ArenaGameplay.CleanMembers(lobby, data)
+
+        -- manage flags
+        GameRemoveFlagRun("player_ready")
+        GameRemoveFlagRun("ready_check")
+        GameRemoveFlagRun("player_unloaded")
+
+        -- destroy active tweens
+        data.tweens = {}
+
+        -- clean local data
+
+        --ArenaGameplay.SetReady(lobby, data, false, true)
+
+        data.client.alive = true
+        data.client.previous_wand = nil
+        data.client.previous_anim = nil
+        data.projectile_seeds = {}
+
+        data.current_arena = nil
+        ArenaGameplay.ResetDamageZone(lobby, data)
+        --data.client.projectile_homing = {}
+
+        -- set state
+        data.state = "lobby"
+
+        --[[player.Immortal(true)
+
+        RunWhenPlayerExists(function()
+            -- clean and unlock player entity
+            player.Clean(first_entry)
+            player.Unlock(data)
+
+            GameRemoveFlagRun("player_is_unlocked")
+
+            -- move player to correct position
+            player.Move(0, 0)
+        end)
+        ]]
+
+        local rounds = ArenaGameplay.GetNumRounds()
+
+        -- Give gold
+        local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
+        local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
+
+        if (steamutils.IsOwner(lobby)) then
+            -- get the gold count from the lobby
+            local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
+            -- add the new gold
+            gold = gold + extra_gold
+            -- set the new gold count
+            steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+        end
+
+        if (not data.rejoined) then
+            ArenaGameplay.AddRound()
+        end
+
+        networking.send.request_perk_update(lobby)
+
+        data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+
+        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+            "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+
+        -- clean other player's data again because it might have failed for some cursed reason
+        ArenaGameplay.CleanMembers(lobby, data)
+
+        -- set ready counter
+        ArenaGameplay.ReadyCounter(lobby, data)
+
+        GameSetCameraFree(true)
+
+    end,
+    UpdateSpectatorEntity = function(lobby, data)
+        if(data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))then
+            data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+        end
+        
+        if(data.spectator_entity)then
+            local camera_x, camera_y = GameGetCameraPos()
+            EntitySetTransform(data.spectator_entity, camera_x, camera_y)
+            EntityApplyTransform(data.spectator_entity, camera_x, camera_y)
+        end
+    end,
+    SpectateUpdate = function(lobby, data)
         if (data.arena_spectator) then
             if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
                 data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
@@ -18,6 +121,7 @@ SpectatorMode = {
             end
 
             local camera_x, camera_y = GameGetCameraPos()
+
             GuiStartFrame(data.spectator_gui)
 
             --GuiOptionsAdd(data.spectator_gui, GUI_OPTION.NonInteractive)
@@ -287,6 +391,13 @@ SpectatorMode = {
             end
             ]]
         end
+    end,
+    Update = function(lobby, data)
+        SpectatorMode.UpdateSpectatorEntity(lobby, data)
+        SpectatorMode.SpectateUpdate(lobby, data)
+    end,
+    LateUpdate = function(lobby, data)
+
     end,
 }
 
