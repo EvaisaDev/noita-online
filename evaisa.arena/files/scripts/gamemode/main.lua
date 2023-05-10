@@ -49,7 +49,7 @@ ArenaMode = {
 			name = "$arena_settings_shop_type_name",
 			description = "$arena_settings_shop_type_description",
 			type = "enum",
-			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "mixed", "$arena_settings_shop_type_mixed" }, { "random", "$arena_settings_shop_type_random" },
+			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "random", "$arena_settings_shop_type_random" }, { "mixed", "$arena_settings_shop_type_mixed" },
 				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" } },
 			default = "random"
 		},
@@ -63,18 +63,21 @@ ArenaMode = {
 			type = "slider",
 			min = 20,
 			max = 80,
-			default = 20;
+			default = 40;
 			display_multiplier = 1,
 			formatting_string = " $0%",
 			width = 100
 		},
         {
 			id = "shop_random_ratio",
+			require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") == "random"
+            end,
 			name = "$arena_settings_shop_random_ratio_name",
 			description = "$arena_settings_shop_random_ratio_description",
 			type = "slider",
-			min = 0,
-			max = 100,
+			min = 10,
+			max = 90,
 			default = 50;
 			display_multiplier = 1,
 			formatting_string = " $0%",
