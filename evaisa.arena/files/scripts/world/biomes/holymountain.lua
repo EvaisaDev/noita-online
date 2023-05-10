@@ -87,7 +87,55 @@ function spawn_all_shopitems( x, y )
 
 	print("Sale item: "..tostring(sale_item_i))
 
-	if( random.range( 0, 100 ) <= 50 ) then
+	-- Get the shop type from the settings
+	local shop_type = GlobalsGetValue("shop_type", "mixed")
+	-- Get the wand chance from the settings
+	local shop_wand_chance = tonumber(GlobalsGetValue("shop_wand_chance", "20"))
+	-- "Alternating" shop type switches between spells and wands every round.
+	if (shop_type == "alternating") then
+		-- Alternate which shop is presented
+		if (round % 2 == 0) then
+			for i=1,count do
+				if( i == sale_item_i ) then
+					generate_shop_item( x + (i-1)*item_width, y, true, round, false )
+				else
+					generate_shop_item( x + (i-1)*item_width, y, false, round, false )
+				end
+				
+				generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
+				LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
+			end
+		else
+			for i=1,count do
+				if( i == sale_item_i ) then
+					generate_shop_wand( x + (i-1)*item_width, y, true, round )
+				else
+					generate_shop_wand( x + (i-1)*item_width, y, false, round )
+				end
+			end
+		end
+	-- "Mixed" shop type mixed spells and wands.
+	elseif (shop_type == "mixed") then
+		local wand_count = math.floor(((count / 100) * shop_wand_chance) + 0.5)
+		for i=1, wand_count do
+			if (i == sale_item_i) then
+				generate_shop_wand(x + (i-1)*item_width, y, true, round)
+			else
+				generate_shop_wand(x + (i-1)*item_width, y, false, round)
+			end
+		end
+		for i=wand_count+1, count do
+			LoadPixelScene("data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true)
+			if (i == sale_item_i) then
+				generate_shop_item( x + (i-1)*item_width, y, true, round, false )
+				generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
+			else
+				generate_shop_item( x + (i-1)*item_width, y, false, round, false )
+				generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
+			end
+		end
+	-- "Spell Only" shop type is self explanatory.
+	elseif (shop_type == "spell_only") then
 		for i=1,count do
 			if( i == sale_item_i ) then
 				generate_shop_item( x + (i-1)*item_width, y, true, round, false )
@@ -98,12 +146,38 @@ function spawn_all_shopitems( x, y )
 			generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
 			LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
 		end
-	else
+	-- "Wand Only" shop type is.. uh..
+	elseif (shop_type == "wand_only") then
 		for i=1,count do
 			if( i == sale_item_i ) then
 				generate_shop_wand( x + (i-1)*item_width, y, true, round )
 			else
 				generate_shop_wand( x + (i-1)*item_width, y, false, round )
+			end
+		end
+	-- "Choose" shop type is something i guess the player chooses what type of shop they want but idk how eba wants to implement this.
+	elseif (shop_type == "choose") then
+		print("just kidding, its not implemented yet, ha ha ha!")
+	-- "Random" shop type is basically vanilla and we default to this if no other shop type is match is found.
+	else
+		if( random.range( 0, 100 ) >= shop_wand_chance ) then
+			for i=1,count do
+				if( i == sale_item_i ) then
+					generate_shop_item( x + (i-1)*item_width, y, true, round, false )
+				else
+					generate_shop_item( x + (i-1)*item_width, y, false, round, false )
+				end
+				
+				generate_shop_item( x + (i-1)*item_width, y - 30, false, round, false )
+				LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
+			end
+		else
+			for i=1,count do
+				if( i == sale_item_i ) then
+					generate_shop_wand( x + (i-1)*item_width, y, true, round )
+				else
+					generate_shop_wand( x + (i-1)*item_width, y, false, round )
+				end
 			end
 		end
 	end
