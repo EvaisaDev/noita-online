@@ -404,7 +404,7 @@ SpectatorMode = {
         local lobby_spectated_player = data.lobby_spectated_player
 
         if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
-            data.lobby_spectated_player = members[1]
+            data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
         end
 

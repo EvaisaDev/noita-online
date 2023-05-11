@@ -628,7 +628,7 @@ networking = {
     send = {
         handshake = function(lobby)
             steamutils.send("handshake", { GameGetFrameNum(), (game_funcs.UintToString(game_funcs.GetUnixTimestamp())) },
-                steamutils.messageTypes.OtherPlayers, lobby, true)
+                steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         request_perk_update = function(lobby)
             arena_log:print("Requesting perk update")

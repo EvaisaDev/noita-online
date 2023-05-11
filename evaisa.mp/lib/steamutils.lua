@@ -48,8 +48,8 @@ steam_utils.IsOwner = function(lobby_id)
 	return steam.matchmaking.getLobbyOwner(lobby_id) == steam.user.getSteamID()
 end
 
-steam_utils.IsSpectator = function(lobby_id)
-	local spectating = steam.matchmaking.getLobbyData(lobby_id, tostring(steam.user.getSteamID()) .. "_spectator") ==
+steam_utils.IsSpectator = function(lobby_id, player_id)
+	local spectating = steam.matchmaking.getLobbyData(lobby_id, tostring(player_id and player_id or steam.user.getSteamID()) .. "_spectator") ==
 		"true"
 	return spectating
 end

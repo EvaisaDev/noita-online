@@ -64,6 +64,9 @@ function data:New()
         rejoined = false,
         random = rng.new((os.time() + GameGetFrameNum() + os.clock()) / 2),
         DefinePlayer = function(self, lobby, user)
+            if(steamutils.IsSpectator(lobby, user))then
+                return
+            end
             self.players[tostring(user)] = playerinfo:New(user)
             local ready = steam.matchmaking.getLobbyData(lobby, tostring(user).."_ready")
             if(ready ~= nil and ready ~= "")then

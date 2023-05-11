@@ -110,9 +110,10 @@ function playerinfo_menu:New()
             player_count = debug_repeat
         end
 
+        local spectator = data.spectator_mode
 
         local scrollbar_offset = player_count > 2 and -8 or 0
-        local index = 1
+        local index = spectator and 0 or 1
 
         local player_perk_sprites = {}
         local perk_draw_x = 0
@@ -135,7 +136,7 @@ function playerinfo_menu:New()
 
         ------------- DRAW OUR OWN CARD (if not spectator) ---------------
 
-        local spectator = data.spectator_mode
+ 
 
         if(not spectator)then
             
@@ -357,7 +358,16 @@ function playerinfo_menu:New()
         if((not spectator) and player_index == 1)then
             draw_pos = self.offset_y + 16
         else
-            draw_pos = self.offset_y + 76 + (56 * (player_index - 2))
+            local additional_offset = 76
+            local magic_number = 56
+            local player_index_offset = 2
+            if(spectator)then
+                additional_offset = 38
+                magic_number = 56
+                player_index_offset = 1
+            end
+
+            draw_pos = self.offset_y + additional_offset + (magic_number * (player_index - player_index_offset))
         end
 
         draw_pos = draw_pos + scroll_offset
