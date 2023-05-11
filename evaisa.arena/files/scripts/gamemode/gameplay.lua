@@ -570,6 +570,9 @@ ArenaGameplay = {
                 winner = v.id
             end
         end
+
+        print("Alive count: "..tostring(alive))
+
         if (alive == 1) then
             GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
 
@@ -1240,8 +1243,10 @@ ArenaGameplay = {
                 GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
 
                 -- if we are the last player, unready
-                if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
-                    ArenaGameplay.SetReady(lobby, data, false, true)
+                if(not data.spectator_mode)then
+                    if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
+                        ArenaGameplay.SetReady(lobby, data, false, true)
+                    end
                 end
 
                 if (steamutils.IsOwner(lobby)) then
@@ -1251,7 +1256,11 @@ ArenaGameplay = {
 
                 lobby_member_names[k] = nil
                 if (data.state == "arena") then
-                    ArenaGameplay.WinnerCheck(lobby, data)
+                    if(data.spectator_mode)then
+                        ArenaGameplay.WinnerCheck(lobby, data) 
+                    else
+                        spectator_handler.WinnerCheck(lobby, data)
+                    end
                 end
             end
         end
@@ -1403,8 +1412,7 @@ ArenaGameplay = {
             playerRunQueue = {}
         end
     end,
-    OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
-                                 send_message)
+    OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
         if (data.state == "arena") then
             local playerEntity = player.Get()
             if (playerEntity ~= nil) then

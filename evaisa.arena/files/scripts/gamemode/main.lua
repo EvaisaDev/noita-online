@@ -465,15 +465,23 @@ ArenaMode = {
         end
 
         if (data ~= nil) then
-            if (not data.spectator_mode) then
+            --if (not data.spectator_mode) then
                 if (networking.receive[event]) then
+                    --[[if(event == "death")then
+                        print("Received death event [regular]")
+                    end]]
                     networking.receive[event](lobby, message, user, data)
+                   -- print("Received event [regular networking]: " .. event)
                 end
-            else
+           --[[ else
                 if (spectator_networking.receive[event]) then
+                    if(event == "death")then
+                        print("Received death event [spectator]")
+                    end
                     spectator_networking.receive[event](lobby, message, user, data)
+                  --  print("Received event [spectator networking]: " .. event)
                 end
-            end
+            end]]
         end
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,

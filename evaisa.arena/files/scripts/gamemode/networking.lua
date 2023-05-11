@@ -58,14 +58,23 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         start_countdown = function(lobby, message, user, data)
-            RunWhenPlayerExists(function()
+            if(data.spectator)then
                 GamePrint("Starting countdown...")
 
                 arena_log:print("Received all clear for starting countdown.")
 
                 data.players_loaded = true
                 gameplay_handler.FightCountdown(lobby, data)
-            end)
+            else
+                RunWhenPlayerExists(function()
+                    GamePrint("Starting countdown...")
+
+                    arena_log:print("Received all clear for starting countdown.")
+
+                    data.players_loaded = true
+                    gameplay_handler.FightCountdown(lobby, data)
+                end)
+            end
         end,
         unlock = function(lobby, message, user, data)
             if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died")) then
@@ -89,7 +98,7 @@ networking = {
                 return
             end
 
-            if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 local x, y = message[1], message[2]
 
                 local entity = data.players[tostring(user)].entity
@@ -243,6 +252,9 @@ networking = {
             end
         end,
         request_wand_update = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
             data.client.previous_wand = nil
             networking.send.wand_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
@@ -251,7 +263,7 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
-            if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                     -- set mButtonDownKick to true
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
@@ -434,7 +446,7 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
-            if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
@@ -514,7 +526,7 @@ networking = {
                 return
             end
 
-            if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 data.players[tostring(user)].can_fire = true
 
                 GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[4]))
@@ -592,8 +604,12 @@ networking = {
                         GamePrint(tostring(username) .. " died.")
                     end
                 end
+                if(data.spectator_mode)then
+                    spectator_handler.WinnerCheck(lobby, data)
+                else
+                    gameplay_handler.WinnerCheck(lobby, data)
+                end
 
-                gameplay_handler.WinnerCheck(lobby, data)
             end
         end,
         zone_update = function(lobby, message, user, data)
@@ -603,6 +619,9 @@ networking = {
             data.shrink_time = message[2]
         end,
         request_perk_update = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
             arena_log:print("Attempting to send perk update")
             local perk_info = {}
             for i, perk_data in ipairs(perk_list) do
@@ -645,7 +664,7 @@ networking = {
             steamutils.send("enter_arena", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         start_countdown = function(lobby)
-            steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         unlock = function(lobby)
             steamutils.send("unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
@@ -658,7 +677,7 @@ networking = {
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
                 steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.OtherPlayers, lobby,
-                    false)
+                    false, true)
             end
         end,
         wand_update = function(lobby, data, user, force)
@@ -677,7 +696,7 @@ networking = {
                             steamutils.sendToPlayer("wand_update", data, user, true)
                         else
                             --steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
-                            steamutils.send("wand_update", data, steamutils.messageTypes.OtherPlayers, lobby, true)
+                            steamutils.send("wand_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                         end
                     end
                     data.client.previous_wand = wandString
@@ -689,7 +708,7 @@ networking = {
                         steamutils.sendToPlayer("wand_update", {}, user, true)
                     else
                         --steamutils.sendData({type = "wand_update"}, steamutils.messageTypes.OtherPlayers, lobby)
-                        steamutils.send("wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+                        steamutils.send("wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     end
                     data.client.previous_wand = nil
                 end
@@ -736,14 +755,14 @@ networking = {
                     mouseDelta_y,
                 }
 
-                steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false)
+                steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
             end
         end,
         animation_update = function(lobby, data)
             local rectAnim = player.GetAnimationData()
             if (rectAnim ~= nil) then
                 if (rectAnim ~= data.client.previous_anim) then
-                    steamutils.send("animation_update", { rectAnim }, steamutils.messageTypes.OtherPlayers, lobby, true)
+                    steamutils.send("animation_update", { rectAnim }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     data.client.previous_anim = rectAnim
                 end
             end
@@ -755,7 +774,7 @@ networking = {
                     local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_wand")) or -1
                     if (wand_id ~= -1) then
                         if (user == nil) then
-                            steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true)
+                            steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                             data.client.previous_selected_item = held_item
                         else
                             steamutils.sendToPlayer("switch_item", { wand_id }, user, true)
@@ -800,7 +819,7 @@ networking = {
                             mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
                         }
 
-                        steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.OtherPlayers, lobby, false)
+                        steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                     end
                 end
             end
@@ -857,7 +876,7 @@ networking = {
                         special_seed
                     }
 
-                    steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false)
+                    steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                 end
             end
         end,
@@ -865,7 +884,7 @@ networking = {
             steamutils.send("death", { killer }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         zone_update = function(lobby, zone_size, shrink_time)
-            steamutils.send("zone_update", { zone_size, shrink_time }, steamutils.messageTypes.OtherPlayers, lobby, false)
+            steamutils.send("zone_update", { zone_size, shrink_time }, steamutils.messageTypes.OtherPlayers, lobby, false, true)
         end,
     },
 }

@@ -459,9 +459,10 @@ SpectatorMode = {
         ]]
 
         local alive = 0
-        local winner = steam.user.getSteamID()
+        local winner = nil
         for k, v in pairs(data.players) do
             if (v.alive) then
+                print("Player " .. steamutils.getTranslatedPersonaName(v.id) .. " is alive")
                 alive = alive + 1
                 winner = v.id
             end
@@ -527,8 +528,13 @@ SpectatorMode = {
                 arena_log:print("All players loaded")
                 --message_handler.send.StartCountdown(lobby)
                 networking.send.start_countdown(lobby)
+                print("Sent countdown")
                 ArenaGameplay.FightCountdown(lobby, data)
             end
+        end
+
+        if (data.countdown ~= nil) then
+            data.countdown:update()
         end
     end,
     LobbyUpdate = function(lobby, data)
@@ -550,6 +556,10 @@ SpectatorMode = {
             SpectatorMode.LobbyUpdate(lobby, data)
         elseif(data.state == "arena") then
             SpectatorMode.ArenaUpdate(lobby, data)
+        end
+        ArenaGameplay.UpdateTweens(lobby, data)
+        if (GameGetFrameNum() % 60 == 0) then
+            ArenaGameplay.ValidatePlayers(lobby, data)
         end
     end,
     LateUpdate = function(lobby, data)
