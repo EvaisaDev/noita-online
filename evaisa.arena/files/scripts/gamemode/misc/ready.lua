@@ -3,9 +3,9 @@ readyComp = EntityGetFirstComponentIncludingDisabled(entity, "InteractableCompon
 
 
 if(GameHasFlagRun("ready_check"))then
-    ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_ready"))
-else
     ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_unready"))
+else
+    ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_ready"))
 end
 
 function interacting( entity_who_interacted, entity_interacted, interactable_name )
@@ -15,11 +15,11 @@ function interacting( entity_who_interacted, entity_interacted, interactable_nam
         GameAddFlagRun("player_unready")
         GameRemoveFlagRun("ready_check")
         GameRemoveFlagRun("player_ready")
-        ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_ready"))
+        ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_unready"))
     else
         GameAddFlagRun("player_ready")
         GameAddFlagRun("ready_check")
         GameRemoveFlagRun("player_unready")
-        ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_unready"))
+        ComponentSetValue2(readyComp, "ui_text", GameTextGetTranslatedOrNot("$arena_holymountain_ready"))
     end
 end
