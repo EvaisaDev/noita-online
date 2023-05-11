@@ -18,6 +18,8 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 spectator_networking = {
     receive = {
         ready = function(lobby, message, user, data)
+            print("Received ready message from " .. tostring(user) .. " with message " .. tostring(message[1]))
+
             local username = steamutils.getTranslatedPersonaName(user)
 
             if (message[1]) then
@@ -125,6 +127,38 @@ spectator_networking = {
         fire_wand = function(lobby, message, user, data)
         end,
         death = function(lobby, message, user, data)
+            if (data.state == "arena") then
+                local username = steamutils.getTranslatedPersonaName(user)
+
+                local killer = message[1]
+                -- iterate data.tweens backwards and remove tweens belonging to the dead player
+                for i = #data.tweens, 1, -1 do
+                    local tween = data.tweens[i]
+                    if (tween.id == tostring(user)) then
+                        table.remove(data.tweens, i)
+                    end
+                end
+
+                --print(json.stringify(killer))
+
+                data.players[tostring(user)]:Clean(lobby)
+                data.players[tostring(user)].alive = false
+                data.deaths = data.deaths + 1
+
+                if (killer == nil) then
+                    GamePrint(tostring(username) .. " died.")
+                else
+                    local killer_id = gameplay_handler.FindUser(lobby, killer)
+                    if (killer_id ~= nil) then
+                        GamePrint(tostring(username) ..
+                            " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
+                    else
+                        GamePrint(tostring(username) .. " died.")
+                    end
+                end
+
+                spectator_handler.WinnerCheck(lobby, data)
+            end
         end,
         zone_update = function(lobby, message, user, data)
         end,

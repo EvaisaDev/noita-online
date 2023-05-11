@@ -602,11 +602,15 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 				if (lobby_gamemode) then
 					local user = data.userID
 
-					spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user) .. "_spectator") == "true"
+					spectating = steamutils.IsSpectator(lobby_code)
+
+					print("Are we spectating? " .. tostring(spectating))
 
 					if (spectating) then
 						if (lobby_gamemode.spectate ~= nil) then
 							lobby_gamemode.spectate(lobby_code)
+						elseif (lobby_gamemode.start ~= nil) then
+							lobby_gamemode.start(lobby_code)
 						end
 					else
 						if (lobby_gamemode.start ~= nil) then
@@ -652,7 +656,8 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		end
 	elseif (owner == steam.user.getSteamID() and data.message == "spectate") then
 		local user = data.userID
-		local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(user) .. "_spectator") == "true"
+		print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
+		local spectating = steamutils.IsSpectator(lobby_code, user)
 		steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
 	end
 end

@@ -903,7 +903,8 @@ ArenaGameplay = {
         end)
     end,
     ReadyCheck = function(lobby, data)
-        return ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby)
+        --print("Players ready: "..tostring(ArenaGameplay.ReadyAmount(data, lobby)))
+        return ArenaGameplay.TotalPlayers(lobby) > 0 and (ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby))
     end,
     SetReady = function(lobby, data, ready, silent)
         if (ready == nil) then
@@ -959,6 +960,30 @@ ArenaGameplay = {
             end
         end
     end,
+    RunReadyCheck = function(lobby, data)
+        if (steamutils.IsOwner(lobby)) then
+            -- check if all players are ready
+            if (ArenaGameplay.ReadyCheck(lobby, data) and ArenaLoadCountdown == nil) then
+                ArenaLoadCountdown = GameGetFrameNum() + 62
+            end
+
+            if (ArenaLoadCountdown ~= nil and GameGetFrameNum() >= ArenaLoadCountdown) then
+                ArenaLoadCountdown = nil
+
+                -- still ready? start game.
+                if (ArenaGameplay.ReadyCheck(lobby, data)) then
+                    if(steamutils.IsSpectator(lobby))then
+                        spectator_handler.LoadArena(lobby, data, true)
+                    else
+                        ArenaGameplay.LoadArena(lobby, data, true)
+                    end
+
+                    --message_handler.send.EnterArena(lobby)
+                    networking.send.enter_arena(lobby)
+                end
+            end
+        end
+    end,
     LobbyUpdate = function(lobby, data)
         -- update ready counter
         if (data.ready_counter ~= nil) then
@@ -974,23 +999,7 @@ ArenaGameplay = {
 
         GameAddFlagRun("Immortal")
 
-        if (steamutils.IsOwner(lobby)) then
-            -- check if all players are ready
-            if (ArenaGameplay.ReadyCheck(lobby, data) and ArenaLoadCountdown == nil) then
-                ArenaLoadCountdown = GameGetFrameNum() + 62
-            end
-
-            if (ArenaLoadCountdown ~= nil and GameGetFrameNum() >= ArenaLoadCountdown) then
-                ArenaLoadCountdown = nil
-
-                -- still ready? start game.
-                if (ArenaGameplay.ReadyCheck(lobby, data)) then
-                    ArenaGameplay.LoadArena(lobby, data, true)
-                    --message_handler.send.EnterArena(lobby)
-                    networking.send.enter_arena(lobby)
-                end
-            end
-        end
+        ArenaGameplay.RunReadyCheck(lobby, data)
 
         if (GameHasFlagRun("player_ready")) then
             GameRemoveFlagRun("player_ready")
@@ -1044,7 +1053,9 @@ ArenaGameplay = {
             --message_handler.send.Unlock(lobby)
             networking.send.unlock(lobby)
             GameAddFlagRun("countdown_completed")
-            player.Immortal(false)
+            if(not steamutils.IsSpectator(lobby))then
+                player.Immortal(false)
+            end
             ArenaGameplay.AllowFiring(data)
 
             arena_log:print("Completed countdown.")

@@ -862,7 +862,7 @@ networking = {
             end
         end,
         death = function(lobby, killer)
-            steamutils.send("death", { killer }, steamutils.messageTypes.OtherPlayers, lobby, true)
+            steamutils.send("death", { killer }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         zone_update = function(lobby, zone_size, shrink_time)
             steamutils.send("zone_update", { zone_size, shrink_time }, steamutils.messageTypes.OtherPlayers, lobby, false)

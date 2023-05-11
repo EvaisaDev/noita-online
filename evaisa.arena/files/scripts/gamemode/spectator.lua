@@ -2,6 +2,9 @@
 
 SpectatorMode = {
     LoadLobby = function(lobby, data, show_message)
+
+        print("Loading lobby through spectator system.")
+
         ArenaGameplay.GracefulReset(lobby, data)
 
         data.selected_player = nil
@@ -91,6 +94,56 @@ SpectatorMode = {
         ArenaGameplay.ReadyCounter(lobby, data)
 
         GameSetCameraFree(true)
+
+    end,
+    LoadArena = function(lobby, data, show_message)
+        show_message = show_message or false
+
+        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+
+        ArenaGameplay.ClearWorld()
+
+        playermenu:Close()
+
+        --[[
+        local current_player = player.Get()
+
+        if(current_player == nil)then
+            ArenaGameplay.LoadPlayer(lobby, data)
+        end
+        ]]
+        -- manage flags
+        GameRemoveFlagRun("ready_check")
+        GameRemoveFlagRun("first_death")
+        GameRemoveFlagRun("in_hm")
+
+        data.state = "arena"
+        data.preparing = true
+        data.players_loaded = false
+        data.deaths = 0
+        data.lobby_loaded = false
+        data.client.player_loaded_from_data = false
+
+        local members = steamutils.getLobbyMembers(lobby)
+
+        for _, member in pairs(members) do
+            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
+                data.players[tostring(member.id)].alive = true
+            end
+        end
+
+        ArenaGameplay.PreventFiring()
+
+        -- load map
+        local arena = arena_list[data.random.range(1, #arena_list)]
+
+        data.current_arena = arena
+
+        BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
+
+        ArenaGameplay.LoadClientPlayers(lobby, data)
 
     end,
     UpdateSpectatorEntity = function(lobby, data)
@@ -398,6 +451,86 @@ SpectatorMode = {
             ]]
         end
     end,
+    WinnerCheck = function(lobby, data)
+        --[[
+        if(true)then
+            return
+        end
+        ]]
+
+        local alive = 0
+        local winner = steam.user.getSteamID()
+        for k, v in pairs(data.players) do
+            if (v.alive) then
+                alive = alive + 1
+                winner = v.id
+            end
+        end
+        if (alive == 1) then
+            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+
+            -- if we are owner, add win to tally
+            if (steamutils.IsOwner(lobby)) then
+                local winner_key = tostring(winner) .. "_wins"
+                local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
+                steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            end
+
+            SpectatorMode.LoadLobby(lobby, data, false)
+        elseif (alive == 0) then
+            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+
+            SpectatorMode.LoadLobby(lobby, data, false)
+        end
+    end,
+    ArenaUpdate = function(lobby, data)
+        if (data.preparing) then
+            local spawn_points = EntityGetWithTag("spawn_point") or {}
+            if (spawn_points ~= nil and #spawn_points > 0) then
+                data.ready_for_zone = true
+
+                local spawn_point = spawn_points[Random(1, #spawn_points)]
+                local x, y = EntityGetTransform(spawn_point)
+
+                local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
+
+                GameSetCameraPos(x, y)
+
+                arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
+
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, 400)
+
+                if (not in_bounds) then
+                    arena_log:print("Game tried to spawn player out of bounds, retrying...")
+                    GamePrint("Game attempted to spawn you out of bounds, retrying...")
+                end
+
+                if (spawn_loaded and in_bounds) then
+                    data.preparing = false
+
+
+                    --GamePrint("Spawned!!")
+
+                    --if (not steamutils.IsOwner(lobby)) then
+                    --    networking.send.arena_loaded(lobby)
+                        --message_handler.send.Loaded(lobby)
+                    --end
+
+                end
+            else
+                GameSetCameraPos(data.spawn_point.x, data.spawn_point.y)
+            end
+        end
+        if (steamutils.IsOwner(lobby)) then
+            if ((not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
+                data.players_loaded = true
+                arena_log:print("All players loaded")
+                --message_handler.send.StartCountdown(lobby)
+                networking.send.start_countdown(lobby)
+                ArenaGameplay.FightCountdown(lobby, data)
+            end
+        end
+    end,
     LobbyUpdate = function(lobby, data)
         SpectatorMode.SpectatorText(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
@@ -408,13 +541,15 @@ SpectatorMode = {
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
         end
 
-        
+        ArenaGameplay.RunReadyCheck(lobby, data)
     end,
     Update = function(lobby, data)
         SpectatorMode.UpdateSpectatorEntity(lobby, data)
         SpectatorMode.SpectateUpdate(lobby, data)
         if(data.state == "lobby")then
             SpectatorMode.LobbyUpdate(lobby, data)
+        elseif(data.state == "arena") then
+            SpectatorMode.ArenaUpdate(lobby, data)
         end
     end,
     LateUpdate = function(lobby, data)

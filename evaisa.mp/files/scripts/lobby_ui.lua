@@ -305,7 +305,7 @@ local windows = {
 				end
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-				local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
+				local spectating = steamutils.IsSpectator(lobby_code)
 				if(active_mode and active_mode.spectate ~= nil)then
 					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
@@ -338,7 +338,7 @@ local windows = {
 					end
 				end
 
-				spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator") == "true"
+				spectating = steamutils.IsSpectator(lobby_code)
 
 				--print(tostring(spectating))
 
@@ -357,6 +357,9 @@ local windows = {
 								if(active_mode.spectate ~= nil)then
 									mp_log:print("Starting gamemode in spectator mode")
 									active_mode.spectate(lobby_code, true)
+								elseif(active_mode.start ~= nil)then
+									mp_log:print("Starting gamemode")
+									active_mode.start(lobby_code, true)
 								end
 							else
 								mp_log:print("Checking if gamemode has start function")

@@ -33,11 +33,14 @@ steam_utils.getSteamFriends = function()
 end
 
 steam_utils.getLobbyMembers = function(lobby_id, include_spectators)
-	include_spectators = include_spectators or false
 	local list = {}
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
+
 		if (include_spectators or steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") ~= "true") then
+			--[[if(include_spectators)then
+				print("Adding " .. tostring(steam_utils.getTranslatedPersonaName(h)) .. " to list")
+			end]]
 			table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
 		end	
 	end
@@ -241,6 +244,8 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID()) then
+				--print("Sending to " .. member.name)
+
 				local success, size = 0, 0
 
 				if (reliable) then
@@ -367,7 +372,7 @@ steam_utils.sendDataToPlayer = function(data, player, reliable)
 	end
 end
 ]]
-steam_utils.send = function(event, message, messageType, lobby, reliable)
+steam_utils.send = function(event, message, messageType, lobby, reliable, include_spectators)
 	local data = { event, message }
 
 	if (not reliable) then
@@ -380,7 +385,7 @@ steam_utils.send = function(event, message, messageType, lobby, reliable)
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
-		message_handlers[messageType](encodedData, lobby, reliable)
+		message_handlers[messageType](encodedData, lobby, reliable, include_spectators)
 	else
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
