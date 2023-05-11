@@ -377,7 +377,7 @@ local windows = {
 
 
 				GuiText(menu_gui, 2, 0, "--------------------")
-				local players = steam_utils.getLobbyMembers(lobby_code)
+				local players = steam_utils.getLobbyMembers(lobby_code, true)
 	
 				for k, v in pairs(players) do
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)

@@ -81,7 +81,7 @@ SpectatorMode = {
 
         data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
 
-        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
             "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
 
         -- clean other player's data again because it might have failed for some cursed reason
@@ -104,17 +104,45 @@ SpectatorMode = {
             EntityApplyTransform(data.spectator_entity, camera_x, camera_y)
         end
     end,
+    SpectatorText = function(lobby, data)
+        if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
+            data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
+
+            EntitySetTransform(data.spectator_gui_entity, 0, 0, 0, 0.25, 0.25)
+        end
+
+        if (data.spectator_text_gui == nil) then
+            data.spectator_text_gui = GuiCreate()
+        end
+
+        local camera_x, camera_y = GameGetCameraPos()
+
+        
+        local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
+
+        local text = GameTextGetTranslatedOrNot("$arena_spectating_text")
+
+        if (data.selected_player_name ~= nil) then
+            text = string.format(text, data.selected_player_name)
+        else
+            text = string.format(text, "")
+        end
+
+
+        local font_width, font_height = data.big_font:GetTextDimensions(text, 0.25, 0.25)
+
+        local text_sprite_component = EntityGetFirstComponentIncludingDisabled(data.spectator_gui_entity,
+            "SpriteComponent")
+
+        ComponentSetValue2(text_sprite_component, "text", text)
+        ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, 0)
+
+        EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
+    end,
     SpectateUpdate = function(lobby, data)
         if (data.arena_spectator) then
-            if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
-                data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
 
-                EntitySetTransform(data.spectator_gui_entity, 0, 0, 0, 0.25, 0.25)
-            end
-
-            if (data.spectator_text_gui == nil) then
-                data.spectator_text_gui = GuiCreate()
-            end
+            SpectatorMode.SpectatorText(lobby, data)
 
             if (data.spectator_gui == nil) then
                 data.spectator_gui = GuiCreate()
@@ -134,28 +162,6 @@ SpectatorMode = {
             end
 
             local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
-
-            local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
-
-            local text = GameTextGetTranslatedOrNot("$arena_spectating_text")
-
-            if (data.selected_player ~= nil and data.selected_player_name ~= nil) then
-                text = string.format(text, data.selected_player_name)
-            else
-                text = string.format(text, "")
-            end
-
-
-            local font_width, font_height = data.big_font:GetTextDimensions(text, 0.25, 0.25)
-
-            local text_sprite_component = EntityGetFirstComponentIncludingDisabled(data.spectator_gui_entity,
-                "SpriteComponent")
-
-            ComponentSetValue2(text_sprite_component, "text", text)
-            ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, 0)
-
-            EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
-
 
             --GamePrint("Spectator mode")
             if (data.selected_player ~= nil) then
@@ -392,9 +398,24 @@ SpectatorMode = {
             ]]
         end
     end,
+    LobbyUpdate = function(lobby, data)
+        SpectatorMode.SpectatorText(lobby, data)
+        local members = steamutils.getLobbyMembers(lobby)
+        local lobby_spectated_player = data.lobby_spectated_player
+
+        if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
+            data.lobby_spectated_player = members[1]
+            data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+        end
+
+        
+    end,
     Update = function(lobby, data)
         SpectatorMode.UpdateSpectatorEntity(lobby, data)
         SpectatorMode.SpectateUpdate(lobby, data)
+        if(data.state == "lobby")then
+            SpectatorMode.LobbyUpdate(lobby, data)
+        end
     end,
     LateUpdate = function(lobby, data)
 

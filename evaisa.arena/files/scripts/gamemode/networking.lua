@@ -636,13 +636,13 @@ networking = {
         end,
         ready = function(lobby, is_ready, silent)
             silent = silent or false
-            steamutils.send("ready", { is_ready, silent }, steamutils.messageTypes.OtherPlayers, lobby, true)
+            steamutils.send("ready", { is_ready, silent }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         arena_loaded = function(lobby)
-            steamutils.send("arena_loaded", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            steamutils.send("arena_loaded", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         enter_arena = function(lobby)
-            steamutils.send("enter_arena", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            steamutils.send("enter_arena", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         start_countdown = function(lobby)
             steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
@@ -811,7 +811,7 @@ networking = {
             if (health ~= nil and max_health ~= nil) then
                 if ((data.client.max_hp ~= max_health or data.client.hp ~= health) or force) then
                     steamutils.send("health_update", { health, max_health }, steamutils.messageTypes.OtherPlayers, lobby,
-                        true)
+                        true, true)
                     data.client.max_hp = max_health
                     data.client.hp = health
                 end
@@ -836,7 +836,7 @@ networking = {
                 local perk_string = bitser.dumps(message_data)
                 if (perk_string ~= data.client.previous_perk_string) then
                     arena_log:print("Sent perk update!!")
-                    steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true)
+                    steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     data.client.previous_perk_string = perk_string
                     data.client.perks = perk_info
                 end

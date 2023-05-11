@@ -11,4 +11,10 @@
 		height_index="1"
 		color="ffebebae" >
 	</Biome>
+
+	<Biome 
+		biome_filename="mods/evaisa.arena/files/biome/holymountain_spectator.xml" 
+		height_index="1"
+		color="ffaf32c9" >
+	</Biome>
 </BiomesToLoad>

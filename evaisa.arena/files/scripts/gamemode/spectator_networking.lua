@@ -18,8 +18,42 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 spectator_networking = {
     receive = {
         ready = function(lobby, message, user, data)
+            local username = steamutils.getTranslatedPersonaName(user)
+
+            if (message[1]) then
+                data.players[tostring(user)].ready = true
+
+                if (not message[2]) then
+                    GamePrint(tostring(username) .. " is ready.")
+                end
+
+                if (steamutils.IsOwner(lobby)) then
+                    arena_log:print(tostring(user) .. "_ready: " .. tostring(message[1]))
+                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                end
+            else
+                data.players[tostring(user)].ready = false
+
+                if (not message[2]) then
+                    GamePrint(tostring(username) .. " is no longer ready.")
+                end
+
+                if (steamutils.IsOwner(lobby)) then
+                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "false")
+                end
+            end
         end,
         arena_loaded = function(lobby, message, user, data)
+            local username = steamutils.getTranslatedPersonaName(user)
+
+            data.players[tostring(user)].loaded = true
+
+            GamePrint(username .. " has loaded the arena.")
+            arena_log:print(username .. " has loaded the arena.")
+
+            if (steamutils.IsOwner(lobby)) then
+                steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_loaded", "true")
+            end
         end,
         enter_arena = function(lobby, message, user, data)
         end,
@@ -47,8 +81,46 @@ spectator_networking = {
         sync_wand_stats = function(lobby, message, user, data)
         end,
         health_update = function(lobby, message, user, data)
+            local health = message[1]
+            local maxHealth = message[2]
+
+            if (health ~= nil and maxHealth ~= nil) then
+                if (data.players[tostring(user)].entity ~= nil) then
+                    local last_health = maxHealth
+                    if (data.players[tostring(user)].health) then
+                        last_health = data.players[tostring(user)].health
+                    end
+                    if (health < last_health) then
+                        local damage = last_health - health
+                        EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
+                            "NONE", 0, 0, nil)
+                    end
+
+                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                        "DamageModelComponent")
+
+                    if (DamageModelComp ~= nil) then
+                        ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
+                        ComponentSetValue2(DamageModelComp, "hp", health)
+                    end
+
+
+                    if (data.players[tostring(user)].hp_bar) then
+                        data.players[tostring(user)].hp_bar:setHealth(health, maxHealth)
+                    else
+                        local hp_bar = healthbar.create(health, maxHealth, 18, 2)
+                        data.players[tostring(user)].hp_bar = hp_bar
+                    end
+                end
+
+                data.players[tostring(user)].health = health
+                data.players[tostring(user)].max_health = maxHealth
+            end
         end,
         perk_update = function(lobby, message, user, data)
+            arena_log:print("Received perk update!!")
+            arena_log:print(json.stringify(message[1]))
+            data.players[tostring(user)].perks = message[1]
         end,
         fire_wand = function(lobby, message, user, data)
         end,

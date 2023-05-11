@@ -10,15 +10,18 @@ function data:New()
         projectile_seeds = {},
         ready_counter = nil,
         countdown = nil,
+        ----- spectator mode -----
         spectator_gui_entity = nil,
         spectator_gui = nil,
         spectator_text_gui = nil,
         arena_spectator = false,
         selected_player = nil,
         selected_player_name = nil,
-        ----- spectator mode -----
+
         spectator_mode = false,
         spectator_quick_switch_trigger = 0,
+
+        lobby_spectated_player = nil,
 
         big_font = font_helper.NewFont("mods/evaisa.arena/files/font/Daydream_128.xml"),
         client = {

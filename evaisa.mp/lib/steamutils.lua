@@ -55,7 +55,7 @@ steam_utils.IsSpectator = function(lobby_id)
 end
 
 steam_utils.isInLobby = function(lobby_id, steam_id)
-	local list = steam_utils.getLobbyMembers(lobby_id)
+	local list = steam_utils.getLobbyMembers(lobby_id, true)
 	for i = 1, #list do
 		if (list[i].id == steam_id) then
 			return true
@@ -216,8 +216,8 @@ steam_utils.messageTypes = {
 }
 
 message_handlers = {
-	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable)
-		local members = steamutils.getLobbyMembers(lobby)
+	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators)
+		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			local success, size = 0, 0
 
@@ -237,8 +237,8 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable)
-		local members = steamutils.getLobbyMembers(lobby)
+	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators)
+		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID()) then
 				local success, size = 0, 0
@@ -259,8 +259,8 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable)
-		local members = steamutils.getLobbyMembers(lobby)
+	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators)
+		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
 				local success, size = 0, 0
@@ -300,7 +300,7 @@ message_handlers = {
 		end
 	end,
 	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable)
-		local members = steamutils.getLobbyMembers(lobby)
+		local members = steamutils.getLobbyMembers(lobby, true)
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
 			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby) and spectating) then
