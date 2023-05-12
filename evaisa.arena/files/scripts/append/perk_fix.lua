@@ -162,6 +162,7 @@ local rewrites = {
 		stackable = STACKABLE_YES,
 		stackable_is_rare = true,
 		max_in_perk_pool = 2,
+		usable_by_enemies = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			EntityAddComponent( entity_who_picked, "LuaComponent", 
 			{
