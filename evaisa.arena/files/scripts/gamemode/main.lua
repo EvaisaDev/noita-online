@@ -16,7 +16,7 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
-spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
+--spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
 
