@@ -458,6 +458,8 @@ SpectatorMode = {
         end
         ]]
 
+        print("WinnerCheck (spectator)")
+
         local alive = 0
         local winner = nil
         for k, v in pairs(data.players) do

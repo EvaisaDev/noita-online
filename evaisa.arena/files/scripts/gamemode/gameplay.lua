@@ -562,6 +562,8 @@ ArenaGameplay = {
         end
         ]]
 
+        print("WinnerCheck (gameplay)")
+
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
         for k, v in pairs(data.players) do
