@@ -7,9 +7,11 @@ SpectatorMode = {
 
         ArenaGameplay.GracefulReset(lobby, data)
 
+        data.arena_spectator = false
         data.selected_player = nil
         data.selected_player_name = nil
-        GameRemoveFlagRun("can_save_player")
+        data.lobby_spectated_player = nil
+
         GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
 
@@ -144,7 +146,6 @@ SpectatorMode = {
 
         BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
 
-        ArenaGameplay.LoadClientPlayers(lobby, data)
 
     end,
     UpdateSpectatorEntity = function(lobby, data)
@@ -512,7 +513,8 @@ SpectatorMode = {
                 if (spawn_loaded and in_bounds) then
                     data.preparing = false
 
-
+                    data.arena_spectator = true
+                    ArenaGameplay.LoadClientPlayers(lobby, data)
                     --GamePrint("Spawned!!")
 
                     --if (not steamutils.IsOwner(lobby)) then
@@ -538,6 +540,10 @@ SpectatorMode = {
 
         if (data.countdown ~= nil) then
             data.countdown:update()
+        end
+
+        if(data.players_loaded)then
+            ArenaGameplay.CheckFiringBlock(lobby, data)
         end
     end,
     LobbyUpdate = function(lobby, data)

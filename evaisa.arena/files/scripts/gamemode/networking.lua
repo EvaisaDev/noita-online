@@ -58,7 +58,7 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         start_countdown = function(lobby, message, user, data)
-            if(data.spectator)then
+            if(data.spectator_mode)then
                 GamePrint("Starting countdown...")
 
                 arena_log:print("Received all clear for starting countdown.")
@@ -751,6 +751,29 @@ networking = {
                 steamutils.sendToPlayer("perk_update", message_data, user, true)
             end
         end,
+        player_data_update = function(lobby, message, user, data)
+            --[[
+                template:
+                local message = {
+                    mFlyingTimeLeft = ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                }
+
+            ]]
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local player = data.players[tostring(user)].entity
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+                if (character_data_comp ~= nil) then
+                    local player_data = {
+                        mFlyingTimeLeft = message[1]
+                    }
+                    ComponentSetValue2(character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
+                end
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -882,6 +905,21 @@ networking = {
                 }
 
                 steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+            end
+        end,
+        player_data_update = function(lobby, data)
+            local player = player.Get()
+            if(player ~= nil and EntityGetIsAlive(player))then
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+                if(character_data_comp ~= nil)then
+                    local message = {
+                        ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                    }
+
+                    --print("mFlyingTimeLeft: " .. tostring(message.mFlyingTimeLeft))
+
+                    steamutils.send("player_data_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                end
             end
         end,
         animation_update = function(lobby, data)

@@ -1227,6 +1227,7 @@ ArenaGameplay = {
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
             networking.send.animation_update(lobby, data)
+            networking.send.player_data_update(lobby, data)
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
             networking.send.input_update(lobby)
