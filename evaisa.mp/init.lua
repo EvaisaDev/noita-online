@@ -445,7 +445,7 @@ function OnWorldPreUpdate()
 end
 
 function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
-						   unknown1, unknown2, unknown3)
+						   unknown1, multicast_index, unknown3)
 	if steam and Checksum_passed then
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
@@ -456,7 +456,7 @@ function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_
 			if (game_in_progress) then
 				if (lobby_gamemode.on_projectile_fired) then
 					lobby_gamemode.on_projectile_fired(lobby_code, shooter_id, projectile_id, rng, position_x, position_y,
-						target_x, target_y, send_message, unknown1, unknown2, unknown3)
+						target_x, target_y, send_message, unknown1, multicast_index, unknown3)
 				end
 			end
 		end
@@ -464,7 +464,7 @@ function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_
 end
 
 function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
-							   unknown1, unknown2, unknown3)
+							   unknown1, multicast_index, unknown3)
 	if steam and Checksum_passed then
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
@@ -475,7 +475,7 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 			if (game_in_progress) then
 				if (lobby_gamemode.on_projectile_fired_post) then
 					lobby_gamemode.on_projectile_fired_post(lobby_code, shooter_id, projectile_id, rng, position_x,
-						position_y, target_x, target_y, send_message, unknown1, unknown2, unknown3)
+						position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
 				end
 			end
 		end

@@ -272,10 +272,19 @@ networking = {
                     if (controlsComp ~= nil) then
                         --[[
                             Message reference:
-                            {
+                            local data = {
                                 kick,
                                 fire,
                                 fire2,
+                                action,
+                                throw,
+                                interact,
+                                left,
+                                right,
+                                up,
+                                down,
+                                jump,
+                                fly,
                                 leftClick,
                                 rightClick,
                                 aim_x,
@@ -298,22 +307,31 @@ networking = {
                             kick = message[1],
                             fire = message[2],
                             fire2 = message[3],
-                            leftClick = message[4],
-                            rightClick = message[5],
-                            aim_x = message[6],
-                            aim_y = message[7],
-                            aimNormal_x = message[8],
-                            aimNormal_y = message[9],
-                            aimNonZero_x = message[10],
-                            aimNonZero_y = message[11],
-                            mouse_x = message[12],
-                            mouse_y = message[13],
-                            mouseRaw_x = message[14],
-                            mouseRaw_y = message[15],
-                            mouseRawPrev_x = message[16],
-                            mouseRawPrev_y = message[17],
-                            mouseDelta_x = message[18],
-                            mouseDelta_y = message[19],
+                            action = message[4],
+                            throw = message[5],
+                            interact = message[6],
+                            left = message[7],
+                            right = message[8],
+                            up = message[9],
+                            down = message[10],
+                            jump = message[11],
+                            fly = message[12],
+                            leftClick = message[13],
+                            rightClick = message[14],
+                            aim_x = message[15],
+                            aim_y = message[16],
+                            aimNormal_x = message[17],
+                            aimNormal_y = message[18],
+                            aimNonZero_x = message[19],
+                            aimNonZero_y = message[20],
+                            mouse_x = message[21],
+                            mouse_y = message[22],
+                            mouseRaw_x = message[23],
+                            mouseRaw_y = message[24],
+                            mouseRawPrev_x = message[25],
+                            mouseRawPrev_y = message[26],
+                            mouseDelta_x = message[27],
+                            mouseDelta_y = message[28],
                         }
 
 
@@ -349,6 +367,96 @@ networking = {
                             controls_data.fire2 = true
                         else
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
+                        end
+
+                        if (message_data.action) then
+                            ComponentSetValue2(controlsComp, "mButtonDownAction", true)
+                            if (not controls_data.action) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum())
+                            end
+                            controls_data.action = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownAction", false)
+                        end
+
+                        if (message_data.throw) then
+                            ComponentSetValue2(controlsComp, "mButtonDownThrow", true)
+                            if (not controls_data.throw) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum())
+                            end
+                            controls_data.throw = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownThrow", false)
+                        end
+
+                        if (message_data.interact) then
+                            ComponentSetValue2(controlsComp, "mButtonDownInteract", true)
+                            if (not controls_data.interact) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum())
+                            end
+                            controls_data.interact = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownInteract", false)
+                        end
+
+                        if (message_data.left) then
+                            ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
+                            if (not controls_data.left) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                            end
+                            controls_data.left = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                        end
+
+                        if (message_data.right) then
+                            ComponentSetValue2(controlsComp, "mButtonDownRight", true)
+                            if (not controls_data.right) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                            end
+                            controls_data.right = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                        end
+
+                        if (message_data.up) then
+                            ComponentSetValue2(controlsComp, "mButtonDownUp", true)
+                            if (not controls_data.up) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum())
+                            end
+                            controls_data.up = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownUp", false)
+                        end
+
+                        if (message_data.down) then
+                            ComponentSetValue2(controlsComp, "mButtonDownDown", true)
+                            if (not controls_data.down) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum())
+                            end
+                            controls_data.down = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownDown", false)
+                        end
+
+                        if (message_data.jump) then
+                            ComponentSetValue2(controlsComp, "mButtonDownJump", true)
+                            if (not controls_data.jump) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum())
+                            end
+                            controls_data.jump = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownJump", false)
+                        end
+
+                        if (message_data.fly) then
+                            ComponentSetValue2(controlsComp, "mButtonDownFly", true)
+                            if (not controls_data.fly) then
+                                ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum())
+                            end
+                            controls_data.fly = true
+                        else
+                            ComponentSetValue2(controlsComp, "mButtonDownFly", false)
                         end
 
                         if (message_data.leftClick) then
@@ -723,6 +831,15 @@ networking = {
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")
+                local action = ComponentGetValue2(controls, "mButtonDownAction")
+                local throw = ComponentGetValue2(controls, "mButtonDownThrow")
+                local interact = ComponentGetValue2(controls, "mButtonDownInteract")
+                local left = ComponentGetValue2(controls, "mButtonDownLeft")
+                local right = ComponentGetValue2(controls, "mButtonDownRight")
+                local up = ComponentGetValue2(controls, "mButtonDownUp")
+                local down = ComponentGetValue2(controls, "mButtonDownDown")
+                local jump = ComponentGetValue2(controls, "mButtonDownJump")
+                local fly = ComponentGetValue2(controls, "mButtonDownFly")
                 local leftClick = ComponentGetValue2(controls, "mButtonDownLeftClick")
                 local rightClick = ComponentGetValue2(controls, "mButtonDownRightClick")
                 local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
@@ -737,6 +854,15 @@ networking = {
                     kick,
                     fire,
                     fire2,
+                    action,
+                    throw,
+                    interact,
+                    left,
+                    right,
+                    up,
+                    down,
+                    jump,
+                    fly,
                     leftClick,
                     rightClick,
                     aim_x,

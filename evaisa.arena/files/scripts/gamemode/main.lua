@@ -407,6 +407,11 @@ ArenaMode = {
                     EntityKill(world_state)
                     ]]
 
+                    --[[
+                    local x, y = EntityGetTransform(player_ent)
+                    local tentacle = EntityLoad("data/entities/projectiles/deck/tentacle.xml", x, y)
+                    GameShootProjectile(player_ent, x, y, x + 400, y + 400, tentacle, true, player_ent)
+                    ]]
 
                     --[[
 
@@ -485,25 +490,30 @@ ArenaMode = {
         end
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
-                                   send_message)
+                                   send_message, unknown1, multicast_index, unknown3)
+        --[[print(tostring(send_message))
+        print(tostring(unknown1))
+        print(tostring(unknown2))
+        print(tostring(unknown3))]]
+
         if (EntityHasTag(shooter_id, "client")) then
             EntityAddTag(shooter_id, "player_unit")
         end
 
         if (data ~= nil) then
             gameplay_handler.OnProjectileFired(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
-                target_x, target_y, send_message)
+                target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         end
     end,
     on_projectile_fired_post = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
-                                        send_message)
+                                        send_message, unknown1, multicast_index, unknown3)
         if (EntityHasTag(shooter_id, "client")) then
             EntityRemoveTag(shooter_id, "player_unit")
         end
 
         if (data ~= nil) then
             gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
-                target_x, target_y, send_message)
+                target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         end
     end
 }

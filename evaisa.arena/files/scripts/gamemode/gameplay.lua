@@ -1412,7 +1412,7 @@ ArenaGameplay = {
             playerRunQueue = {}
         end
     end,
-    OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message)
+    OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         if (data.state == "arena") then
             local playerEntity = player.Get()
             if (playerEntity ~= nil) then
@@ -1422,7 +1422,7 @@ ArenaGameplay = {
 
                     local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
                     local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
-                    if (entity_that_shot == 0) then
+                    if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
                         data.client.projectiles_fired = data.client.projectiles_fired + 1
 
                         --rng = data.client.spread_index
@@ -1460,7 +1460,7 @@ ArenaGameplay = {
 
                     local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
                     local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
-                    if (entity_that_shot == 0) then
+                    if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
                         local rng = 0
                         if (#(data.players[EntityGetName(shooter_id)].projectile_rng_stack) > 0) then
                             -- set rng to first in stack, remove
@@ -1547,7 +1547,7 @@ ArenaGameplay = {
         ]]
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x,
-                                     target_y, send_message)
+                                     target_y, send_message, unknown1, multicast_index, unknown3)
         --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
         if(projectileComp ~= nil)then
             local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")
