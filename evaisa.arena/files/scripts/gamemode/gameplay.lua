@@ -1258,7 +1258,7 @@ ArenaGameplay = {
 
                 lobby_member_names[k] = nil
                 if (data.state == "arena") then
-                    if(data.spectator_mode)then
+                    if(not data.spectator_mode)then
                         ArenaGameplay.WinnerCheck(lobby, data) 
                     else
                         spectator_handler.WinnerCheck(lobby, data)
