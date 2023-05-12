@@ -1002,6 +1002,15 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
+        if (GameGetFrameNum() % 2 == 0) then
+            networking.send.character_position(lobby, data, true)
+        end
+        networking.send.wand_update(lobby, data, nil, true)
+        networking.send.input_update(lobby, true)
+        networking.send.switch_item(lobby, data, nil, true)
+        networking.send.animation_update(lobby, data, true)
+        networking.send.player_data_update(lobby, data, true)
+
         GameAddFlagRun("Immortal")
 
         ArenaGameplay.RunReadyCheck(lobby, data)
@@ -1200,8 +1209,7 @@ ArenaGameplay = {
         end
 
         if (GameGetFrameNum() % 2 == 0) then
-            --message_handler.send.CharacterUpdate(lobby)
-            networking.send.character_position(lobby)
+            networking.send.character_position(lobby, data)
         end
 
         if (GameHasFlagRun("took_damage")) then
@@ -1302,6 +1310,7 @@ ArenaGameplay = {
         end
 
         if (data.state == "lobby") then
+            networking.send.sync_wand_stats(lobby, data, true)
             ArenaGameplay.LobbyUpdate(lobby, data)
         elseif (data.state == "arena") then
             -- message_handler.send.SyncWandStats(lobby, data)
@@ -1321,29 +1330,33 @@ ArenaGameplay = {
         if (data.state == "arena") then
             ArenaGameplay.KillCheck(lobby, data)
 
-            if (data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0) then
-                local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
-                --local cast_state = GlobalsGetValue("player_cast_state") or nil
 
-                --print(tostring(cast_state))
-
-                --GamePrint("Sending special seed:"..tostring(special_seed))
-                --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
-                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
-                data.client.projectiles_fired = 0
-                data.client.projectile_rng_stack = {}
-            end
-
-
-            GlobalsSetValue("wand_fire_count", "0")
             --
-        else
+        --[[else
             data.client.projectile_rng_stack = {}
-            data.client.projectiles_fired = 0
+            data.client.projectiles_fired = 0]]
         end
         local current_player = player.Get()
 
+        if (data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0) then
+            local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
+            --local cast_state = GlobalsGetValue("player_cast_state") or nil
 
+            --print(tostring(cast_state))
+
+            --GamePrint("Sending special seed:"..tostring(special_seed))
+            --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
+            if(data.state == "arena")then
+                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
+            else
+                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
+            end
+            data.client.projectiles_fired = 0
+            data.client.projectile_rng_stack = {}
+        end
+
+
+        GlobalsSetValue("wand_fire_count", "0")
 
 
         if ((not GameHasFlagRun("player_unloaded")) and current_player == nil) then
@@ -1416,7 +1429,7 @@ ArenaGameplay = {
         end
     end,
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
-        if (data.state == "arena") then
+        --if (data.state == "arena") then
             local playerEntity = player.Get()
             if (playerEntity ~= nil) then
                 if (playerEntity == shooter_id) then
@@ -1483,7 +1496,7 @@ ArenaGameplay = {
                     end
                 end
             end
-        end
+        --end
         --[[
         if(data.state == "arena")then
             local playerEntity = player.Get()

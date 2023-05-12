@@ -131,6 +131,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		stealable_value = "1"
 	end
 	
+	
 	EntityAddComponent( eid, "ItemCostComponent", { 
 		_tags="shop_cost,enabled_in_world", 
 		cost=cardcost,

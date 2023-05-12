@@ -313,7 +313,7 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby, true)
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
-			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby) and spectating) then
+			if (member.id ~= steam.user.getSteamID() and spectating) then
 				networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				local success, size = 0, 0
 

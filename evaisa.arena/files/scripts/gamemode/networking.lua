@@ -800,18 +800,22 @@ networking = {
         unlock = function(lobby)
             steamutils.send("unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        character_position = function(lobby, data)
+        character_position = function(lobby, data, to_spectators)
             local player = player.Get()
             if (player) then
                 local x, y = EntityGetTransform(player)
                 local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
-                steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.OtherPlayers, lobby,
-                    false, true)
+                if(to_spectators)then
+                    steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.Spectators, lobby, false, true)
+                else
+                    steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                end
+
             end
         end,
-        wand_update = function(lobby, data, user, force)
+        wand_update = function(lobby, data, user, force, to_spectators)
             local wandString = player.GetWandString()
             if (wandString ~= nil) then
                 if (force or (wandString ~= data.client.previous_wand)) then
@@ -827,7 +831,11 @@ networking = {
                             steamutils.sendToPlayer("wand_update", data, user, true)
                         else
                             --steamutils.sendData({type = "wand_update", wandData = wandData}, steamutils.messageTypes.OtherPlayers, lobby)
-                            steamutils.send("wand_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            if(to_spectators)then
+                                steamutils.send("wand_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
+                            else
+                                steamutils.send("wand_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            end
                         end
                     end
                     data.client.previous_wand = wandString
@@ -839,7 +847,12 @@ networking = {
                         steamutils.sendToPlayer("wand_update", {}, user, true)
                     else
                         --steamutils.sendData({type = "wand_update"}, steamutils.messageTypes.OtherPlayers, lobby)
-                        steamutils.send("wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+
+                        if(to_spectators)then
+                            steamutils.send("wand_update", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+                        else
+                            steamutils.send("wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                        end
                     end
                     data.client.previous_wand = nil
                 end
@@ -848,7 +861,7 @@ networking = {
         request_wand_update = function(lobby)
             steamutils.send("request_wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        input_update = function(lobby)
+        input_update = function(lobby, to_spectators)
             local controls = player.GetControlsComponent()
             if (controls ~= nil) then
                 local kick = ComponentGetValue2(controls, "mButtonDownKick")
@@ -904,10 +917,15 @@ networking = {
                     mouseDelta_y,
                 }
 
-                steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                if(to_spectators)then
+                    steamutils.send("input_update", data, steamutils.messageTypes.Spectators, lobby, false, true)
+                else
+                    steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                end
+
             end
         end,
-        player_data_update = function(lobby, data)
+        player_data_update = function(lobby, data, to_spectators)
             local player = player.Get()
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
@@ -918,27 +936,39 @@ networking = {
 
                     --print("mFlyingTimeLeft: " .. tostring(message.mFlyingTimeLeft))
 
-                    steamutils.send("player_data_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    if(to_spectators)then
+                        steamutils.send("player_data_update", message, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("player_data_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
                 end
             end
         end,
-        animation_update = function(lobby, data)
+        animation_update = function(lobby, data, to_spectators)
             local rectAnim = player.GetAnimationData()
             if (rectAnim ~= nil) then
                 if (rectAnim ~= data.client.previous_anim) then
-                    steamutils.send("animation_update", { rectAnim }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    if(to_spectators)then
+                        steamutils.send("animation_update", { rectAnim }, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("animation_update", { rectAnim }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
                     data.client.previous_anim = rectAnim
                 end
             end
         end,
-        switch_item = function(lobby, data, user, force)
+        switch_item = function(lobby, data, user, force, to_spectators)
             local held_item = player.GetActiveHeldItem()
             if (held_item ~= nil) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
                     local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_wand")) or -1
                     if (wand_id ~= -1) then
                         if (user == nil) then
-                            steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            if(to_spectators)then
+                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.Spectators, lobby, true, true)
+                            else
+                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            end
                             data.client.previous_selected_item = held_item
                         else
                             steamutils.sendToPlayer("switch_item", { wand_id }, user, true)
@@ -947,7 +977,7 @@ networking = {
                 end
             end
         end,
-        sync_wand_stats = function(lobby, data)
+        sync_wand_stats = function(lobby, data, to_spectators)
             local held_item = player.GetActiveHeldItem()
             if (held_item ~= nil) then
                 -- if has ability component
@@ -983,7 +1013,11 @@ networking = {
                             mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
                         }
 
-                        steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                        if(to_spectators)then
+                            steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.Spectators, lobby, false, true)
+                        else
+                            steamutils.send("sync_wand_stats", msg_data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                        end
                     end
                 end
             end
@@ -1025,7 +1059,7 @@ networking = {
                 end
             end
         end,
-        fire_wand = function(lobby, rng, special_seed, cast_state)
+        fire_wand = function(lobby, rng, special_seed, to_spectators)
             local player = player.Get()
             if (player) then
                 local wand = EntityHelper.GetHeldItem(player)
@@ -1040,7 +1074,11 @@ networking = {
                         special_seed
                     }
 
-                    steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    if(to_spectators)then
+                        steamutils.send("fire_wand", data, steamutils.messageTypes.Spectators, lobby, false, true)
+                    else
+                        steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    end
                 end
             end
         end,

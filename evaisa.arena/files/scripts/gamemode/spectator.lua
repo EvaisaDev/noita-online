@@ -11,6 +11,7 @@ SpectatorMode = {
         data.selected_player = nil
         data.selected_player_name = nil
         data.lobby_spectated_player = nil
+        data.spectator_lobby_loaded = false
 
         GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
@@ -541,9 +542,18 @@ SpectatorMode = {
         if (data.countdown ~= nil) then
             data.countdown:update()
         end
+    end,
+    SpawnSpectatedPlayer = function(lobby, data)
+        if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity) then
+            data.players[tostring(data.lobby_spectated_player)]:Clean(lobby)
+        end
 
-        if(data.players_loaded)then
-            ArenaGameplay.CheckFiringBlock(lobby, data)
+        --[[if(member.id ~= steam.user.getSteamID())then
+            print(json.stringify(data.players[tostring(member.id)]))
+        end]]
+        if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity == nil) then
+            --GamePrint("Loading player " .. tostring(member.id))
+            ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data)
         end
     end,
     LobbyUpdate = function(lobby, data)
@@ -554,6 +564,11 @@ SpectatorMode = {
         if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
             data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+        end
+
+        if(#(EntityGetWithTag("workshop") or {}) > 0 and not data.spectator_lobby_loaded)then
+            data.spectator_lobby_loaded = true
+            SpectatorMode.SpawnSpectatedPlayer(lobby, data)
         end
 
         ArenaGameplay.RunReadyCheck(lobby, data)
@@ -570,6 +585,7 @@ SpectatorMode = {
         if (GameGetFrameNum() % 60 == 0) then
             ArenaGameplay.ValidatePlayers(lobby, data)
         end
+        ArenaGameplay.CheckFiringBlock(lobby, data)
     end,
     LateUpdate = function(lobby, data)
 
