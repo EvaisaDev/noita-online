@@ -222,7 +222,7 @@ message_handlers = {
 	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
-			networking_log:print("Sending message ["..data[1].."] to " .. member.name)
+			networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 			
 			local success, size = 0, 0
 
@@ -246,7 +246,7 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID()) then
-				networking_log:print("Sending message ["..data[1].."] to " .. member.name)
+				networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				--print("Sending to " .. member.name)
 
 				local success, size = 0, 0
@@ -271,7 +271,7 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
-				networking_log:print("Sending message ["..data[1].."] to " .. member.name)
+				networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				local success, size = 0, 0
 
 				if (reliable) then
@@ -292,7 +292,7 @@ message_handlers = {
 		end
 	end,
 	[steam_utils.messageTypes.Host] = function(data, lobby, reliable)
-		networking_log:print("Sending message ["..data[1].."] to Host")
+		networking_log:print("Sending message ["..bitser.loads(data)[1].."] to Host")
 		local success, size = 0, 0
 
 		if (reliable) then
@@ -314,7 +314,7 @@ message_handlers = {
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
 			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby) and spectating) then
-				networking_log:print("Sending message ["..data[1].."] to " .. member.name)
+				networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				local success, size = 0, 0
 
 				if (reliable) then
