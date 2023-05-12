@@ -193,6 +193,31 @@ local rewrites = {
             GlobalsSetValue( "RESPAWN_COUNT", tostring( respawn_count ) )
 		end,
 	},
+	CONTACT_DAMAGE = {
+		id = "CONTACT_DAMAGE",
+		ui_name = "$perk_contact_damage",
+		ui_description = "$perkdesc_contact_damage",
+		ui_icon = "data/ui_gfx/perk_icons/contact_damage.png",
+		perk_icon = "data/items_gfx/perks/contact_damage.png",
+		stackable = STACKABLE_NO,
+		usable_by_enemies = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage.xml", x, y )
+			EntityAddTag( child_id, "perk_entity" )
+			EntityAddChild( entity_who_picked, child_id )
+		end,
+		func_enemy = function( entity_perk_item, entity_who_picked )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage_enemy.xml", x, y )
+			EntityAddChild( entity_who_picked, child_id )
+		end,
+		func_client = function( entity_perk_item, entity_who_picked, item_name, amount )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage_enemy.xml", x, y )
+			EntityAddChild( entity_who_picked, child_id )
+		end,
+	}
 }
 
 -- loop backwards through perk_list so we can remove entries
