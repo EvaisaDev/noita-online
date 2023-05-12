@@ -125,6 +125,7 @@ SpectatorMode = {
         data.deaths = 0
         data.lobby_loaded = false
         data.client.player_loaded_from_data = false
+        data.arena_spectator = true
 
         local members = steamutils.getLobbyMembers(lobby)
 

@@ -28,6 +28,7 @@ table.insert(package.loaders, 2, load)
 
 logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
+networking_log = logger.init("networking.log")
 --debug_log = logger.init("debugging.log")
 
 ------ TRANSLATIONS -------
