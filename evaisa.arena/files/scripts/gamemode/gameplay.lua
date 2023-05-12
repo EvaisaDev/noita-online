@@ -1080,8 +1080,8 @@ ArenaGameplay = {
             data.countdown = nil
         end)
     end,
-    SpawnClientPlayer = function(lobby, user, data)
-        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", -1000, -1000)
+    SpawnClientPlayer = function(lobby, user, data, x, y)
+        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
         EntitySetName(client, tostring(user))
         local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
         local name = steamutils.getTranslatedPersonaName(user)
@@ -1102,6 +1102,8 @@ ArenaGameplay = {
                 end
             end
         end
+
+        return client
     end,
     CheckPlayer = function(lobby, user, data)
         if (not data.players[tostring(user)].entity and data.players[tostring(user)].alive) then

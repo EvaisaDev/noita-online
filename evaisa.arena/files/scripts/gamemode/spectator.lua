@@ -86,6 +86,7 @@ SpectatorMode = {
         networking.send.request_perk_update(lobby)
 
         data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+        np.RegisterPlayerEntityId(data.spectator_entity)
 
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
             "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
@@ -152,6 +153,7 @@ SpectatorMode = {
     UpdateSpectatorEntity = function(lobby, data)
         if(data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))then
             data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+            np.RegisterPlayerEntityId(data.spectator_entity)
         end
         
         if(data.spectator_entity)then
@@ -266,14 +268,6 @@ SpectatorMode = {
             data.spectator_quick_switch_trigger = right_trigger
 
             if (not GameHasFlagRun("chat_input_hovered")) then
-                --[[
-                arena_log:print("stick_x: "..tostring(stick_x))
-                arena_log:print("stick_y: "..tostring(stick_y))
-                arena_log:print("r_stick_x: "..tostring(r_stick_x))
-                arena_log:print("r_stick_y: "..tostring(r_stick_y))
-                arena_log:print("left_trigger: "..tostring(left_trigger))
-                arena_log:print("right_trigger: "..tostring(right_trigger))
-                ]]
 
                 local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
                 local movement_x = (stick_x * (camera_speed * (1 + (right_trigger * 5))))
@@ -544,27 +538,166 @@ SpectatorMode = {
         end
     end,
     SpawnSpectatedPlayer = function(lobby, data)
-        if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity) then
-            data.players[tostring(data.lobby_spectated_player)]:Clean(lobby)
-        end
+        if(data.lobby_spectated_player ~= nil)then
+            if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity) then
+                data.players[tostring(data.lobby_spectated_player)]:Clean(lobby)
+            end
 
-        --[[if(member.id ~= steam.user.getSteamID())then
-            print(json.stringify(data.players[tostring(member.id)]))
-        end]]
-        if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity == nil) then
-            --GamePrint("Loading player " .. tostring(member.id))
-            ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data)
+            if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity == nil) then
+                for k, v in ipairs(EntityGetWithTag("client") or {})do
+                    EntityKill(v)
+                end
+                --GamePrint("Loading player " .. tostring(member.id))
+                data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
+            end
         end
     end,
-    LobbyUpdate = function(lobby, data)
-        SpectatorMode.SpectatorText(lobby, data)
+    LobbySpectateUpdate = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
         local lobby_spectated_player = data.lobby_spectated_player
 
         if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
             data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+            data.spectator_lobby_loaded = false
         end
+
+        local camera_x, camera_y = GameGetCameraPos()
+
+        if ( data.selected_player ~= nil) then
+            local client_entity = data.selected_player
+            if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
+                local x, y = EntityGetTransform(client_entity)
+
+                if (x ~= nil and y ~= nil) then
+                    -- camera smoothing
+                    local camera_speed = 0.1
+
+                    local camera_x_diff = x - camera_x
+                    local camera_y_diff = y - camera_y
+                    local camera_x_new = camera_x + camera_x_diff * camera_speed
+                    local camera_y_new = camera_y + camera_y_diff * camera_speed
+                    GameSetCameraPos(camera_x_new, camera_y_new)
+                else
+                    data.selected_player = nil
+                    data.selected_player_name = nil
+                    data.lobby_spectated_player = nil
+                end
+            else
+                data.selected_player = nil
+                data.selected_player_name = nil
+                data.lobby_spectated_player = nil
+            end
+        end
+
+        local keys_pressed = {
+            w = input:WasKeyPressed("w"),
+            a = input:WasKeyPressed("a"),
+            s = input:WasKeyPressed("s"),
+            d = input:WasKeyPressed("d"),
+            q = input:WasKeyPressed("q"),
+            e = input:WasKeyPressed("e"),
+            space = input:WasKeyPressed("space"),
+        }
+
+        local stick_x, stick_y = input:GetGamepadAxis("left_stick")
+        local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
+        local left_trigger = input:GetGamepadAxis("left_trigger")
+        local right_trigger = input:GetGamepadAxis("right_trigger")
+
+        local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
+        local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
+
+        local right_trigger_pressed = right_trigger >= 0.5 and data.spectator_quick_switch_trigger < 0.5
+        
+        data.spectator_quick_switch_trigger = right_trigger
+
+        if (not GameHasFlagRun("chat_input_hovered")) then
+
+            local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
+            local movement_x = (stick_x * (camera_speed * (1 + (right_trigger * 5))))
+            local movement_y = (stick_y * (camera_speed * (1 + (right_trigger * 5))))
+
+            local stick_average = ((stick_x + stick_y) / 2)
+
+            if(stick_average >= 0.1 or stick_average <= -0.1)then
+                --arena_log:print("x_move: "..tostring(movement_x)..", y_move: "..tostring(movement_y))
+
+                GameSetCameraPos(camera_x + movement_x, camera_y + movement_y)
+            end
+
+            if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
+                data.selected_player = nil
+            end
+
+            if(right_trigger_pressed or keys_pressed.space)then
+                local player_entities = EntityGetWithTag("client") or {}
+
+                if(#player_entities > 0)then
+                    data.selected_player = player_entities[1]
+
+                end
+            end
+
+            if (keys_pressed.q or left_bumper) then
+                --[[
+                    data.lobby_spectated_player = 
+                    data.selected_player_name = 
+                ]]
+                local lobby_spectated_player = data.lobby_spectated_player
+
+                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                    local index = 1
+                    for k, v in ipairs(members)do
+                        if(v.id == lobby_spectated_player)then
+                            index = k
+                            break
+                        end
+                    end
+
+                    index = index - 1
+
+                    if(index < 1)then
+                        index = #members
+                    end
+
+                    data.lobby_spectated_player = members[index].id
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.spectator_lobby_loaded = false
+                    data.selected_player = nil
+                end
+            end
+
+            if (keys_pressed.e or right_bumper) then
+                local lobby_spectated_player = data.lobby_spectated_player
+
+                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                    local index = 1
+                    for k, v in ipairs(members)do
+                        if(v.id == lobby_spectated_player)then
+                            index = k
+                            break
+                        end
+                    end
+
+                    index = index + 1
+
+                    if(index > #members)then
+                        index = 1
+                    end
+
+                    data.lobby_spectated_player = members[index].id
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.spectator_lobby_loaded = false
+                    data.selected_player = nil
+                end
+            end
+        end
+    end,
+    LobbyUpdate = function(lobby, data)
+        SpectatorMode.SpectatorText(lobby, data)
+
+        SpectatorMode.LobbySpectateUpdate(lobby, data)
 
         if(#(EntityGetWithTag("workshop") or {}) > 0 and not data.spectator_lobby_loaded)then
             data.spectator_lobby_loaded = true

@@ -1129,5 +1129,15 @@ if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_heigh
 end
 
 if(not gui_closed)then
+	local version_string = "Noita Online v"..tostring(MP_VERSION).." "..GameTextGetTranslatedOrNot(VERSION_FLAVOR_TEXT)
+	if(lobby_code ~= nil)then
+		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		if(active_mode ~= nil)then
+			version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name).." "..tostring(active_mode.version)..(active_mode.version_flavor_text and " "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text) or "")
+		end
+	end
+	local text_width, text_height = GuiGetTextDimensions(menu_gui, version_string)
+	GuiText(menu_gui, screen_width / 2 - text_width / 2, screen_height - text_height, version_string)
+	--print(version_string)
 	windows[menu_status].func()
 end

@@ -43,6 +43,7 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 0.5,
+    version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     settings = {
 		{
