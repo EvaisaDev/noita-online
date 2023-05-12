@@ -1005,9 +1005,9 @@ ArenaGameplay = {
         if (GameGetFrameNum() % 2 == 0) then
             networking.send.character_position(lobby, data, true)
         end
-        networking.send.wand_update(lobby, data, nil, true)
+        networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input_update(lobby, true)
-        networking.send.switch_item(lobby, data, nil, true)
+        networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
         networking.send.player_data_update(lobby, data, true)
 
