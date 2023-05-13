@@ -57,7 +57,7 @@ function spawn_perk_reroll( x, y )
 end
 
 function spawn_target_dummy( x, y )
-	--EntityLoad( "mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y )
 end
 
 -- GameHasFlagRun("first_death")

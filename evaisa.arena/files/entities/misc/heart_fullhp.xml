@@ -1,0 +1,11 @@
+<Entity tags="drillable,hittable,teleportable_NOT">
+
+   <Base file="data/entities/items/pickup/heart_fullhp.xml" >
+
+		<LuaComponent 
+			script_item_picked_up="mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua" >
+		</LuaComponent>
+
+   </Base>
+
+</Entity>

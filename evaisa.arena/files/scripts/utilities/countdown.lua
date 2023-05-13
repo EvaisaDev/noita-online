@@ -33,7 +33,14 @@ function countdown.create( table_images, frames_between_images, finish_callback 
             end
 
 
+            --print("image_index: " .. self.image_index)
             local image = self.table_images[self.image_index]
+
+
+            if(image == nil)then
+                print("image is nil")
+                return false
+            end
             local width, height = GuiGetImageDimensions(gui_countdown, image, 1)
             local screen_width, screen_height = GuiGetScreenDimensions(gui_countdown)
 

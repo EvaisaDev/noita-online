@@ -48,8 +48,36 @@ ArenaGameplay = {
             arena_log:print("Gold count: " .. goldCount)
         end
         local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
-        local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
+        --local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
 
+        --[[
+             local match_data = {
+                reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
+                picked_health = GameHasFlagRun("picked_health"),
+                picked_perk = GameHasFlagRun("picked_perk"),
+            }
+
+            local serialized = bitser.dumps(match_data)
+
+            if(data.client.match_data ~= serialized)then
+                steamutils.SetLocalLobbyData(lobby, "match_data", serialized)
+
+                data.client.match_data = serialized
+            end
+        ]]
+
+        if(steamutils.GetLocalLobbyData(lobby, "match_data") ~= nil)then
+            local match_data = bitser.loads(steamutils.GetLocalLobbyData(lobby, "match_data"))
+
+            if(match_data ~= nil)then
+                data.client.reroll_count = tonumber(match_data.reroll_count)
+                GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", tostring(data.client.reroll_count))
+                GameAddFlagRun("picked_health")
+                GameAddFlagRun("picked_perk")
+            end
+        end
+
+        --[[
         if(steamutils.GetLocalLobbyData(lobby, "reroll_count") == nil)then
             data.rejoined = true
         end
@@ -57,6 +85,7 @@ ArenaGameplay = {
         data.client.reroll_count = rerollCount
 
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", tostring(rerollCount))
+        ]]
 
         if (playerData ~= nil and playerData ~= "") then
             data.client.serialized_player = playerData
@@ -664,12 +693,19 @@ ArenaGameplay = {
             --[[profile:stop()
 
             print("Profiler result: "..tostring(profile:time()) .. "ms")]]
-            local rerollCount = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0")
 
-            if (data.client.reroll_count ~= rerollCount) then
-                steamutils.SetLocalLobbyData(lobby, "reroll_count", rerollCount)
+            local match_data = {
+                reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
+                picked_health = GameHasFlagRun("picked_health"),
+                picked_perk = GameHasFlagRun("picked_perk"),
+            }
 
-                data.client.reroll_count = rerollCount
+            local serialized = bitser.dumps(match_data)
+
+            if(data.client.match_data ~= serialized)then
+                steamutils.SetLocalLobbyData(lobby, "match_data", serialized)
+
+                data.client.match_data = serialized
             end
         end
     end,
@@ -757,9 +793,16 @@ ArenaGameplay = {
         local rounds = ArenaGameplay.GetNumRounds()
 
         if (data.client.player_loaded_from_data) then
-            GameAddFlagRun("skip_perks")
-            GameAddFlagRun("skip_health")
+            if(GameHasFlagRun("picked_perk"))then
+                GameAddFlagRun("skip_perks")
+            end
+            if(GameHasFlagRun("picked_health"))then
+                GameAddFlagRun("skip_health")
+            end
             ArenaGameplay.RemoveRound()
+        else
+            GameRemoveFlagRun("picked_health")
+            GameRemoveFlagRun("picked_perk")
         end
 
         -- Give gold
@@ -850,6 +893,7 @@ ArenaGameplay = {
         np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
         np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
         np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
 
         ArenaGameplay.ClearWorld()
 
@@ -1064,6 +1108,9 @@ ArenaGameplay = {
             "mods/evaisa.arena/files/sprites/ui/countdown/1.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/fight.png",
         }, 60, function()
+            print("Countdown completed")
+            data.countdown:cleanup()
+            data.countdown = nil
             --message_handler.send.Unlock(lobby)
             networking.send.unlock(lobby)
             GameAddFlagRun("countdown_completed")
@@ -1076,8 +1123,6 @@ ArenaGameplay = {
 
             --message_handler.send.RequestWandUpdate(lobby, data)
             networking.send.request_wand_update(lobby)
-            data.countdown:cleanup()
-            data.countdown = nil
         end)
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)

@@ -19,5 +19,7 @@ perk_pickup = function( entity_item, entity_who_picked, item_name, do_cosmetic_f
         oldSetRandomSeed(local_seed, local_seed)
     end
 
+    GameAddFlagRun("picked_perk")
+
     return old_perk_pickup( entity_item, entity_who_picked, item_name, do_cosmetic_fx, kill_other_perks, no_perk_entity_ )
 end

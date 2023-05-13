@@ -549,6 +549,7 @@ SpectatorMode = {
                 end
                 --GamePrint("Loading player " .. tostring(member.id))
                 data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
+                networking.send.request_wand_update(lobby, data.lobby_spectated_player)
             end
         end
     end,
@@ -560,6 +561,7 @@ SpectatorMode = {
             data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
             data.spectator_lobby_loaded = false
+            
         end
 
         local camera_x, camera_y = GameGetCameraPos()

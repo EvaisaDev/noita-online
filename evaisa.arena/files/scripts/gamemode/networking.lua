@@ -858,8 +858,12 @@ networking = {
                 end
             end
         end,
-        request_wand_update = function(lobby)
-            steamutils.send("request_wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+        request_wand_update = function(lobby, user)
+            if(user == nil)then
+                steamutils.send("request_wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_wand_update", {}, user, true)
+            end
         end,
         input_update = function(lobby, to_spectators)
             local controls = player.GetControlsComponent()
