@@ -47,7 +47,10 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators)
 	return list
 end
 
-steam_utils.IsOwner = function(lobby_id)
+steam_utils.IsOwner = function(lobby_id, user)
+	if(user ~= nil)then
+		return steam.matchmaking.getLobbyOwner(lobby_id) == user
+	end
 	return steam.matchmaking.getLobbyOwner(lobby_id) == steam.user.getSteamID()
 end
 

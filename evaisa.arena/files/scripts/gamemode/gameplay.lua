@@ -714,6 +714,7 @@ ArenaGameplay = {
 
         data.selected_player = nil
         data.selected_player_name = nil
+        GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
         show_message = show_message or false
@@ -1013,6 +1014,8 @@ ArenaGameplay = {
         if (steamutils.IsOwner(lobby)) then
             -- check if all players are ready
             if (ArenaGameplay.ReadyCheck(lobby, data) and ArenaLoadCountdown == nil) then
+                GameAddFlagRun("lock_ready_state")
+                networking.send.lock_ready_state(lobby)
                 ArenaLoadCountdown = GameGetFrameNum() + 62
             end
 

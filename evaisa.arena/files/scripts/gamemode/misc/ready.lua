@@ -11,6 +11,10 @@ end
 function interacting( entity_who_interacted, entity_interacted, interactable_name )
     readyComp = EntityGetFirstComponentIncludingDisabled(entity, "InteractableComponent", "ready")
     
+    if(GameHasFlagRun("lock_ready_state"))then
+        return
+    end
+    
     if(GameHasFlagRun("ready_check"))then
         GameAddFlagRun("player_unready")
         GameRemoveFlagRun("ready_check")

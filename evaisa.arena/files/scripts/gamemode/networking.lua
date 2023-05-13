@@ -19,6 +19,14 @@ networking = {
         ready = function(lobby, message, user, data)
             local username = steamutils.getTranslatedPersonaName(user)
 
+            if(GameHasFlagRun("lock_ready_state"))then
+                data.players[tostring(user)].ready = true
+                if (steamutils.IsOwner(lobby)) then
+                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                end
+                return
+            end
+
             if (message[1]) then
                 data.players[tostring(user)].ready = true
 
@@ -774,6 +782,17 @@ networking = {
                 end
             end
         end,
+        lock_ready_state = function(lobby, message, user, data)
+            -- check if user is lobby owner
+            if (not steamutils.IsOwner(lobby, user)) then
+                return
+            end
+
+            GameAddFlagRun("lock_ready_state")
+            GameAddFlagRun("player_ready")
+            GameAddFlagRun("ready_check")
+            GameRemoveFlagRun("player_unready")
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -1091,6 +1110,9 @@ networking = {
         end,
         zone_update = function(lobby, zone_size, shrink_time)
             steamutils.send("zone_update", { zone_size, shrink_time }, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+        end,
+        lock_ready_state = function(lobby)
+            steamutils.send("lock_ready_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
     },
 }
