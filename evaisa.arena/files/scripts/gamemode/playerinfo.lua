@@ -33,6 +33,9 @@ function playerinfo:New(user)
     }
     obj.Death = function(self)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+
+            GameDestroyInventoryItems( self.entity )
+
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
             if(damage_model_comp ~= nil)then
                 ComponentSetValue2(damage_model_comp, "hp", 0)

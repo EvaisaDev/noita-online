@@ -14,6 +14,8 @@ SpectatorMode = {
         data.spectator_lobby_loaded = false
 
         GameRemoveFlagRun("countdown_completed")
+        GameRemoveFlagRun("round_finished")
+        
         show_message = show_message or false
 
         np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
@@ -455,6 +457,10 @@ SpectatorMode = {
         end
         ]]
 
+        if(GameHasFlagRun("round_finished"))then
+            return
+        end
+
         print("WinnerCheck (spectator)")
 
         local alive = 0
@@ -475,6 +481,8 @@ SpectatorMode = {
                 local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
+            
+            GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
                 SpectatorMode.LoadLobby(lobby, data, false)
@@ -486,6 +494,8 @@ SpectatorMode = {
 
         elseif (alive == 0) then
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+
+            GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
                 SpectatorMode.LoadLobby(lobby, data, false)

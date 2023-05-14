@@ -591,6 +591,10 @@ ArenaGameplay = {
         end
         ]]
 
+        if(GameHasFlagRun("round_finished"))then
+            return
+        end
+
         print("WinnerCheck (gameplay)")
 
         local alive = data.client.alive and 1 or 0
@@ -614,6 +618,8 @@ ArenaGameplay = {
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
 
+            GameAddFlagRun("round_finished")
+
             delay.new(5 * 60, function()
                 ArenaGameplay.LoadLobby(lobby, data, false)
             end, function(frames)
@@ -623,6 +629,8 @@ ArenaGameplay = {
             end)
         elseif (alive == 0) then
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+
+            GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
                 ArenaGameplay.LoadLobby(lobby, data, false)
@@ -730,6 +738,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
+        GameRemoveFlagRun("round_finished")
         show_message = show_message or false
         first_entry = first_entry or false
 
