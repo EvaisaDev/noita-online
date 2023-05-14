@@ -342,9 +342,6 @@ ArenaMode = {
         end
 
         delay.update()
-
-        networking.send.handshake(lobby)
-
         data.spectator_mode = steamutils.IsSpectator(lobby)
 
         data.using_controller = GameGetIsGamepadConnected()
@@ -364,6 +361,10 @@ ArenaMode = {
                     end
                 end
             end
+
+
+            networking.send.handshake(lobby)
+
 
             -- fix daynight cycle
             local world_state = GameGetWorldStateEntity()
