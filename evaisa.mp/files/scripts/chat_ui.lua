@@ -178,13 +178,28 @@ if (lobby_code ~= nil) then
 		local sendMessage = function()
 			chat_input.cursor_pos = 0
 			if (utf8.len(input_text) > 0 and not input_text:match("^%s*$")) then
+				-- check if message begins with / or !
+				local command = input_text:sub(1, 1)
 
-				local username = steamutils.getTranslatedPersonaName()
-				local message = username .. ": " .. input_text
+				if (command == "/" or command == "!") then
+					-- get command name, get arguments as table, remove ! or / from command name
+					local command_name, args = input_text:match("([%w_]+)%s*(.*)")
 
-				local message_final = "chat;" .. message
-				steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+					mp_log:print("command received: " .. command_name)
 
+					if(lobby_code ~= nil)then
+						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+						if(active_mode ~= nil and active_mode.commands and active_mode.commands[command_name])then
+							active_mode.commands[command_name](command_name, args)
+						end
+					end
+				else
+					local username = steamutils.getTranslatedPersonaName()
+					local message = username .. ": " .. input_text
+
+					local message_final = "chat;" .. message
+					steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+				end
 			end
 			input_text = ""
 		end

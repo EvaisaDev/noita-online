@@ -43,7 +43,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.51,
+    version = 0.52,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     settings = {
@@ -128,6 +128,27 @@ ArenaMode = {
             formatting_string = " $0s",
             width = 100
         },
+    },
+    commands = {
+        ready = function(command_name, arguments)
+            if(GameHasFlagRun("lock_ready_state"))then
+                return
+            end
+            
+            if(GameHasFlagRun("ready_check"))then
+                ChatPrint(GameTextGetTranslatedOrNot("$arena_self_unready"))
+                GameAddFlagRun("player_unready")
+                GameRemoveFlagRun("ready_check")
+                GameRemoveFlagRun("player_ready")
+            else
+                ChatPrint(GameTextGetTranslatedOrNot("$arena_self_ready"))
+                GameAddFlagRun("player_ready")
+                GameAddFlagRun("ready_check")
+                GameRemoveFlagRun("player_unready")
+            end
+
+
+        end
     },
     default_data = {
         total_gold = "0",

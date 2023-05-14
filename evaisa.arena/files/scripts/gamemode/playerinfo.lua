@@ -34,7 +34,11 @@ function playerinfo:New(user)
     obj.Death = function(self)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-            GameDestroyInventoryItems( self.entity )
+            local items = GameGetAllInventoryItems( self.entity )
+
+            for i,item in ipairs(items) do
+                EntityKill(item)
+            end
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
             if(damage_model_comp ~= nil)then

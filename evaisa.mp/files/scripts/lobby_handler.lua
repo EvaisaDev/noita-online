@@ -354,6 +354,51 @@ function handleChatMessage(data)
 	end
 end
 
+function ChatPrint(text)
+
+	local buffer = {}
+	local chunks = split_message(text)
+
+	for h = 1, #chunks do
+		if (not reverse_chat_direction) then
+			local was_found = false
+			for j = 1, #chat_log do
+				if (chat_log[j] == " ") then
+					chat_log[j] = chunks[h]
+					new_chat_message = true
+					was_found = true
+					break
+				end
+			end
+			if (not was_found) then
+				table.insert(chat_log, chunks[h])
+				new_chat_message = true
+			end
+		else
+			local empty_index = nil
+			for j = 1, #chat_log do
+				if (chat_log[j] == " ") then
+					empty_index = j
+					break
+				end
+			end
+			if (empty_index ~= nil) then
+				table.remove(chat_log, empty_index)
+			end
+
+			table.insert(buffer, chunks[h])
+			new_chat_message = true
+		end
+	end
+
+	if(reverse_chat_direction)then
+		for i = #buffer, 1, -1 do
+			print("inserting "..buffer[i].." at 1")
+			table.insert(chat_log, 1, buffer[i])
+		end
+	end
+end
+
 function getFriendLobbies()
 	local friend_lobbies = {}
 
