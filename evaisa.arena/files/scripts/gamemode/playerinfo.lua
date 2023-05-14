@@ -20,6 +20,7 @@ function playerinfo:New(user)
         previous_positions = {},
         last_inventory_string = nil,
         ping = 0,
+        delay_frames = 0,
         id = user,
         perks = {},
         controls = {
@@ -30,7 +31,30 @@ function playerinfo:New(user)
             rightClick = false,
         }
     }
+    obj.Death = function(self)
+        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
+            if(damage_model_comp ~= nil)then
+                ComponentSetValue2(damage_model_comp, "hp", 0)
+                ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
+            end
+            EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0)
+        end
+        
 
+        self.entity = nil
+        self.held_item = nil
+        if(self.hp_bar)then
+            self.hp_bar:destroy()
+            self.hp_bar = nil
+        end
+        self.ready = false
+        self.alive = false
+        --[[self.last_position_x = nil
+        self.last_position_y = nil]]
+        self.previous_positions = {}
+        self.last_inventory_string = nil
+    end
     obj.Clean = function(self, lobby)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)

@@ -24,8 +24,8 @@ mod_settings =
 			},]]
 			{
 				id = "flip_chat_direction",
-				ui_name = "$mp_flip_chat_direction_name",
-				ui_description = "$mp_flip_chat_direction_description",
+				ui_name = "Flip chat direction",
+				ui_description = "Make new messages appear on the top of the chat box.",
 				value_default = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},

@@ -4,6 +4,7 @@ local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 
+delay = dofile("mods/evaisa.arena/files/scripts/utilities/delay.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
@@ -206,6 +207,8 @@ ArenaMode = {
     start = function(lobby, was_in_progress)
         arena_log:print("Start called!!!")
 
+        delay.reset()
+
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -276,6 +279,8 @@ ArenaMode = {
     spectate = function(lobby, was_in_progress)
         arena_log:print("Spectate called!!!")
 
+        delay.reset()
+
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -336,6 +341,10 @@ ArenaMode = {
             return
         end
 
+        delay.update()
+
+        networking.send.handshake(lobby)
+
         data.spectator_mode = steamutils.IsSpectator(lobby)
 
         data.using_controller = GameGetIsGamepadConnected()
@@ -355,8 +364,6 @@ ArenaMode = {
                     end
                 end
             end
-
-            networking.send.handshake(lobby)
 
             -- fix daynight cycle
             local world_state = GameGetWorldStateEntity()

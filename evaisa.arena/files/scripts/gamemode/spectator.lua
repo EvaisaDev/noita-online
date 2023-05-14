@@ -476,11 +476,24 @@ SpectatorMode = {
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
 
-            SpectatorMode.LoadLobby(lobby, data, false)
+            delay.new(5 * 60, function()
+                SpectatorMode.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if (frames % 60 == 0) then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
+
         elseif (alive == 0) then
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
 
-            SpectatorMode.LoadLobby(lobby, data, false)
+            delay.new(5 * 60, function()
+                SpectatorMode.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if (frames % 60 == 0) then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
         end
     end,
     ArenaUpdate = function(lobby, data)
@@ -550,6 +563,7 @@ SpectatorMode = {
                 --GamePrint("Loading player " .. tostring(member.id))
                 data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
                 networking.send.request_wand_update(lobby, data.lobby_spectated_player)
+                networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
             end
         end
     end,

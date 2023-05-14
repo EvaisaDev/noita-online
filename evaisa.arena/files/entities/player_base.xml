@@ -152,7 +152,7 @@
     ragdollify_child_entity_sprites="1"
     blood_spray_material="blood"
     physics_objects_damage="0"
-    critical_damage_resistance="1"
+    critical_damage_resistance="0"
     ><damage_multipliers
       explosion="0.35" >
     </damage_multipliers>

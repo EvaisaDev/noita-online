@@ -5,7 +5,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     if(entity_thats_responsible == nil or entity_thats_responsible == 0 )then
         local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-        if damageModelComponent ~= nil then
+        if damageModelComponent ~= nil and damage ~= 69420 then
             local health = ComponentGetValue2( damageModelComponent, "hp" )
             if health then
                 ComponentSetValue2( damageModelComponent, "hp", health + damage )

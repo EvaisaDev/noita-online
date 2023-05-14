@@ -118,7 +118,7 @@ networking = {
                     if ((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true) then
                         local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
 
-                        --[[
+                     
                         local last_position_x, last_position_y = nil, nil
 
                         for k, v in ipairs(data.players[tostring(user)].previous_positions)do
@@ -133,6 +133,8 @@ networking = {
                                 last_position_y = last_position_y + v.y
                             end
                         end
+
+
 
                         local new_x, new_y = x, y
 
@@ -170,9 +172,11 @@ networking = {
 
                         EntitySetTransform(entity, new_x, new_y)
                         EntityApplyTransform(entity, new_x, new_y)
-                        ]]
+                        
+                        --[[
                         EntitySetTransform(entity, x, y)
                         EntityApplyTransform(entity, x, y)
+                        ]]
                     else
                         EntitySetTransform(entity, x, y)
                         EntityApplyTransform(entity, x, y)
@@ -705,7 +709,7 @@ networking = {
 
                 --print(json.stringify(killer))
 
-                data.players[tostring(user)]:Clean(lobby)
+                data.players[tostring(user)]:Death()
                 data.players[tostring(user)].alive = false
                 data.deaths = data.deaths + 1
 
@@ -793,6 +797,22 @@ networking = {
             GameAddFlagRun("ready_check")
             GameRemoveFlagRun("player_unready")
         end,
+        request_spectate_data = function(lobby, message, user, data)
+           networking.send.spectate_data(lobby, data, user, true)
+        end,
+        spectate_data = function(lobby, message, user, data)
+            local spectator_simulated = EntityGetWithTag("spectator_simulated")
+            if(spectator_simulated ~= nil)then
+                for _, spectator in ipairs(spectator_simulated) do
+                    EntityKill(spectator)
+                end
+            end
+
+            if(message.heart)then
+                local heart = EntityLoad("data/entities/animals/heart.xml", message.heart[1], message.heart[2])
+                EntityAddTag(heart, "spectator_simulated")
+            end
+        end
     },
     send = {
         handshake = function(lobby)
@@ -1113,6 +1133,32 @@ networking = {
         end,
         lock_ready_state = function(lobby)
             steamutils.send("lock_ready_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
+        request_spectate_data = function(lobby, user)
+            steamutils.sendToPlayer("request_spectate_data", {}, user, true)
+        end,
+        spectate_data = function(lobby, data, user, force)
+            local heart_entity = EntityGetWithTag("heart")
+            local spectate_data = {
+                heart = nil
+            }
+
+            if (#heart_entity > 0) then
+                local heart_x, heart_y = EntityGetTransform(heart_entity[1])
+                spectate_data.heart = { heart_x, heart_y }
+            end
+
+            local serialized = bitser.dumps(spectate_data)
+            if (serialized ~= data.client.previous_spectate_data or force) then
+                data.client.previous_spectate_data = serialized
+                
+                if(user ~= nil)then
+                    steamutils.sendToPlayer("spectate_date", spectate_data, user, true)
+                else
+                    steamutils.send("spectate_date", spectate_data, steamutils.messageTypes.Spectators, lobby, true)
+                end
+            end
+
         end,
     },
 }

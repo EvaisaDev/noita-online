@@ -614,11 +614,23 @@ ArenaGameplay = {
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
 
-            ArenaGameplay.LoadLobby(lobby, data, false)
+            delay.new(5 * 60, function()
+                ArenaGameplay.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if (frames % 60 == 0) then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
         elseif (alive == 0) then
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
 
-            ArenaGameplay.LoadLobby(lobby, data, false)
+            delay.new(5 * 60, function()
+                ArenaGameplay.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if (frames % 60 == 0) then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
         end
     end,
     KillCheck = function(lobby, data)
@@ -714,6 +726,7 @@ ArenaGameplay = {
 
         data.selected_player = nil
         data.selected_player_name = nil
+        data.client.previous_spectate_data = nil
         GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
@@ -1049,14 +1062,15 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
-        if (GameGetFrameNum() % 2 == 0) then
+        --if (GameGetFrameNum() % 2 == 0) then
             networking.send.character_position(lobby, data, true)
-        end
+        --end
         networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input_update(lobby, true)
         networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
         networking.send.player_data_update(lobby, data, true)
+        networking.send.spectate_data(lobby, data, nil, false)
 
         GameAddFlagRun("Immortal")
 

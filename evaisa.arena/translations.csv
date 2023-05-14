@@ -60,3 +60,6 @@ arena_holymountain_unready,Press $0 to unready,Нажмите $0 для отме
 arena_open_beta,Open Beta,,,,,,,,,,,,,
 arena_dev,Dev,,,,,,,,,,,,,
 arena_prerelease,Pre release,,,,,,,,,,,,,
+arena_ready_count_left_name,Ready Count Left,,,,,,,,,,,,,
+arena_ready_count_left_description,Move ready count to the left side of the screen.,,,,,,,,,,,,,
+arena_returning_to_lobby_text,Returning to lobby in %s seconds,,,,,,,,,,,,,

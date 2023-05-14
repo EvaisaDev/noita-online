@@ -37,7 +37,7 @@ end
 function spawn_hp( x, y )
 	GameAddFlagRun("in_hm")
     if(not GameHasFlagRun("skip_health"))then
-		EntityLoad( "data/entities/items/pickup/heart_fullhp_temple.xml", x-16, y )
+		EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
 	else
 		GameRemoveFlagRun("skip_health")
 	end

@@ -1,4 +1,4 @@
-<Entity tags="drillable,hittable,teleportable_NOT">
+<Entity tags="drillable,hittable,teleportable_NOT,heart">
 
    <Base file="data/entities/items/pickup/heart_fullhp.xml" >
 
