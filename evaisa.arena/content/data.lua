@@ -6,5 +6,6 @@ arena_list = {
             {x = 0, y = 0}
         },
         zone_size = 600,
+        zone_floor = 400
     }
 }

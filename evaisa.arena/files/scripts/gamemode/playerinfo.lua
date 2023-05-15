@@ -32,22 +32,23 @@ function playerinfo:New(user)
         }
     }
     obj.Death = function(self)
-        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-            local items = GameGetAllInventoryItems( self.entity )
+                local items = GameGetAllInventoryItems( self.entity )
 
-            for i,item in ipairs(items) do
-                EntityKill(item)
+                for i,item in ipairs(items) do
+                    EntityRemoveFromParent(item)
+                    EntityKill(item)
+                end
+
+                local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
+                if(damage_model_comp ~= nil)then
+                    ComponentSetValue2(damage_model_comp, "hp", 0)
+                    ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
+                end
+                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0)
             end
-
-            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
-            if(damage_model_comp ~= nil)then
-                ComponentSetValue2(damage_model_comp, "hp", 0)
-                ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
-            end
-            EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0)
-        end
-        
+            
 
         self.entity = nil
         self.held_item = nil

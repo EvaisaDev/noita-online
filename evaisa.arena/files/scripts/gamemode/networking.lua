@@ -63,6 +63,10 @@ networking = {
             end
         end,
         enter_arena = function(lobby, message, user, data)
+            if(data.ready_counter)then
+                data.ready_counter:cleanup()
+                data.ready_counter = nil
+            end
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         start_countdown = function(lobby, message, user, data)

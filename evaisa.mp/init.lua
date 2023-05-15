@@ -56,7 +56,7 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.44
+MP_VERSION = 1.441
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -526,7 +526,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		ModSettingSet("last_lobby_code", tostring(lobby_code))
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if handleVersionCheck() then
+		if handleVersionCheck() and handleModCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					defineLobbyUserData(lobby_code)
@@ -599,7 +599,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 	if (data.fromOwner and data.message == "start" or data.message == "restart") then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if handleVersionCheck() then
+		if handleVersionCheck() and handleModCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					local user = data.userID
@@ -635,7 +635,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 	elseif (data.fromOwner and data.message == "refresh") then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if handleVersionCheck() then
+		if handleVersionCheck() and handleModCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					--game_in_progress = false

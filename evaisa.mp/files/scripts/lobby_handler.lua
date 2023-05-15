@@ -233,6 +233,44 @@ function defineLobbyUserData(lobby)
 	end
 end
 
+function handleModCheck()
+	local required_mods = (steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby_code, "required_mods")) or {}
+
+	local player_mods = ModData()
+
+	print(json.stringify(required_mods))
+
+	
+	for i = #required_mods, 1, -1 do
+		local v = required_mods[i]
+		for k2, v2 in pairs(player_mods) do
+			if (v2.id == v[1]) then
+				table.remove(required_mods, i)
+			end
+		end
+	end
+
+	if (#required_mods > 0) then
+
+		local mods_string = ""
+		for i, v in ipairs(required_mods) do
+			if(i == #required_mods) then
+				mods_string = mods_string .. v[2] .. " ("..v[1]..")"
+			else
+				mods_string = mods_string .. v[2] .. " ("..v[1].."), "
+			end
+		end
+
+		disconnect({
+			lobbyID = lobby_code,
+			message = string.format(GameTextGetTranslatedOrNot("$mp_client_missing_mods"), mods_string)
+		})
+		return false
+	end
+	
+	return true
+end
+
 function getLobbyUserData(lobby, userid)
 	if(lobby == nil) then
 		return nil

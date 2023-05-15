@@ -258,8 +258,6 @@ ArenaGameplay = {
             local totalPlayers = ArenaGameplay.TotalPlayers(lobby)
 
             return playersReady, totalPlayers
-        end, function()
-            data.ready_counter = nil
         end)
     end,
     LoadPlayer = function(lobby, data)
@@ -357,6 +355,24 @@ ArenaGameplay = {
             end
         end
     end,
+    DamageFloorCheck = function(depth, max_depth)
+        -- if player goes under depth, do proportional damage based on depth
+        local players = EntityGetWithTag("player_unit") or {}
+        for k, v in pairs(players) do
+            local x, y = EntityGetTransform(v)
+            if(y >= depth)then
+                local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
+                if (healthComp ~= nil) then
+                    local health = tonumber(ComponentGetValue(healthComp, "hp"))
+                    local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
+                    local base_health = 4
+                    local damage_percentage = (y - depth) / max_depth
+                    local damage = max_health * damage_percentage
+                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0)
+                end
+            end
+        end
+    end,
     ResetDamageZone = function(lobby, data)
         GuiDestroy(data.zone_gui)
         data.zone_gui = nil
@@ -368,6 +384,7 @@ ArenaGameplay = {
     DamageZoneHandler = function(lobby, data, can_shrink)
         if (data.current_arena) then
             local default_size = data.current_arena.zone_size
+            local zone_floor = data.current_arena.zone_floor
 
             --{{"disabled", "Disabled"}, {"static", "Static"}, {"shrinking_Linear", "Linear Shrinking"}, {"shrinking_step", "Stepped Shrinking"}},
             local zone_type = GlobalsGetValue("zone_shrink", "static")
@@ -577,6 +594,11 @@ ArenaGameplay = {
 
                 if (GameGetFrameNum() % 60 == 0) then
                     ArenaGameplay.DamageZoneCheck(0, 0, data.zone_size, data.zone_size + 200)
+
+                end
+            else
+                if (GameGetFrameNum() % 60 == 0) then
+                    ArenaGameplay.DamageFloorCheck(zone_floor, zone_floor + 200)
                 end
             end
         end
@@ -1035,14 +1057,23 @@ ArenaGameplay = {
     RunReadyCheck = function(lobby, data)
         if (steamutils.IsOwner(lobby)) then
             -- check if all players are ready
-            if (ArenaGameplay.ReadyCheck(lobby, data) and ArenaLoadCountdown == nil) then
-                GameAddFlagRun("lock_ready_state")
-                networking.send.lock_ready_state(lobby)
-                ArenaLoadCountdown = GameGetFrameNum() + 62
+            if (ArenaGameplay.ReadyCheck(lobby, data)) then
+                if(ArenaLoadCountdown == nil)then
+                    GameAddFlagRun("lock_ready_state")
+                    networking.send.lock_ready_state(lobby)
+                    ArenaLoadCountdown = GameGetFrameNum() + 62
+                end
+            else
+                ArenaLoadCountdown = nil 
             end
 
             if (ArenaLoadCountdown ~= nil and GameGetFrameNum() >= ArenaLoadCountdown) then
                 ArenaLoadCountdown = nil
+
+                if(data.ready_counter)then
+                    data.ready_counter:cleanup()
+                    data.ready_counter = nil
+                end
 
                 -- still ready? start game.
                 if (ArenaGameplay.ReadyCheck(lobby, data)) then
@@ -1329,7 +1360,10 @@ ArenaGameplay = {
                 -- if we are the last player, unready
                 if(not data.spectator_mode)then
                     if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
-                        ArenaGameplay.SetReady(lobby, data, false, true)
+                        GameRemoveFlagRun("lock_ready_state")
+                        GameAddFlagRun("player_unready")
+                        GameRemoveFlagRun("ready_check")
+                        --ArenaGameplay.SetReady(lobby, data, false, true)
                     end
                 end
 

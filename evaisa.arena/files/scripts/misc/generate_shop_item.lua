@@ -113,30 +113,32 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	end
 	
 	offsetx = textwidth * 0.5 - 0.5
-
-	EntityAddComponent( eid, "SpriteComponent", { 
-		_tags="shop_cost,enabled_in_world",
-		image_file="data/fonts/font_pixel_white.xml", 
-		is_text_sprite="1", 
-		offset_x=tostring(offsetx), 
-		offset_y="25", 
-		update_transform="1" ,
-		update_transform_rotation="0",
-		text=tostring(cardcost),
-		z_index="-1",
+	if( GlobalsGetValue("no_shop_cost") == "false")then
+			
+		EntityAddComponent( eid, "SpriteComponent", { 
+			_tags="shop_cost,enabled_in_world",
+			image_file="data/fonts/font_pixel_white.xml", 
+			is_text_sprite="1", 
+			offset_x=tostring(offsetx), 
+			offset_y="25", 
+			update_transform="1" ,
+			update_transform_rotation="0",
+			text=tostring(cardcost),
+			z_index="-1",
 		} )
 
-	local stealable_value = "0"
-	if( is_stealable ) then 
-		stealable_value = "1"
+		local stealable_value = "0"
+		if( is_stealable ) then 
+			stealable_value = "1"
+		end
+		
+
+		EntityAddComponent( eid, "ItemCostComponent", { 
+			_tags="shop_cost,enabled_in_world", 
+			cost=cardcost,
+			stealable="0"
+		} )
 	end
-	
-	
-	EntityAddComponent( eid, "ItemCostComponent", { 
-		_tags="shop_cost,enabled_in_world", 
-		cost=cardcost,
-		stealable="0"
-		} )
 		
 	EntityAddComponent( eid, "LuaComponent", { 
 		script_item_picked_up="data/scripts/items/shop_effect.lua",
@@ -268,24 +270,26 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	-- local x, y = EntityGetTransform( entity_id )
 	-- SetRandomSeed( x, y )
 	local eid = EntityLoad( item, x, y)
-
-	EntityAddComponent( eid, "SpriteComponent", { 
-		_tags="shop_cost,enabled_in_world",
-		image_file="data/fonts/font_pixel_white.xml", 
-		is_text_sprite="1", 
-		offset_x=tostring(offsetx), 
-		offset_y="25", 
-		update_transform="1" ,
-		update_transform_rotation="0",
-		text=tostring(wandcost),
-		z_index="-1"
+	if( GlobalsGetValue("no_shop_cost") == "false")then
+		EntityAddComponent( eid, "SpriteComponent", { 
+			_tags="shop_cost,enabled_in_world",
+			image_file="data/fonts/font_pixel_white.xml", 
+			is_text_sprite="1", 
+			offset_x=tostring(offsetx), 
+			offset_y="25", 
+			update_transform="1" ,
+			update_transform_rotation="0",
+			text=tostring(wandcost),
+			z_index="-1"
 		} )
 
-	EntityAddComponent( eid, "ItemCostComponent", { 
-		_tags="shop_cost,enabled_in_world", 
-		cost=wandcost,
-		stealable="0"
+
+		EntityAddComponent( eid, "ItemCostComponent", { 
+			_tags="shop_cost,enabled_in_world", 
+			cost=wandcost,
+			stealable="0"
 		} )
+	end
 		
 	EntityAddComponent( eid, "LuaComponent", { 
 		script_item_picked_up="data/scripts/items/shop_effect.lua"

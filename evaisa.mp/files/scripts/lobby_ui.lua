@@ -306,7 +306,7 @@ local windows = {
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steamutils.IsSpectator(lobby_code)
-				if(active_mode and active_mode.spectate ~= nil)then
+				if(active_mode and active_mode.spectate ~= nil and active_mode.disable_spectator_system ~= true)then
 					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
@@ -595,6 +595,8 @@ local windows = {
 						GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 0.8 )
 						GuiZSetForNextWidget(menu_gui, -5510)
 						--GamePrint(tostring(v.workshop_item_id))
+						--GuiLayoutBeginHorizontal(menu_gui, 0, 0, true)
+
 						if(v.workshop_item_id ~= 0 and v.workshop_item_id ~= "0")then
 							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")))then
 								--steam.utils.openWorkshopItem(v.workshop_item_id)
@@ -636,12 +638,55 @@ local windows = {
 
 							end
 							GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_open_download_page_tooltip"),  description_truncated)
-						else
+						else	
 							GuiText(menu_gui, 0, 0, v.name .. (v.id ~= nil and " ( "..v.id.." )" or ""))
 							GuiTooltip(menu_gui,  description_truncated, "")
 						end
+
+						local mod_required = (steam.matchmaking.getLobbyData(lobby_code, "mod_required_"..v.id) == "true") or false
+
+						local required_text = mod_required and GameTextGetTranslatedOrNot("$mp_required") or GameTextGetTranslatedOrNot("$mp_not_required")
+
+						GuiZSetForNextWidget(menu_gui, -5510)
+
+						if(mod_required)then
+							GuiColorSetForNextWidget( menu_gui, 1, 0.129, 0, 0.8 )
+						else
+							GuiColorSetForNextWidget( menu_gui, 0.314, 1, 0, 0.8 )
+						end
+
+						if(steamutils.IsOwner(lobby_code))then
+							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, required_text))then
+								steam.matchmaking.setLobbyData(lobby_code, "mod_required_"..v.id, tostring(not mod_required))
+								if(not mod_required)then
+									local required_mods = (steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby_code, "required_mods")) or {}
+								
+									table.insert(required_mods, {v.id, v.name})
+
+									steam.matchmaking.setLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
+								else
+									local required_mods = (steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby_code, "required_mods")) or {}
+								
+									for i, mod in ipairs(required_mods) do
+										if(mod.id == v.id)then
+											table.remove(required_mods, i)
+											break
+										end
+									end
+
+									steam.matchmaking.setLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
+								end
+							end
+						else
+							GuiText(menu_gui, 0, 0, required_text)
+						end
+
+
+						GuiText(menu_gui, 0, -8, " ")
+
 						mod_count = mod_count + 1
 					end
+					--GuiLayoutEnd(menu_gui)
 					
 
 					for i = 1, 50 - mod_count do
@@ -736,6 +781,16 @@ local windows = {
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
 							GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
+						else
+							if(setting.type == "bool" and type(gamemode_settings[setting.id]) == "string")then
+								if(gamemode_settings[setting.id] == "true")then
+									gamemode_settings[setting.id] = true
+								else
+									gamemode_settings[setting.id] = false
+								end
+							elseif(setting.type == "slider" and type(gamemode_settings[setting.id]) == "string")then
+								gamemode_settings[setting.id] = tonumber(gamemode_settings[setting.id])
+							end
 						end
 
 						if(setting.require == nil or setting.require(setting))then
@@ -779,6 +834,9 @@ local windows = {
 
 								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 									gamemode_settings[setting.id] = not gamemode_settings[setting.id]
+
+									--print(tostring(gamemode_settings[setting.id]))
+
 									GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))

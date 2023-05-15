@@ -43,9 +43,10 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.52,
+    version = 0.53,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
+    disable_spectator_system = true,
     settings = {
 		{
 			id = "shop_type",
@@ -86,6 +87,13 @@ ArenaMode = {
 			formatting_string = " $0%",
 			width = 100
 		},
+        {
+            id = "no_shop_cost",
+            name = "$arena_settings_no_cost_name",
+            description = "$arena_settings_no_cost_description",
+            type = "bool",
+            default = false
+        },
         {
             id = "damage_cap",
             name = "$arena_settings_damage_cap_name",
@@ -173,6 +181,14 @@ ArenaMode = {
             shop_random_ratio = 50
         end
         GlobalsSetValue("shop_random_ratio", tostring(shop_random_ratio))
+
+        local no_shop_cost = steam.matchmaking.getLobbyData(lobby, "setting_no_shop_cost")	
+        if (no_shop_cost == nil) then
+            no_shop_cost = false
+        end
+        print("no_shop_cost: " .. tostring(no_shop_cost))
+        GlobalsSetValue("no_shop_cost", tostring(no_shop_cost))
+        
 
         local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))
         if (damage_cap == nil) then

@@ -230,7 +230,8 @@ ArenaMessageHandler = {
                         if(newPlayerEntity ~= nil and EntityGetIsAlive(newPlayerEntity))then
 
                             local x, y = message.x, message.y
-
+                            
+                            
                             if((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true)then
                                 local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
 
