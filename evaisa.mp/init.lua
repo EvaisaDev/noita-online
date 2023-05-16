@@ -56,7 +56,7 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.441	
+MP_VERSION = 1.442	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -257,6 +257,7 @@ end
 local spawned_popup = false
 local init_cleanup = false
 local connection_popup_open = false
+local connection_popup_was_open_timer = 0
 
 function OnWorldPreUpdate()
 
@@ -294,15 +295,27 @@ function OnWorldPreUpdate()
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
 
 		if(not steam.utils.loggedOn())then
-			GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
-			if(not connection_popup_open)then
+			if(GameGetFrameNum() % (60 * 5) == 0)then
+				GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
+			end
+			
+			if(connection_popup_was_open_timer > 0)then
+				connection_popup_was_open_timer = connection_popup_was_open_timer - 1
+			end
+
+
+
+			if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
 				connection_popup_open = true
+				connection_popup_was_open_timer = 60 * 60 * 2
 				popup.create("update_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
 				GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
 					{
 						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
 						callback = function()
-							connection_popup_open = false
+							if(lobby_code ~= nil)then
+								connection_popup_open = false
+							end
 						end
 					}
 				}, -6000)
