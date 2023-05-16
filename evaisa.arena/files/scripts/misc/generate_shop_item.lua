@@ -165,7 +165,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 				} )
 		end
 	end)]]--
-
+	return eid
 end
 
 ------------ generate shop wand -----------------------------------------------
@@ -297,4 +297,6 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	EntitySetTransform( eid, x, y )
 	EntityApplyTransform( eid, x, y )
+
+	return eid
 end
