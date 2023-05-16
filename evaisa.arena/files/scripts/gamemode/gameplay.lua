@@ -197,6 +197,20 @@ ArenaGameplay = {
                 local winner_key = tostring(member.id) .. "_wins"
                 steam.matchmaking.deleteLobbyData(lobby, winner_key)
             end
+
+            local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
+            if (winner_keys == nil) then
+                winner_keys = {}
+            else
+                winner_keys = bitser.loads(winner_keys)
+            end
+
+            for k, key in pairs(winner_keys) do
+                steam.matchmaking.deleteLobbyData(lobby, key)
+            end
+
+            steam.matchmaking.deleteLobbyData(lobby, "winner_keys")
+
         end
 
         GameRemoveFlagRun("saving_grace")
@@ -636,6 +650,19 @@ ArenaGameplay = {
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
                 local winner_key = tostring(winner) .. "_wins"
+
+                local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
+                if (winner_keys == nil) then
+                    winner_keys = {}
+                else
+                    winner_keys = bitser.loads(winner_keys)
+                end
+
+                if (not table.contains(winner_keys, winner_key)) then
+                    table.insert(winner_keys, winner_key)
+                    steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
+                end
+
                 local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
@@ -1367,11 +1394,11 @@ ArenaGameplay = {
                     end
                 end
 
-                if (steamutils.IsOwner(lobby)) then
+                --[[if (steamutils.IsOwner(lobby)) then
                     local winner_key = tostring(k) .. "_wins"
                     steam.matchmaking.deleteLobbyData(lobby, winner_key)
                 end
-
+                ]]
                 lobby_member_names[k] = nil
                 if (data.state == "arena") then
                     if(not data.spectator_mode)then

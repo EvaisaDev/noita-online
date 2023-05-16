@@ -56,7 +56,7 @@ profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.441
+MP_VERSION = 1.441	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -66,6 +66,7 @@ rng = dofile("mods/evaisa.mp/lib/rng.lua")
 Checksum_passed = false
 in_game = false
 Spawned = false
+Starting = nil
 
 disable_print = false
 
@@ -350,6 +351,18 @@ function OnWorldPreUpdate()
 				return
 			end
 
+			if(Starting ~= nil)then
+				Starting = Starting - 1
+				if(Starting < 0)then
+					Starting = 0
+				end
+			end
+
+			if(Starting == 0)then
+				StartGame()
+				Starting = nil
+			end
+
 			--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 
 			--print("a")
@@ -518,6 +531,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 	end
 	input:Clear()
+	Starting = nil
 	in_game = false
 	game_in_progress = false
 	if (data.response ~= 2) then
@@ -574,6 +588,43 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 	end
 end
 
+function StartGame()
+	local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+	if handleVersionCheck() and handleModCheck() then
+		if handleGamemodeVersionCheck(lobby_code) then
+			if (lobby_gamemode) then
+
+				spectating = steamutils.IsSpectator(lobby_code)
+
+				--print("Are we spectating? " .. tostring(spectating))
+
+				if (spectating) then
+					if (lobby_gamemode.spectate ~= nil) then
+						lobby_gamemode.spectate(lobby_code)
+					elseif (lobby_gamemode.start ~= nil) then
+						lobby_gamemode.start(lobby_code)
+					end
+				else
+					if (lobby_gamemode.start ~= nil) then
+						lobby_gamemode.start(lobby_code)
+					end
+				end
+
+				in_game = true
+				game_in_progress = true
+
+				gui_closed = true
+			else
+				disconnect({
+					lobbyID = lobby_code,
+					message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))
+				})
+			end
+		end
+	end
+end
+
 function steam.matchmaking.onLobbyChatMsgReceived(data)
 	--pretty.table(data)
 	--[[
@@ -597,40 +648,10 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 
 
 	if (data.fromOwner and data.message == "start" or data.message == "restart") then
-		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-
-		if handleVersionCheck() and handleModCheck() then
-			if handleGamemodeVersionCheck(lobby_code) then
-				if (lobby_gamemode) then
-					local user = data.userID
-
-					spectating = steamutils.IsSpectator(lobby_code)
-
-					print("Are we spectating? " .. tostring(spectating))
-
-					if (spectating) then
-						if (lobby_gamemode.spectate ~= nil) then
-							lobby_gamemode.spectate(lobby_code)
-						elseif (lobby_gamemode.start ~= nil) then
-							lobby_gamemode.start(lobby_code)
-						end
-					else
-						if (lobby_gamemode.start ~= nil) then
-							lobby_gamemode.start(lobby_code)
-						end
-					end
-
-					in_game = true
-					game_in_progress = true
-
-					gui_closed = true
-				else
-					disconnect({
-						lobbyID = lobby_code,
-						message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))
-					})
-				end
-			end
+		if(owner == steam.user.getSteamID())then
+			StartGame()
+		else
+			Starting = 30
 		end
 	elseif (data.fromOwner and data.message == "refresh") then
 		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
