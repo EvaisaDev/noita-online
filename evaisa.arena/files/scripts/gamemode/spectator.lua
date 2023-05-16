@@ -175,9 +175,6 @@ SpectatorMode = {
             data.spectator_text_gui = GuiCreate()
         end
 
-        local camera_x, camera_y = GameGetCameraPos()
-
-        
         local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
 
         local text = GameTextGetTranslatedOrNot("$arena_spectating_text")
