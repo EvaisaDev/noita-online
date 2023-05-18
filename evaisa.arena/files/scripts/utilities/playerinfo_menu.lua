@@ -150,6 +150,14 @@ function playerinfo_menu:New()
                         
             GuiZSetForNextWidget(self.gui, 900)
 
+            GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
+
+            local self_ready = GameHasFlagRun("ready_check")
+            
+            if(self_ready)then
+                GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
+            end
+            GuiZSetForNextWidget(self.gui, 900)
             local color = game_funcs.ID2Color(player_id)
             if(color == nil)then
                 color = {r = 255, g = 255, b = 255}
@@ -163,9 +171,12 @@ function playerinfo_menu:New()
             local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
             scroll_offset = scroll_y - self.offset_y - 2
 
+
+            GuiLayoutEnd(self.gui)
+
             GuiZSetForNextWidget(self.gui, 900)
             GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-            GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
+            GuiText(self.gui, 0, -2, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
 
             local health_ratio = hp / max_hp
             local health_bar_width = 90
@@ -245,7 +256,12 @@ function playerinfo_menu:New()
                     if(v.max_health == nil)then
                         v.max_health = 100
                     end
-    
+
+                    GuiLayoutBeginHorizontal(self.gui, 0, 2, true)
+                    if(v.ready)then
+                        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
+                    end
+
                     local username = v.name or steamutils.getTranslatedPersonaName(playerid)
                     GuiZSetForNextWidget(self.gui, 900)
                     local color = game_funcs.ID2Color(playerid)
@@ -256,9 +272,12 @@ function playerinfo_menu:New()
                     local a = 1
                     GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
                     GuiText(self.gui, 0, 0, username)
+
+                    GuiLayoutEnd(self.gui)
+
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
+                    GuiText(self.gui, 0, -2, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
                     GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames))--[["Delay: "..tostring(v.delay_frames).." frames"]])
@@ -375,7 +394,7 @@ function playerinfo_menu:New()
         draw_pos = draw_pos + 10
 
         if(draw_perks)then
-
+            perk_draw_x = perk_draw_x + 11
             GuiBeginAutoBox(self.gui)
             if(#player_perk_sprites > 0)then
                 local width = 7
@@ -386,11 +405,11 @@ function playerinfo_menu:New()
                     local pos_x = i % width
                     local pos_y = math.floor(i / width)
                     GuiZSetForNextWidget(self.gui, 800)
-                    GuiImage(self.gui, new_id(), perk_draw_x + (pos_x * pdg_x), (draw_pos + (pos_y * pdg_y)), player_perk_sprites[i+1], 1, 1, 1)
+                    GuiImage(self.gui, new_id(), perk_draw_x + (pos_x * pdg_x), 1 + (draw_pos + (pos_y * pdg_y)), player_perk_sprites[i+1], 1, 1, 1)
                 end
             else
                 GuiZSetForNextWidget(self.gui, 800)
-                GuiText(self.gui, perk_draw_x, draw_pos, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
+                GuiText(self.gui, perk_draw_x, draw_pos + 1, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
             end
             GuiZSetForNextWidget(self.gui, 850)
 

@@ -40,6 +40,72 @@ register_localizations("mods/evaisa.mp/translations.csv", 2)
 ---------------------------
 
 
+local function readWord(file)
+	local byte1, byte2 = file:read(1), file:read(1)
+	if not byte1 or not byte2 then
+	return nil
+	end
+	return byte1:byte() + byte2:byte() * 256
+end
+
+local function readDword(file)
+	local word1, word2 = readWord(file), readWord(file)
+	if not word1 or not word2 then
+	return nil
+	end
+	return word1 + word2 * 65536
+end
+
+local function checkLAA(filename)
+	local file, err = io.open(filename, "rb")
+	if not file then
+	  print("Error opening file: " .. err)
+	  return false
+	end
+  
+	file:seek("set", 0x3C)
+	local peOffset = readDword(file)
+  
+	file:seek("set", peOffset + 4) -- Go to IMAGE_FILE_HEADER
+	local characteristicsOffset = peOffset + 22 -- Offset of "Characteristics" field
+  
+	file:seek("set", characteristicsOffset)
+	local characteristics = readWord(file)
+  
+	file:close()
+  
+	return bit.band(characteristics, 0x20) == 0x20 -- Properly check the IMAGE_FILE_LARGE_ADDRESS_AWARE flag
+end
+
+local function LAAPatch()
+	local batch = string.format([[
+		@echo off
+		taskkill /F /IM "noita.exe"
+		timeout /t 5
+
+		echo Running LAA-enabling script
+
+		start mods/evaisa.mp/bin/laac.exe noita.exe
+
+		echo LAA-enabling script finished, starting Noita
+
+		timeout /t 5
+
+		start noita.exe
+
+		echo You can close this window.
+	]])
+
+	--
+
+	local batchname = "enablelaa.bat"
+	local batchfile = io.open(batchname, "w")
+	batchfile:write(batch)
+	batchfile:close()
+
+	os.execute("start "..batchname)
+end
+
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
@@ -72,6 +138,30 @@ disable_print = false
 
 dev_mode = true
 
+function GetNoitaVersionHash()
+	local file = "_version_hash.txt"
+	local f = io.open(file, "r")
+	if f then
+		local hash = f:read("*all")
+		f:close()
+		return hash
+	end
+	return nil
+end
+
+local noita_version_hash = GetNoitaVersionHash()
+
+last_noita_version = ModSettingGet("evaisa.mp.last_noita_version") or ""
+laa_check_done = false
+if(noita_version_hash ~= nil)then
+	mp_log:print("Noita version hash: " .. noita_version_hash)
+	if(last_noita_version ~= noita_version_hash)then
+		ModSettingSet("evaisa.mp.last_noita_version", noita_version_hash)
+		laa_check_done = false
+	else
+		laa_check_done = true
+	end
+end
 base64 = require("base64")
 
 msg = require("msg")
@@ -293,6 +383,31 @@ function OnWorldPreUpdate()
 	end
 
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
+
+		--[[
+		if(not laa_check_done)then
+			laa_enabled = checkLAA("noita.exe")
+			print("LAA: " .. tostring(laa_enabled))
+
+			
+			popup.create("update_message", "Do you want to enable LAA?", "Enabling Large Address Aware lets noita use up to 4GB of memory. \nWhich helps prevent crashes.", {
+				{
+					text = GameTextGetTranslatedOrNot("Patch"),
+					callback = function()
+						LAAPatch("noita.exe", "noita")
+					end
+				},
+				{
+					text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+					callback = function()
+						
+					end
+				},
+			}, -6000)
+
+			laa_check_done = true
+		end
+		]]
 
 		if(not steam.utils.loggedOn())then
 			if(GameGetFrameNum() % (60 * 5) == 0)then
