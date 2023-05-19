@@ -628,6 +628,7 @@ networking = {
                         ]]
 
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
+                           -- print(pretty.table(damage_details))
 
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
@@ -636,6 +637,9 @@ networking = {
                             local damage_per_type = damage / #damage_types
 
                             for i, damage_type in ipairs(damage_types) do
+
+                                
+
                                 EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
                                 ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], nil, damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
                             end
