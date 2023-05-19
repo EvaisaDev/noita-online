@@ -606,6 +606,7 @@ networking = {
         health_update = function(lobby, message, user, data)
             local health = message[1]
             local maxHealth = message[2]
+            local damage_details = message[3]
 
             if (health ~= nil and maxHealth ~= nil) then
                 if (data.players[tostring(user)].entity ~= nil) then
@@ -615,8 +616,34 @@ networking = {
                     end
                     if (health < last_health) then
                         local damage = last_health - health
-                        EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
+
+                        --[[
+                            {
+                                ragdoll_fx = 1 
+                                damage_types = 16 -- bitflag
+                                knockback_force = 0    
+                                impulse = {0, 0},
+                                world_pos = {216.21, 12.583},
+                            }
+                        ]]
+
+                        if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
+
+                            local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
+                            local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
+
+                            -- split the damage into as many parts as there are damage types
+                            local damage_per_type = damage / #damage_types
+
+                            for i, damage_type in ipairs(damage_types) do
+                                EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
+                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], nil, damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                            end
+                        else
+                            EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
                             "NONE", 0, 0, nil)
+                        end
+
                     end
 
                     local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
@@ -711,9 +738,10 @@ networking = {
                     end
                 end
 
+                local damage_details = message[2]
                 --print(json.stringify(killer))
 
-                data.players[tostring(user)]:Death()
+                data.players[tostring(user)]:Death(damage_details)
                 data.players[tostring(user)].alive = false
                 data.deaths = data.deaths + 1
 
@@ -1074,7 +1102,13 @@ networking = {
 
             if (health ~= nil and max_health ~= nil) then
                 if ((data.client.max_hp ~= max_health or data.client.hp ~= health) or force) then
-                    steamutils.send("health_update", { health, max_health }, steamutils.messageTypes.OtherPlayers, lobby,
+                    local damage_details = json.parse(GlobalsGetValue("last_damage_details", "{}"))
+
+                    if(not GameHasFlagRun("player_died"))then
+                        GlobalsSetValue("last_damage_details", "{}")
+                    end
+
+                    steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                     data.client.max_hp = max_health
                     data.client.hp = health
@@ -1130,7 +1164,9 @@ networking = {
             end
         end,
         death = function(lobby, killer)
-            steamutils.send("death", { killer }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            local damage_details = json.parse(GlobalsGetValue("last_damage_details", "{}"))
+            GlobalsSetValue("last_damage_details", "{}")
+            steamutils.send("death", { killer, damage_details }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         zone_update = function(lobby, zone_size, shrink_time)
             steamutils.send("zone_update", { zone_size, shrink_time }, steamutils.messageTypes.OtherPlayers, lobby, false, true)

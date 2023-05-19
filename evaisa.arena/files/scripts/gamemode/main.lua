@@ -1,5 +1,5 @@
 arena_log = logger.init("noita-arena.log")
-
+mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
@@ -43,7 +43,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.531,
+    version = 0.534,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,

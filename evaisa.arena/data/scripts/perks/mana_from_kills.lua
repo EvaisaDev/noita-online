@@ -7,7 +7,7 @@ local targets = EntityGetInRadiusWithTag( x, y, 240, "mortal" )
 
 if ( #targets > 0 ) then
 	for i,target_id in ipairs( targets ) do
-        if(target_id ~= entity_id)then
+        if(target_id ~= EntityGetRootEntity(entity_id))then
             local variablestorages = EntityGetComponent( target_id, "VariableStorageComponent" )
             local found = false
             

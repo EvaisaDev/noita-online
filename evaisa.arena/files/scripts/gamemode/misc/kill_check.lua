@@ -1,3 +1,6 @@
+local helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
+local json = dofile("mods/evaisa.arena/lib/json.lua")
+
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
     
@@ -23,7 +26,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     local damage_cap_percentage = tonumber(GlobalsGetValue("damage_cap", "0.25") or 0.25)
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-    if damageModelComponent ~= nil then
+    if damageModelComponent ~= nil and entity_thats_responsible ~= GameGetWorldStateEntity() then
         local max_hp = ComponentGetValue2( damageModelComponent, "max_hp" )
         local damage_cap = max_hp * damage_cap_percentage
         if damage > damage_cap then
@@ -37,8 +40,19 @@ end
 function damage_received( damage, message, entity_thats_responsible, is_fatal, projectile_thats_responsible )
     local entity_id = GetUpdatedEntityID()
     
+    local damage_details = GetDamageDetails()
+    --[[
+        {
+            ragdoll_fx = 1 
+            damage_types = 16 -- bitflag
+            knockback_force = 0    
+            impulse = {0, 0},
+            world_pos = {216.21, 12.583},
+        }
+    ]]
     -- check if would kill
     GameAddFlagRun("took_damage")
+    GlobalsSetValue("last_damage_details", tostring(json.stringify(damage_details)))
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     if damageModelComponent ~= nil then

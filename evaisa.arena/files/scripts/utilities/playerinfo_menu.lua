@@ -146,15 +146,26 @@ function playerinfo_menu:New()
             local hp = data.client.hp or 100
             local max_hp = data.client.max_hp or 100
 
+
+            if(hp < 0)then
+                hp = 0
+            end
+            if(max_hp < 0)then
+                max_hp = 100
+            end
+            if(hp > max_hp)then
+                hp = max_hp
+            end
+
             local wins = ArenaGameplay.GetWins(lobby, player_id)
                         
-            GuiZSetForNextWidget(self.gui, 900)
 
-            GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
 
             local self_ready = GameHasFlagRun("ready_check")
-            
             if(self_ready)then
+                GuiZSetForNextWidget(self.gui, 900)
+                GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
+
                 GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
             end
             GuiZSetForNextWidget(self.gui, 900)
@@ -171,12 +182,13 @@ function playerinfo_menu:New()
             local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
             scroll_offset = scroll_y - self.offset_y - 2
 
-
-            GuiLayoutEnd(self.gui)
+            if(self_ready)then
+                GuiLayoutEnd(self.gui)
+            end
 
             GuiZSetForNextWidget(self.gui, 900)
             GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-            GuiText(self.gui, 0, -2, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
+            GuiText(self.gui, 0, self_ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
 
             local health_ratio = hp / max_hp
             local health_bar_width = 90
@@ -253,13 +265,22 @@ function playerinfo_menu:New()
                     if(v.health == nil)then
                         v.health = 0
                     end
+                    if(v.health < 0)then
+                        v.health = 0
+                    end
                     if(v.max_health == nil)then
                         v.max_health = 100
                     end
-
-                    GuiLayoutBeginHorizontal(self.gui, 0, 2, true)
+                    if(v.max_health < 0)then
+                        v.max_health = 100
+                    end
+                    if(v.health > v.max_health)then
+                        v.health = v.max_health
+                    end
                     if(v.ready)then
-                        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
+                        GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
+                    
+                        GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
                     end
 
                     local username = v.name or steamutils.getTranslatedPersonaName(playerid)
@@ -273,11 +294,13 @@ function playerinfo_menu:New()
                     GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
                     GuiText(self.gui, 0, 0, username)
 
-                    GuiLayoutEnd(self.gui)
+                    if(v.ready)then
+                        GuiLayoutEnd(self.gui)
+                    end
 
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, -2, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
+                    GuiText(self.gui, 0, v.ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
                     GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames))--[["Delay: "..tostring(v.delay_frames).." frames"]])

@@ -6,11 +6,11 @@ local entity_id = GetUpdatedEntityID()
 local x,y = EntityGetTransform( entity_id )
 local radius = 56
 
-local targets = EntityGetInRadiusWithTag( x, y, radius, "mortal" )
--- iterate targets backwards and remove self
-for i=#targets,1,-1 do
-    if targets[i] == entity_id then
-        table.remove( targets, i )
+local targets = {}
+
+for k, v in ipairs(EntityGetInRadiusWithTag( x, y, radius, "mortal" ) or {})do
+    if(v ~= EntityGetRootEntity(entity_id))then
+        table.insert(targets, v)
     end
 end
 

@@ -187,6 +187,7 @@ local application_id = 943584660334739457LL
 
 np.InstallShootProjectileFiredCallbacks()
 np.EnableGameSimulatePausing(false)
+np.InstallDamageDetailsPatch()
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 
 --GameSDK = require("game_sdk")

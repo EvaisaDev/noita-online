@@ -31,7 +31,7 @@ function playerinfo:New(user)
             rightClick = false,
         }
     }
-    obj.Death = function(self)
+    obj.Death = function(self, damage_details)
             if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
                 local items = GameGetAllInventoryItems( self.entity )
@@ -46,7 +46,21 @@ function playerinfo:New(user)
                     ComponentSetValue2(damage_model_comp, "hp", 0)
                     ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
                 end
-                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0)
+
+                if(damage_details.ragdoll_fx ~= nil)then
+                    local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
+                    local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
+
+                    -- split the damage into as many parts as there are damage types
+                    local damage_per_type = 69420 / #damage_types
+
+                    for i, damage_type in ipairs(damage_types) do
+                        EntityInflictDamage(self.entity, damage_per_type, damage_type, "damage_fake",
+                        ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], GameGetWorldStateEntity(), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                    end
+                else
+                    EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0, GameGetWorldStateEntity())
+                end
             end
             
 

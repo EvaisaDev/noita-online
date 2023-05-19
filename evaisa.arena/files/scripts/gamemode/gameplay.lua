@@ -364,7 +364,7 @@ ArenaGameplay = {
                     local base_health = 4
                     local damage_percentage = (distance - max_distance) / distance_cap
                     local damage = max_health * damage_percentage
-                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0)
+                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
         end
@@ -382,7 +382,7 @@ ArenaGameplay = {
                     local base_health = 4
                     local damage_percentage = (y - depth) / max_depth
                     local damage = max_health * damage_percentage
-                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0)
+                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
         end
@@ -621,11 +621,11 @@ ArenaGameplay = {
         return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
     end,
     WinnerCheck = function(lobby, data)
-        --[[
-        if(true)then
+        
+        --[[if(true)then
             return
-        end
-        ]]
+        end]]
+        
 
         if(GameHasFlagRun("round_finished"))then
             return
@@ -813,12 +813,13 @@ ArenaGameplay = {
             ArenaGameplay.LoadPlayer(lobby, data)
         end
         ]]
+
+        player.Immortal(true)
+
         RunWhenPlayerExists(function()
             if (first_entry and player.Get()) then
                 GameDestroyInventoryItems(player.Get())
             end
-
-            player.Immortal(true)
         end)
 
         -- clean other player's data
@@ -879,7 +880,12 @@ ArenaGameplay = {
 
         -- Give gold
         local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
-        local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
+
+        local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
+
+        extra_gold_count = extra_gold_count + 1
+
+        local extra_gold = 400 + (extra_gold_count * (70 * (rounds_limited * rounds_limited)))
 
         --print("First spawn gold = "..tostring(data.client.first_spawn_gold))
 
