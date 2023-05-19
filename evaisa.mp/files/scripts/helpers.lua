@@ -12,7 +12,6 @@ local helpers = {
         PLAYER_RAGDOLL_CAMERA = 0x9,
     },
     DAMAGE_TYPES = {
-        NONE = 0x0,
         DAMAGE_MELEE = 0x1,
         DAMAGE_PROJECTILE = 0x2,
         DAMAGE_EXPLOSION = 0x4,
