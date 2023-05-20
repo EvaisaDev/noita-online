@@ -10,6 +10,7 @@ function data:New()
         projectile_seeds = {},
         ready_counter = nil,
         countdown = nil,
+        upgrade_system = nil,
         ----- spectator mode -----
         spectator_gui_entity = nil,
         spectator_gui = nil,

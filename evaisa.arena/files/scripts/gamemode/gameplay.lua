@@ -129,6 +129,10 @@ ArenaGameplay = {
                 EntityKill(data.spectator_gui_entity)
             end
         end
+        if(data.upgrade_system)then
+            data.upgrade_system:clean()
+            data.upgrade_system = nil
+        end
         if (data.countdown) then
             data.countdown:cleanup()
             data.countdown = nil
@@ -795,7 +799,12 @@ ArenaGameplay = {
         np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
         np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
         np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
-
+        
+        if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            data.upgrade_system = upgrade_system.create(3, function(upgrade)
+                data.upgrade_system = nil
+            end)
+        end
 
         if (not first_entry) then
             ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1427,6 +1436,10 @@ ArenaGameplay = {
     end,
     Update = function(lobby, data)
         SpectatorMode.SpectateUpdate(lobby, data)
+
+        if(data.upgrade_system ~= nil and not IsPaused())then
+            data.upgrade_system:draw()
+        end
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)
         --end

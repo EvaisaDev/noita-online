@@ -18,6 +18,8 @@ font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 --spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
+
+upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
 
@@ -43,7 +45,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.534,
+    version = 0.535,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
@@ -136,6 +138,13 @@ ArenaMode = {
             formatting_string = " $0s",
             width = 100
         },
+        {
+            id = "upgrades_system",
+            name = "$arena_settings_upgrades_system_name",
+            description = "$arena_settings_upgrades_system_description",
+            type = "bool",
+            default = false
+        },
     },
     commands = {
         ready = function(command_name, arguments)
@@ -214,6 +223,12 @@ ArenaMode = {
         end
         GlobalsSetValue("zone_step_interval", tostring(zone_step_interval))
 
+        local upgrades_system = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_system")
+        if (upgrades_system == nil) then
+            upgrades_system = false
+        end
+        GlobalsSetValue("upgrades_system", tostring(upgrades_system))
+
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
@@ -251,6 +266,7 @@ ArenaMode = {
         end
 
         if (not was_in_progress) then
+            GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
         end
@@ -262,6 +278,7 @@ ArenaMode = {
 
         if (unique_game_id_server ~= unique_game_id_client) then
             arena_log:print("Unique game id mismatch, removing player data")
+            GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
         end
