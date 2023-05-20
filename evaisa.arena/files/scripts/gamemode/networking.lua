@@ -70,30 +70,33 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true)
         end,
         start_countdown = function(lobby, message, user, data)
-            if(data.spectator_mode)then
-                GamePrint("Starting countdown...")
-
-                arena_log:print("Received all clear for starting countdown.")
-
-                data.players_loaded = true
-                gameplay_handler.FightCountdown(lobby, data)
-            else
-                RunWhenPlayerExists(function()
+            if(data.state == "arena")then
+                if(data.spectator_mode)then
                     GamePrint("Starting countdown...")
 
                     arena_log:print("Received all clear for starting countdown.")
 
                     data.players_loaded = true
                     gameplay_handler.FightCountdown(lobby, data)
-                end)
+                else
+                    RunWhenPlayerExists(function()
+                        GamePrint("Starting countdown...")
+
+                        arena_log:print("Received all clear for starting countdown.")
+
+                        data.players_loaded = true
+                        gameplay_handler.FightCountdown(lobby, data)
+                    end)
+                end
             end
         end,
         unlock = function(lobby, message, user, data)
-            if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died")) then
+            if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died") and data.state == "arena") then
                 --print("Received unlock message, attempting to unlock player.")
 
                 --player_helper.immortal(false)
 
+                
                 GameRemoveFlagRun("Immortal")
 
                 gameplay_handler.AllowFiring(data)
