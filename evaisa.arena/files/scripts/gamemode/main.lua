@@ -45,11 +45,19 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.535,
+    version = 0.538,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
     settings = {
+        {
+            id = "perk_catchup",
+            name = "$arena_settings_perk_reward_system_name",
+            description = "$arena_settings_perk_reward_system_description",
+            type = "enum",
+            options = { { "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
+            default = "losers"
+        },
 		{
 			id = "shop_type",
 			name = "$arena_settings_shop_type_name",
@@ -145,6 +153,17 @@ ArenaMode = {
             type = "bool",
             default = false
         },
+        {
+            id = "upgrades_catchup",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_upgrades_system", "false") == "true"
+            end,
+            name = "$arena_settings_upgrades_reward_system_name",
+            description = "$arena_settings_upgrades_reward_system_description",
+            type = "enum",
+            options = {{ "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
+            default = "losers"
+        },
     },
     commands = {
         ready = function(command_name, arguments)
@@ -173,6 +192,12 @@ ArenaMode = {
         ready_players = "null",
     },
     refresh = function(lobby)
+        local perk_catchup = steam.matchmaking.getLobbyData(lobby, "setting_perk_catchup")
+        if (perk_catchup == nil) then
+            perk_catchup = "losers"
+        end
+        GlobalsSetValue("perk_catchup", tostring(perk_catchup))
+
 		local shop_type = steam.matchmaking.getLobbyData(lobby, "setting_shop_type")
 		if (shop_type == nil) then
 			shop_type = "random"
@@ -229,6 +254,12 @@ ArenaMode = {
         end
         GlobalsSetValue("upgrades_system", tostring(upgrades_system))
 
+        local upgrades_catchup = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_catchup")
+        if (upgrades_catchup == nil) then
+            upgrades_catchup = "losers"
+        end
+        GlobalsSetValue("upgrades_catchup", tostring(upgrades_catchup))
+
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
@@ -247,6 +278,30 @@ ArenaMode = {
         arena_log:print("Enter called!!!")
 
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
+
+        local upgrade_translation_keys = ""
+        local upgrade_translation_values = ""
+        for k, v in ipairs(upgrades)do
+            local id = v.id
+            local ui_name = v.ui_name
+            local ui_description = v.ui_description
+
+            upgrade_translation_keys = upgrade_translation_keys .. "arena_upgrades_" .. string.lower(id) .. "_name\n"
+            upgrade_translation_keys = upgrade_translation_keys .. "arena_upgrades_" .. string.lower(id) .. "_description\n"
+
+            upgrade_translation_values = upgrade_translation_values .. ui_name .. "\n"
+            upgrade_translation_values = upgrade_translation_values .. ui_description .. "\n"
+        end
+
+        -- write to files
+        local upgrade_translation_keys_file = io.open("noita_online_logs/arena_upgrades_keys.txt", "w")
+        upgrade_translation_keys_file:write(upgrade_translation_keys)
+        upgrade_translation_keys_file:close()
+
+        local upgrade_translation_values_file = io.open("noita_online_logs/arena_upgrades_values.txt", "w")
+        upgrade_translation_values_file:write(upgrade_translation_values)
+        upgrade_translation_values_file:close()
+
 
         --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"

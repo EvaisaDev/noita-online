@@ -10,6 +10,27 @@ function NewID(identifier, force)
 	end
 	return generated_id
 end
+function ResetID()
+	generated_id = 1000
+end
+
+local old_window_stack = {}
+local window_stack = {}
+local last_hovered_window = nil
+function ResetWindowStack()
+	--print("ResetWindowStack")
+	for k, window in pairs(old_window_stack) do
+		if(window_stack[k] == nil)then
+			old_window_stack[k] = nil
+		end
+	end
+
+	for k, window in pairs(window_stack) do
+		old_window_stack[k] = window
+	end
+
+	window_stack = {}
+end
 
 
 function WorldToScreenPos(gui_input, x, y)
@@ -93,6 +114,9 @@ end
 
 function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_callback, identifier)
 
+	--print(tostring(title))
+	--print(tostring(identifier))
+
 	h = h - 12
 	if(centered)then
 		x, y = GetCenterPosition(x, y, w, h)
@@ -113,10 +137,12 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 		GuiText(gui, x, bar_y, " "..title)
 	end
 
+	w = w + 12
+
 	if(close_callback ~= nil)then
 		GuiLayoutBeginLayer( gui )
 		GuiLayoutBeginHorizontal( gui, 0, 0, true, 0, 0)
-		if(CustomButton(gui, "sagsadshds", x + (w + 2), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then
+		if(CustomButton(gui, "sagsadshds", x + (w - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then
 			close_callback()
 		end
 		GuiLayoutEnd( gui )
@@ -125,12 +151,110 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 
 	GuiZSetForNextWidget( gui, z_index )
 	GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
-	GuiEndAutoBoxNinePiece( gui, 0, w + 12, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
+	GuiEndAutoBoxNinePiece( gui, 0, w, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
 	
 	local clicked, right_clicked, hovered, bar_x, bar_y = GuiGetPreviousWidgetInfo( gui )
 
+	--GuiOptionsAddForNextWidget(gui, GUI_OPTION.IgnoreContainer)
+
+	local mouse_x, mouse_y = input:GetUIMousePos(gui)
+
+	local disable_scroll = true
+
+	
+
+	-- check if mouse is over scroll container
+
+	--[[
+	if(mouse_x > x and mouse_x < x + w and mouse_y > y and mouse_y < y + h)then
+		w = w - 12
+		disable_scroll = false
+	else
+		w = w - 4
+	end
+	]]
+	
+	-- only do this if we are the upmost window hovered
+	-- check old_window_stack for this
+	
+	local hovered_windows = {}
+	for k, v in pairs(old_window_stack)do
+		if(mouse_x > v.x and mouse_x < v.x + v.w and mouse_y > v.y and mouse_y < v.y + v.h)then
+			table.insert(hovered_windows, v)
+			--print("hovered window: "..tostring(k))
+		--[[else
+			print("not hovered window: "..tostring(k))]]
+		end
+	end
+
+	window_stack[identifier] = {
+		identifier = identifier,
+		z_index = z_index,
+		x = x,
+		y = y,
+		w = w,
+		h = h,
+	}
+
+	if(last_hovered_window == identifier)then
+		w = w - 12
+		disable_scroll = false
+	else
+		if(#hovered_windows > 0)then
+			-- check z index, lower z is higher up
+			local highest_z = 9999
+			local highest_window = nil
+			for k, v in ipairs(hovered_windows)do
+				if(v.z_index < highest_z)then
+					highest_z = v.z_index
+					highest_window = v.identifier
+				end
+			end
+			if(highest_window ~= nil and highest_window == identifier)then
+				w = w - 12
+				disable_scroll = false
+			else
+				w = w - 4
+			end
+		else
+			w = w - 4
+		end
+	end
+
+
+	local id_extra = 0
+	if(disable_scroll)then
+		id_extra = id_extra + 1
+		id_extra = GameGetFrameNum() % 2
+	end
+
+	local id = NewID(identifier)
+	NewID(identifier)
+
+	local screen_width, screen_height = GuiGetScreenDimensions( gui )
+	
+	GuiBeginAutoBox(gui)
+	GuiLayoutBeginHorizontal( gui, screen_width + 5, screen_height + 5, true, 0, 0)
+	callback()
+	GuiLayoutEnd( gui )
+	GuiZSetForNextWidget( gui, 10)
+	GuiEndAutoBoxNinePiece( gui, 2, 0, 0, false, 0)
+	local _, _, _, _, _, content_width, content_height = GuiGetPreviousWidgetInfo( gui )
+	--print("contents height: "..tostring(content_height))
+	--print("container height: "..tostring(h)	)
+
+	
+	if(content_height < h and not disable_scroll)then
+		w = w + 8
+	elseif(content_height >= h and not disable_scroll)then
+		last_hovered_window = identifier
+	end
+
+	GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+	GuiOptionsRemove(gui, GUI_OPTION.DrawScaleIn)
+
 	GuiZSetForNextWidget( gui, z_index + 1 )
-	GuiBeginScrollContainer( gui, NewID(identifier, true), x, y, w, h, true, 2, 2 )
+	GuiBeginScrollContainer( gui, id + id_extra, x, y, w, h, true, 2, 2 )
 	GuiZSet( gui, z_index )
 	callback()
 	GuiZSet( gui, 0 )

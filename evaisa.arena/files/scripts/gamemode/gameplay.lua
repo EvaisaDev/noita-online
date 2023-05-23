@@ -671,6 +671,23 @@ ArenaGameplay = {
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
             end
 
+            
+
+            -- check if winner is us!!!
+            if(winner == steam.user.getSteamID())then
+                local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+                if(catchup_mechanic == "winner")then
+                    GameAddFlagRun("first_death")
+                    GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
+                end
+                if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                    local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                    if(catchup_mechanic_upgrades == "winner")then
+                        GameAddFlagRun("pick_upgrade")
+                    end
+                end
+            end
+
             GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
@@ -710,10 +727,17 @@ ArenaGameplay = {
                 end
             end
 
-            --if(data.deaths == 0)then
-            GameAddFlagRun("first_death")
-            GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
-            --end
+            local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+            if(catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death"))then
+                GameAddFlagRun("first_death")
+                GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
+            end
+            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                if(catchup_mechanic_upgrades == "losers" or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
+                    GameAddFlagRun("pick_upgrade")
+                end
+            end
 
             data.deaths = data.deaths + 1
             data.client.alive = false
@@ -783,6 +807,18 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+
+        local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+        if(catchup_mechanic == "everyone")then
+            GameAddFlagRun("first_death")
+        end
+        if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+            if(catchup_mechanic_upgrades == "everyone")then
+                GameAddFlagRun("pick_upgrade")
+            end
+        end
+
         ArenaGameplay.GracefulReset(lobby, data)
 
         data.selected_player = nil
@@ -799,12 +835,6 @@ ArenaGameplay = {
         np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
         np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
         np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
-        
-        if(GlobalsGetValue("upgrades_system", "false") == "true")then
-            data.upgrade_system = upgrade_system.create(3, function(upgrade)
-                data.upgrade_system = nil
-            end)
-        end
 
         if (not first_entry) then
             ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -883,6 +913,11 @@ ArenaGameplay = {
             end
             ArenaGameplay.RemoveRound()
         else
+            if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
+                data.upgrade_system = upgrade_system.create(3, function(upgrade)
+                    data.upgrade_system = nil
+                end)
+            end
             GameRemoveFlagRun("picked_health")
             GameRemoveFlagRun("picked_perk")
         end

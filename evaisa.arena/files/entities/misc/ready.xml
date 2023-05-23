@@ -9,7 +9,7 @@
 
     <SpriteComponent 
         alpha="1" 
-        image_file="mods/evaisa.arena/files/sprites/entities/exit.png" 
+        image_file="mods/evaisa.arena/files/sprites/entities/exit-alt3.png" 
         next_rect_animation="" 
         offset_x="8" 
         offset_y="8" 

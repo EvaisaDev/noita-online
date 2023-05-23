@@ -5,12 +5,16 @@ local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.l
     EXAMPLE:
     upgrades = {
         {
-            id = "MAX_MANA",
-            ui_name = "Max Mana Upgrade",
-            ui_description = "Upgrade the max mana of all your wands",
+            id = "MAX_MANA_ALL",
+            ui_name = "$arena_upgrades_max_mana_all_name",
+            ui_description = "$arena_upgrades_max_mana_all_description",
             card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/max_mana.png",
-            weight = 1.0,
-            func = function()
+            card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+            card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+            card_border_tint = {0.52, 0.31, 0.52},
+            card_symbol_tint = {0.52, 0.31, 0.52},
+            weight = 0.2,
+            func = function( entity_who_picked )
             end,
         },
     }
@@ -62,6 +66,7 @@ local upgrade_system = {
             upgrades = GetUpgrades(option_count),
             option_count = option_count,
             selected_index = nil,
+            skip_selected = false,
             card_render_size = 2,
             card_hover_multiplier = 1.1,
             started_moving_left = false,
@@ -73,10 +78,17 @@ local upgrade_system = {
         end
 
         self.pick = function(self)
+
+            if(self.skip_selected == true)then
+                self:clean()
+                callback()
+                return
+            end
+
             local v = self.upgrades[self.selected_index]
             self:clean()
             callback(v)
-            GamePrintImportant(v.ui_name, v.ui_description)
+            GamePrintImportant(GameTextGetTranslatedOrNot(v.ui_name), GameTextGetTranslatedOrNot(v.ui_description))
             local players = EntityGetWithTag("player_unit")
             if(players ~= nil and players[1] ~= nil)then
                 local player_entity = players[1]
@@ -102,21 +114,53 @@ local upgrade_system = {
                 return current_id
             end
 
-
-            local card_image = "mods/evaisa.arena/files/sprites/ui/upgrades/card.png"
-
             local x, y = GuiGetScreenDimensions(self.gui)
-            local card_width, card_height = GuiGetImageDimensions(self.gui, card_image, self.card_render_size)
 
-           
+            local skip_enabled = true
+            local added_index = 0
+            if(skip_enabled)then
+                added_index = 1
+            end
 
             for k, v in ipairs(self.upgrades) do
+
+                local card_image = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png"
+
+                if(v.card_background ~= nil)then
+                    card_image = v.card_background
+                end
+
+                local card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png"
+
+                if(v.card_border ~= nil)then
+                    card_border = v.card_border
+                end
+
+                local card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/default.png"
+
+                if(v.card_symbol ~= nil)then
+                    card_symbol = v.card_symbol
+                end
+
+                local card_symbol_tint = {121 / 255, 71 / 255, 56 / 255}
+
+                if(v.card_symbol_tint ~= nil)then
+                    card_symbol_tint = v.card_symbol_tint
+                end
+
+                local card_border_tint = {121 / 255, 71 / 255, 56 / 255}
+
+                if(v.card_border_tint ~= nil)then
+                    card_border_tint = v.card_border_tint
+                end
             
+                local card_width, card_height = GuiGetImageDimensions(self.gui, card_image, self.card_render_size)
+
                 local multiplier = (self.selected_index == k and self.card_hover_multiplier or 1)
                 local draw_size = self.card_render_size * multiplier
                 
                 -- Calculate total width of all cards with spacing
-                local total_cards_width = (#self.upgrades * (card_width * multiplier)) + ((#self.upgrades - 1) * 10)
+                local total_cards_width = ((#self.upgrades + added_index) * (card_width * multiplier)) + ((#self.upgrades - added_index) * 10)
             
                 -- Calculate the x position offset to center the entire row of cards
                 local card_x_offset = x / 2 - total_cards_width / 2
@@ -128,36 +172,93 @@ local upgrade_system = {
                 -- Draw card
                 GuiZSetForNextWidget(self.gui, -400)
                 GuiImage(self.gui, new_id(), card_x, card_y, card_image, 1, draw_size, draw_size)
+
+                local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(self.gui)
+
+                -- Draw border
+    
+                local border_width, border_height = GuiGetImageDimensions(self.gui, card_border, draw_size)
+                --GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.NonInteractive)
+                GuiZSetForNextWidget(self.gui, -450)
+                if(card_border_tint)then
+                    local r, g, b = unpack(card_border_tint)
+                    GuiColorSetForNextWidget(self.gui, r, g, b, 1)
+                end
+                --GuiImage(self.gui, new_id(), card_x, card_y, v.card_border, 1, draw_size, draw_size)
+                -- adjust for border size
+                GuiImage(self.gui, new_id(), card_x + (card_width * multiplier) / 2 - border_width / 2, card_y + (card_height * multiplier) / 2 - border_height / 2, card_border, 1, draw_size, draw_size)
+                local clicked2, right_clicked2, hovered2 = GuiGetPreviousWidgetInfo(self.gui)
                 -- Draw symbol
-                local symbol_width, symbol_height = GuiGetImageDimensions(self.gui, v.card_symbol, draw_size)
+                local symbol_width, symbol_height = GuiGetImageDimensions(self.gui, card_symbol, draw_size)
                 --GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.NonInteractive)
                 GuiZSetForNextWidget(self.gui, -500)
-                GuiImage(self.gui, new_id(), card_x + (card_width * multiplier) / 2 - symbol_width / 2, card_y + (card_height * multiplier) / 2 - symbol_height / 2, v.card_symbol, 1, draw_size, draw_size)
-                
+                if(card_symbol_tint)then
+                    local r, g, b = unpack(card_symbol_tint)
+                    GuiColorSetForNextWidget(self.gui, r, g, b, 1)
+                end
+                GuiImage(self.gui, new_id(), card_x + (card_width * multiplier) / 2 - symbol_width / 2, card_y + (card_height * multiplier) / 2 - symbol_height / 2, card_symbol, 1, draw_size, draw_size)
+                local clicked3, right_clicked3, hovered3 = GuiGetPreviousWidgetInfo(self.gui)
+
                 if(self.selected_index == k)then
                     -- add text under the cards
                     GuiZSetForNextWidget(self.gui, -600)
-                    local name_width, name_height = GuiGetTextDimensions(self.gui, v.ui_name)
-                    local description_width, description_height = GuiGetTextDimensions(self.gui, v.ui_description)
+                    local name_width, name_height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot(v.ui_name))
+                    local description_width, description_height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot(v.ui_description))
                     -- text in center of screen under the cards
-                    GuiText(self.gui, x / 2 - name_width / 2, card_y + (card_height * multiplier) + 10, v.ui_name)
-                    GuiText(self.gui, x / 2 - description_width / 2, card_y + (card_height * multiplier) + 10 + name_height, v.ui_description)
+                    GuiText(self.gui, x / 2 - name_width / 2, card_y + (card_height * multiplier) + 10, GameTextGetTranslatedOrNot(v.ui_name))
+                    GuiText(self.gui, x / 2 - description_width / 2, card_y + (card_height * multiplier) + 10 + name_height, GameTextGetTranslatedOrNot(v.ui_description))
                 end
 
-                local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(self.gui)
                 if(hovered)then
                     self.selected_index = k
+                    self.skip_selected = false
                 end
-                --[[
-                if(clicked)then
-                    self.selected_index = k
-                    self:pick()
+                
+                if(clicked or clicked2 or clicked3)then
+                    if(self.selected_index ~= nil or self.skip_selected == true)then
+                        self:pick()
+                    end
                 end
-                ]]
+                
                 
             end
 
+            if(skip_enabled)then
+                local skip_card_image = "mods/evaisa.arena/files/sprites/ui/upgrades/skip_card.png"
 
+                local skip_card_width, skip_card_height = GuiGetImageDimensions(self.gui, skip_card_image, self.card_render_size)
+
+                local skip_multiplier = (self.skip_selected and self.card_hover_multiplier or 1)
+                local skip_draw_size = self.card_render_size * skip_multiplier
+
+                local total_cards_width = ((#self.upgrades + added_index) * (skip_card_width * skip_multiplier)) + ((#self.upgrades - added_index) * 10)
+                -- Calculate the x position offset to center the entire row of cards
+                local card_x_offset = x / 2 - total_cards_width / 2
+            
+                -- Update the card_x value with the offset
+                local card_x = card_x_offset + ((#self.upgrades + 1) - 1) * ((skip_card_width * skip_multiplier) + 10)
+                local card_y = y / 2 - (skip_card_height * skip_multiplier) / 2
+
+                -- Draw card
+                GuiZSetForNextWidget(self.gui, -400)
+                GuiImage(self.gui, new_id(), card_x, card_y, skip_card_image, 1, skip_draw_size, skip_draw_size)
+                local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(self.gui)
+                
+                if(self.skip_selected)then
+                    GuiZSetForNextWidget(self.gui, -600)
+                    local name_width, name_height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_upgrades_skip_name"))
+                    local description_width, description_height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_upgrades_skip_description"))
+                    -- text in center of screen under the cards
+                    GuiText(self.gui, x / 2 - name_width / 2, card_y + (skip_card_height * skip_multiplier) + 10, GameTextGetTranslatedOrNot("$arena_upgrades_skip_name"))
+                    GuiText(self.gui, x / 2 - description_width / 2, card_y + (skip_card_height * skip_multiplier) + 10 + name_height, GameTextGetTranslatedOrNot("$arena_upgrades_skip_description"))
+                end
+
+
+                if(hovered)then
+                    self.skip_selected = true
+                    self.selected_index = nil
+                end
+            end
 
             local keys_pressed = {
                 e = input:WasKeyPressed("e"),
@@ -212,8 +313,8 @@ local upgrade_system = {
                 self.started_moving_right = false
             end
 
-            if(keys_pressed.e or keys_pressed.left_click or gamepad_a)then
-                if(self.selected_index ~= nil)then
+            if(--[[keys_pressed.e or keys_pressed.left_click or ]]gamepad_a)then
+                if(self.selected_index ~= nil or self.skip_selected == true)then
                     self:pick()
                 end
             end

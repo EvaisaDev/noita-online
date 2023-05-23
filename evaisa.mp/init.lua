@@ -128,6 +128,7 @@ noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
+rand = nil
 
 Checksum_passed = false
 in_game = false
@@ -193,7 +194,7 @@ np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away
 --GameSDK = require("game_sdk")
 
 steam = require("luasteam")
-require("physics")
+--require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 json = dofile_once("mods/evaisa.mp/lib/json.lua")
 
@@ -464,6 +465,9 @@ function OnWorldPreUpdate()
 
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
+		
+		ResetID()
+		ResetWindowStack()
 
 		if (not IsPaused()) then
 			dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
@@ -515,6 +519,10 @@ function OnWorldPreUpdate()
 						member_message_frames[k] = nil
 						steam.networking.closeSession(v)
 						mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
+						-- run gamemode on_leave
+						if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
+							lobby_gamemode.disconnected(lobby_code, v)
+						end
 					end
 				end
 			end
@@ -890,6 +898,7 @@ end
 function OnPlayerSpawned(player)
 	ModSettingRemove("lobby_data_store")
 	GameRemoveFlagRun("game_paused")
+	rand = rng.new(os.time()+GameGetFrameNum())
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

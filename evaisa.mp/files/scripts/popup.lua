@@ -1,4 +1,3 @@
-dofile("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 
 pretty = require("pretty_print")

@@ -1,4 +1,3 @@
-dofile("mods/evaisa.mp/files/scripts/gui_utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 
 pretty = require("pretty_print")
@@ -187,17 +186,18 @@ local windows = {
 				end
 					
 				
-
+				--[[
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end
+				]]
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
 				selected_player = nil
-			end)
+			end, "main_menu_gui")
 
 		end
 	},
@@ -447,15 +447,17 @@ local windows = {
 					GuiText(menu_gui, 0, -6, " ")
 				end
 	
+				--[[
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end
+				]]
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
-			end)
+			end, "lobby_gui")
 		
 			if(invite_menu_open)then
 
@@ -525,11 +527,13 @@ local windows = {
 					end
 
 					for i = 1, 40 do
+						--[[
 						GuiText(menu_gui, 2, 0, " ")
+						]]
 					end
 		
 					GuiLayoutEnd(menu_gui)
-				end)	
+				end, nil, "invite_gui")	
 		
 			end
 
@@ -688,13 +692,14 @@ local windows = {
 					end
 					--GuiLayoutEnd(menu_gui)
 					
-
+					--[[
 					for i = 1, 50 - mod_count do
 						GuiText(menu_gui, 2, 0, " ")
 					end
+					]]
 		
 					GuiLayoutEnd(menu_gui)
-				end)	
+				end, nil, "mod_list_gui")	
 		
 			end
 
@@ -891,13 +896,17 @@ local windows = {
 						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
 					end
 
+					GuiText(menu_gui, 2, 0, " ")
+
+					--[[
 					for i = 1, 40 do
 						GuiText(menu_gui, 2, 0, " ")
 					end
+					]]
 		
 
 					GuiLayoutEnd(menu_gui)
-				end)	
+				end, nil, "lobby_settings_gui")	
 			
 			end
 		end
@@ -932,7 +941,7 @@ local windows = {
 			end
 
 			lobby_name = lobby_name or default_lobby_name
-			lobby_seed = lobby_seed or tostring(math.random(1, 4294967295))
+			lobby_seed = lobby_seed or tostring(rand.range(1, 4294967295))
 
 			DrawWindow(menu_gui, -6000, screen_width / 2, screen_height / 2, window_width, window_height, window_text, true, function()
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -1036,16 +1045,18 @@ local windows = {
 					GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_no_gamemodes"))
 				end
 
+				--[[
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end
+				]]
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false
 				selected_player = nil 
-			end)
+			end, "create_lobby_gui")
 
 		end
 	},
@@ -1118,16 +1129,18 @@ local windows = {
 					lobby_code_input = ""
 				end
 	
+				--[[
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end
+				]]
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
 				selected_player = nil
-			end)
+			end, "join_lobby_gui")
 
 		end
 	},
@@ -1164,16 +1177,18 @@ local windows = {
 				GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_disconnected"))
 				GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_reason")..": "..disconnect_message)
 
+				--[[
 				for i = 1, 40 do
 					GuiText(menu_gui, 2, 0, " ")
 				end
+				]]
 
 				GuiLayoutEnd(menu_gui)
 			end, function() 
 				gui_closed = true; 
 				invite_menu_open = false 
 				selected_player = nil
-			end)
+			end, "disconnected_gui")
 		end
 	}
 }

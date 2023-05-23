@@ -22,28 +22,46 @@ local function get_all_wands()
     return wands
 end
 
+local function get_active_or_random_wand()
+    local player_entity = player.Get()
+    if(player_entity == nil)then return {} end
+
+    local chosen_wand = nil;
+    local wands = {};
+    local items = GameGetAllInventoryItems( player_entity );
+    for key, item in pairs( items ) do
+        if is_wand( item ) then
+            table.insert( wands, item );
+        end
+    end
+    if #wands > 0 then
+        local inventory2 = EntityGetFirstComponent( player_entity, "Inventory2Component" );
+        local active_item = ComponentGetValue2( inventory2, "mActiveItem" );
+        for _,wand in pairs( wands ) do
+            if wand == active_item then
+                chosen_wand = wand;
+                break;
+            end
+        end
+        if chosen_wand == nil then
+            chosen_wand =  wands[Random( 1, #wands )];
+        end
+        return chosen_wand;
+    end
+end
+
 upgrades = {
-    -- max mana
-    -- mana regen
-    -- cast delay
-    -- recharge time
-    -- spread up
-    -- spread down
-    -- projectile_speed_up
-    -- projectile_speed_down
-    -- cast count
-    -- slots
-    -- always cast
-    -- shuffle / unshuffle
-    -- additional gold
-    -- random perk
-    -- health x1.25
+    -- increase max mana all wands
     {
-		id = "MAX_MANA",
-		ui_name = "Max Mana Upgrade",
-		ui_description = "Upgrade the max mana of all your wands",
+		id = "MAX_MANA_ALL",
+		ui_name = "$arena_upgrades_max_mana_all_name",
+		ui_description = "$arena_upgrades_max_mana_all_description",
 		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/max_mana.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
 		func = function( entity_who_picked )
 			local x,y = EntityGetTransform( entity_who_picked )
 			
@@ -66,12 +84,17 @@ upgrades = {
             end
 		end,
 	},
+    -- increase mana recharge all wands
     {
-        id = "MANA_RECHARGE",
-        ui_name = "Mana Recharge Upgrade",
-        ui_description = "Upgrade the mana recharge of all your wands",
+        id = "MANA_RECHARGE_ALL",
+        ui_name = "$arena_upgrades_mana_recharge_all_name",
+        ui_description = "$arena_upgrades_mana_recharge_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/mana_recharge.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -93,12 +116,17 @@ upgrades = {
             end
         end,
     },
+    -- reduce cast delay all wands
     {
-        id = "CAST_DELAY",
-        ui_name = "Cast Delay Upgrade",
-        ui_description = "Upgrade the cast delay of all your wands",
+        id = "CAST_DELAY_ALL",
+        ui_name = "$arena_upgrades_cast_delay_all_name",
+        ui_description = "$arena_upgrades_cast_delay_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/cast_delay.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -111,19 +139,24 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local cast_delay = tonumber( ComponentObjectGetValue( comp, "gunaction_config", "fire_rate_wait" ) )
+                    local cast_delay = ComponentObjectGetValue2( comp, "gunaction_config", "fire_rate_wait" )
                     cast_delay = cast_delay * 0.8 - 5
-                    ComponentObjectSetValue( comp, "gunaction_config", "fire_rate_wait", tostring( cast_delay ) )
+                    ComponentObjectSetValue2( comp, "gunaction_config", "fire_rate_wait", cast_delay )
                 end
             end
         end,
     },
+    -- reduce reload time all wands
     {
-        id = "RELOAD_TIME",
-        ui_name = "Recharge Time Upgrade",
-        ui_description = "Upgrade the recharge time of all your wands",
+        id = "RELOAD_TIME_ALL",
+        ui_name = "$arena_upgrades_reload_time_all_name",
+        ui_description = "$arena_upgrades_reload_time_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/reload.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -136,19 +169,24 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local cast_delay = tonumber( ComponentObjectGetValue( comp, "gunaction_config", "fire_rate_wait" ) )
-                    cast_delay = cast_delay * 0.8 - 5
-                    ComponentObjectSetValue( comp, "gunaction_config", "fire_rate_wait", tostring( cast_delay ) )
+                    local recharge_time = ComponentObjectGetValue2( comp, "gunaction_config", "reload_time" )
+                    recharge_time = recharge_time * 0.8 - 5
+                    ComponentObjectSetValue2( comp, "gunaction_config", "reload_time", recharge_time)
                 end
             end
         end,
     },
+    -- increase spread all wands
     {
-        id = "INCREASE_SPREAD",
-        ui_name = "Increase Spread",
-        ui_description = "Increase the spread of all your wands",
+        id = "INCREASE_SPREAD_ALL",
+        ui_name = "$arena_upgrades_increase_spread_all_name",
+        ui_description = "$arena_upgrades_increase_spread_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/high_spread.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -161,21 +199,26 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local spread_degrees = tonumber( ComponentObjectGetValue( comp, "gunaction_config", "spread_degrees" ) )
+                    local spread_degrees = ComponentObjectGetValue2( comp, "gunaction_config", "spread_degrees" )
 
                     spread_degrees = spread_degrees + Random( 5, 15 )
 
-                    ComponentObjectSetValue( comp, "gunaction_config", "spread_degrees", tostring( spread_degrees ) )
+                    ComponentObjectSetValue2( comp, "gunaction_config", "spread_degrees", spread_degrees )
                 end
             end
         end,
     },
+    -- reduce spread all wands
     {
-        id = "REDUCE_SPREAD",
-        ui_name = "Reduce Spread",
-        ui_description = "Reduce the spread of all your wands",
+        id = "REDUCE_SPREAD_ALL",
+        ui_name = "$arena_upgrades_reduce_spread_all_name",
+        ui_description = "$arena_upgrades_reduce_spread_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/low_spread.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -188,21 +231,26 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local spread_degrees = tonumber( ComponentObjectGetValue( comp, "gunaction_config", "spread_degrees" ) )
+                    local spread_degrees = ComponentObjectGetValue2( comp, "gunaction_config", "spread_degrees" )
 
                     spread_degrees = spread_degrees - Random( 5, 15 )
 
-                    ComponentObjectSetValue( comp, "gunaction_config", "spread_degrees", tostring( spread_degrees ) )
+                    ComponentObjectSetValue2( comp, "gunaction_config", "spread_degrees", spread_degrees )
                 end
             end
         end,
     },
+    -- increase multicast count all wands
     {
-        id = "INCREASE_MULTICAST",
-        ui_name = "Increase Multicast Count",
-        ui_description = "Increase the multicast count of all your wands",
+        id = "INCREASE_MULTICAST_ALL",
+        ui_name = "$arena_upgrades_increase_multicast_all_name",
+        ui_description = "$arena_upgrades_increase_multicast_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/multicast.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -215,21 +263,24 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local multicast_count = tonumber( ComponentObjectGetValue( comp, "gun_config", "actions_per_round" ) )
+                    local multicast_count = ComponentObjectGetValue( comp, "gun_config", "actions_per_round" )
 
                     multicast_count = multicast_count + 1
 
-                    ComponentObjectSetValue( comp, "gun_config", "actions_per_round", tostring( multicast_count ) )
+                    ComponentObjectSetValue2( comp, "gun_config", "actions_per_round", multicast_count )
                 end
             end
         end,
     },
+    -- reduce multicast count all wands
     {
-        id = "REDUCE_MULTICAST",
-        ui_name = "Reduce Multicast Count",
-        ui_description = "Reduce the multicast count of all your wands",
+        id = "REDUCE_MULTICAST_ALL",
+        ui_name = "$arena_upgrades_reduce_multicast_all_name",
+        ui_description = "$arena_upgrades_reduce_multicast_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/anti_multicast.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_rare.png",
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -242,7 +293,7 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local multicast_count = tonumber( ComponentObjectGetValue( comp, "gun_config", "actions_per_round" ) )
+                    local multicast_count = ComponentObjectGetValue2( comp, "gun_config", "actions_per_round" )
 
                     multicast_count = multicast_count - 1
 
@@ -250,17 +301,22 @@ upgrades = {
                         multicast_count = 1
                     end
 
-                    ComponentObjectSetValue( comp, "gun_config", "actions_per_round", tostring( multicast_count ) )
+                    ComponentObjectSetValue2( comp, "gun_config", "actions_per_round", multicast_count )
                 end
             end
         end,
     },
+    -- increase slot count all wands
     {
-        id = "SLOTS",
-        ui_name = "Slots Upgrade",
-        ui_description = "Upgrade the slot count of all your wands",
+        id = "SLOTS_ALL",
+        ui_name = "$arena_upgrades_slots_all_name",
+        ui_description = "$arena_upgrades_slots_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/slots.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function(entity_who_picked)
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -273,21 +329,26 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local deck_capacity = tonumber( ComponentObjectGetValue( comp, "gun_config", "deck_capacity" ) )
+                    local deck_capacity = ComponentObjectGetValue2( comp, "gun_config", "deck_capacity" )
 
                     deck_capacity = deck_capacity + 1
 
-                    ComponentObjectSetValue( comp, "gun_config", "deck_capacity", tostring( deck_capacity ) )
+                    ComponentObjectSetValue2( comp, "gun_config", "deck_capacity", deck_capacity)
                 end
             end
         end,
     },
+    -- add always cast all wands
     {
-        id = "ADD_ALWAYS_CAST",
-        ui_name = "Add Always Cast",
-        ui_description = "Add an always cast to all your wands",
+        id = "ADD_ALWAYS_CAST_ALL",
+        ui_name = "$arena_upgrades_add_always_cast_all_name",
+        ui_description = "$arena_upgrades_add_always_cast_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/always_cast.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -309,20 +370,20 @@ upgrades = {
                     local p = Random(1,100)
     
                     if( p <= 86 ) then
-                        card = GetRandomActionWithType( x, y, level, ACTION_TYPE_MODIFIER, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
                     elseif( p <= 93 ) then
-                        card = GetRandomActionWithType( x, y, level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
                     elseif ( p < 100 ) then
-                        card = GetRandomActionWithType( x, y, level, ACTION_TYPE_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
                     else
-                        card = GetRandomActionWithType( x, y, level, ACTION_TYPE_UTILITY, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
                     end
                 end
 
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local deck_capacity = ComponentObjectGetValue( comp, "gun_config", "deck_capacity" )
+                    local deck_capacity = ComponentObjectGetValue2( comp, "gun_config", "deck_capacity" )
                     local deck_capacity2 = EntityGetWandCapacity( wand )
                     
                     local always_casts = deck_capacity - deck_capacity2
@@ -337,12 +398,17 @@ upgrades = {
             end
         end,
     },
+    -- unshuffle all wands
     {
-        id = "UNSHUFFLE",
-        ui_name = "Unshuffle",
-        ui_description = "All of your wands are unshuffled",
+        id = "UNSHUFFLE_ALL",
+        ui_name = "$arena_upgrades_unshuffle_all_name",
+        ui_description = "$arena_upgrades_unshuffle_all_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/unshuffle.png",
-        weight = 1.0,
+        card_background = "mods/evaisa.arena/files/sprites/ui/upgrades/card_blank.png",
+        card_border = "mods/evaisa.arena/files/sprites/ui/upgrades/border_default.png",
+        card_border_tint = {0.52, 0.31, 0.52},
+        card_symbol_tint = {0.52, 0.31, 0.52},
+        weight = 0.2,
         func = function(entity_who_picked)
             local x,y = EntityGetTransform( entity_who_picked )
             
@@ -360,6 +426,338 @@ upgrades = {
             end
         end,
     },
+    -- increase max mana current wand
+    {
+		id = "MAX_MANA",
+		ui_name = "$arena_upgrades_max_mana_name",
+		ui_description = "$arena_upgrades_max_mana_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/max_mana.png",
+        weight = 0.8,
+		func = function( entity_who_picked )
+			local x,y = EntityGetTransform( entity_who_picked )
+			
+            -- increase max mana of only active wand
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local mana_max = ComponentGetValue2( comp, "mana_max" )
+                    
+                    mana_max = math.min( mana_max + Random( 5, 15 ) * Random( 5, 15 ), 20000 )
+
+                    ComponentSetValue2( comp, "mana_max", mana_max )
+                end
+            end
+		end,
+    },
+    -- increase mana recharge current wand
+    {
+        id = "MANA_RECHARGE",
+        ui_name = "$arena_upgrades_mana_recharge_name",
+        ui_description = "$arena_upgrades_mana_recharge_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/mana_recharge.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local mana_charge_speed = ComponentGetValue2( comp, "mana_charge_speed" )
+                    
+                    mana_charge_speed = math.min( math.min( mana_charge_speed * Random( 100, 175 ) * 0.01, mana_charge_speed + Random( 50, 150 ) ), 20000 )
+
+                    ComponentSetValue2( comp, "mana_charge_speed", mana_charge_speed )
+                end
+            end
+        end,
+    },
+    -- reduce cast delay current wand
+    {
+        id = "CAST_DELAY",
+        ui_name = "$arena_upgrades_cast_delay_name",
+        ui_description = "$arena_upgrades_cast_delay_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/cast_delay.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local cast_delay = ComponentObjectGetValue2( comp, "gunaction_config", "fire_rate_wait" )
+                    cast_delay = cast_delay * 0.8 - 5
+                    ComponentObjectSetValue2( comp, "gunaction_config", "fire_rate_wait", cast_delay )
+                end
+            end
+        end,
+    },
+    -- reduce reload time current wand
+    {
+        id = "RELOAD_TIME",
+        ui_name = "$arena_upgrades_reload_time_name",
+        ui_description = "$arena_upgrades_reload_time_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/reload.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local recharge_time = ComponentObjectGetValue2( comp, "gunaction_config", "reload_time" )
+                    recharge_time = recharge_time * 0.8 - 5
+                    ComponentObjectSetValue2( comp, "gunaction_config", "reload_time", recharge_time)
+                end
+            end
+        end,
+    },    
+    -- increase spread current wand
+    {
+        id = "INCREASE_SPREAD",
+        ui_name = "$arena_upgrades_increase_spread_name",
+        ui_description = "$arena_upgrades_increase_spread_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/high_spread.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local spread_degrees = ComponentObjectGetValue2( comp, "gunaction_config", "spread_degrees" )
+
+                    spread_degrees = spread_degrees + Random( 5, 15 )
+
+                    ComponentObjectSetValue2( comp, "gunaction_config", "spread_degrees", spread_degrees )
+                end
+            end
+        end,
+    },
+    -- reduce spread all wands
+    {
+        id = "REDUCE_SPREAD",
+        ui_name = "$arena_upgrades_reduce_spread_name",
+        ui_description = "$arena_upgrades_reduce_spread_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/low_spread.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local spread_degrees = ComponentObjectGetValue2( comp, "gunaction_config", "spread_degrees" )
+
+                    spread_degrees = spread_degrees - Random( 5, 15 )
+
+                    ComponentObjectSetValue2( comp, "gunaction_config", "spread_degrees", spread_degrees )
+                end
+            end
+        end,
+    },    
+    -- increase multicast count all wands
+    {
+        id = "INCREASE_MULTICAST",
+        ui_name = "$arena_upgrades_increase_multicast_name",
+        ui_description = "$arena_upgrades_increase_multicast_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/multicast.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local multicast_count = ComponentObjectGetValue( comp, "gun_config", "actions_per_round" )
+
+                    multicast_count = multicast_count + 1
+
+                    ComponentObjectSetValue2( comp, "gun_config", "actions_per_round", multicast_count )
+                end
+            end
+        end,
+    },
+    -- reduce multicast count all wands
+    {
+        id = "REDUCE_MULTICAST",
+        ui_name = "$arena_upgrades_reduce_multicast_name",
+        ui_description = "$arena_upgrades_reduce_multicast_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/anti_multicast.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local multicast_count = ComponentObjectGetValue2( comp, "gun_config", "actions_per_round" )
+
+                    multicast_count = multicast_count - 1
+
+                    if(multicast_count < 1)then
+                        multicast_count = 1
+                    end
+
+                    ComponentObjectSetValue2( comp, "gun_config", "actions_per_round", multicast_count )
+                end
+            end
+        end,
+    },
+    -- increase slot count all wands
+    {
+        id = "SLOTS",
+        ui_name = "$arena_upgrades_slots_name",
+        ui_description = "$arena_upgrades_slots_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/slots.png",
+        weight = 0.8,
+        func = function(entity_who_picked)
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local deck_capacity = ComponentObjectGetValue2( comp, "gun_config", "deck_capacity" )
+
+                    deck_capacity = deck_capacity + 1
+
+                    ComponentObjectSetValue2( comp, "gun_config", "deck_capacity", deck_capacity)
+                end
+            end
+        end,
+    },
+    -- add always cast all wands
+    {
+        id = "ADD_ALWAYS_CAST",
+        ui_name = "$arena_upgrades_add_always_cast_name",
+        ui_description = "$arena_upgrades_add_always_cast_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/always_cast.png",
+        weight = 0.8,
+        func = function( entity_who_picked )
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local good_cards = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
+
+       
+                local card = good_cards[ Random( 1, #good_cards ) ]
+    
+                local r = Random( 1, 100 )
+                local level = 6
+    
+                if( r <= 50 ) then
+                    local p = Random(1,100)
+    
+                    if( p <= 86 ) then
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
+                    elseif( p <= 93 ) then
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
+                    elseif ( p < 100 ) then
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
+                    else
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
+                    end
+                end
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local deck_capacity = ComponentObjectGetValue2( comp, "gun_config", "deck_capacity" )
+                    local deck_capacity2 = EntityGetWandCapacity( wand )
+                    
+                    local always_casts = deck_capacity - deck_capacity2
+                    
+                    if ( always_casts < 4 ) then
+                        AddGunActionPermanent( wand, card )
+                    else
+                        GamePrintImportant( "$log_always_cast_failed", "$logdesc_always_cast_failed" )
+                    end
+                end
+      
+            end
+        end,
+    },
+    -- unshuffle all wands
+    {
+        id = "UNSHUFFLE",
+        ui_name = "$arena_upgrades_unshuffle_name",
+        ui_description = "$arena_upgrades_unshuffle_description",
+        card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/unshuffle.png",
+        weight = 0.8,
+        func = function(entity_who_picked)
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local wand = get_active_or_random_wand()
+
+            if(wand ~= nil)then
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    ComponentObjectSetValue2( comp, "gun_config", "shuffle_deck_when_empty", false )
+                end
+            end
+        end,
+    },    
     {
         id = "GOLD",
         ui_name = "Payday",
