@@ -235,7 +235,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	
 	GuiBeginAutoBox(gui)
 	GuiLayoutBeginHorizontal( gui, screen_width + 5, screen_height + 5, true, 0, 0)
-	callback()
+	callback(x, y, w, h)
 	GuiLayoutEnd( gui )
 	GuiZSetForNextWidget( gui, 10)
 	GuiEndAutoBoxNinePiece( gui, 2, 0, 0, false, 0)
@@ -256,7 +256,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	GuiZSetForNextWidget( gui, z_index + 1 )
 	GuiBeginScrollContainer( gui, id + id_extra, x, y, w, h, true, 2, 2 )
 	GuiZSet( gui, z_index )
-	callback()
+	callback(x, y, w, h)
 	GuiZSet( gui, 0 )
 	GuiEndScrollContainer( gui )
 end

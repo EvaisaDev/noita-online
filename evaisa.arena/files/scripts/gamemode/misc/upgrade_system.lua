@@ -1,6 +1,7 @@
 dofile_once("data/scripts/lib/utilities.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrades.lua")
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
+local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 --[[
     EXAMPLE:
     upgrades = {
@@ -22,43 +23,47 @@ local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.l
 local upgrade_system = {
     create = function(option_count, callback)
 
+        local random = rng.new(os.time() + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()) / 2)
 
+        local function getRandomWeightedChoice(upgrades)
+            local totalWeight = 0
+            
+            for _, upgrade in ipairs(upgrades) do
+                totalWeight = totalWeight + upgrade.weight
+            end
+            
+            local targetWeight = random.next_float() * totalWeight
+            
+            for _, upgrade in ipairs(upgrades) do
+                targetWeight = targetWeight - upgrade.weight
+                if targetWeight <= 0 then
+                    return upgrade
+                end
+            end
+        end
+        
         local function GetUpgrades(count)
-            local pool = {}
-            local out = {}
-            local used = {}
-            for _, upgrade in ipairs(upgrades)do
-                if(upgrade.weight ~= nil)then
-                    table.insert(pool, upgrade)
-                    print("added upgrade to pool: " .. upgrade.id)
-                end
-            end
-
-           -- pick random based on weight, recycle pool if empty, pick count
-            for i = 1, count do
-                if(#pool == 0)then
-                    pool = used
-                    used = {}
-                end
-                local total_weight = 0
-                for _, upgrade in ipairs(pool)do
-                    total_weight = total_weight + upgrade.weight
-                end
-                local random = Random(0, total_weight)
-                local current_weight = 0
-                for k, upgrade in ipairs(pool)do
-                    current_weight = current_weight + upgrade.weight
-                    if(random <= current_weight)then
-                        table.insert(out, upgrade)
-                        table.remove(pool, k)
-                        table.insert(used, upgrade)
-                        break
+            local recycle = (count > #upgrades)
+        
+            local result = {}
+            local usedUpgrades = {}
+        
+            while count > 0 do
+                local upgrade = getRandomWeightedChoice(upgrades)
+        
+                if not recycle then
+                    if not usedUpgrades[upgrade.id] then
+                        usedUpgrades[upgrade.id] = true
+                        table.insert(result, upgrade)
+                        count = count - 1
                     end
+                else
+                    table.insert(result, upgrade)
+                    count = count - 1
                 end
             end
-           
-
-            return out
+        
+            return result
         end
         
         local self = {

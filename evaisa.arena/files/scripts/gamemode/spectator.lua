@@ -66,10 +66,10 @@ SpectatorMode = {
         end)
         ]]
 
-        local rounds = ArenaGameplay.GetNumRounds()
+        --local rounds = ArenaGameplay.GetNumRounds()
 
         -- Give gold
-        local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
+        local rounds_limited = ArenaGameplay.GetRoundTier()
         local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
 
         if (steamutils.IsOwner(lobby)) then

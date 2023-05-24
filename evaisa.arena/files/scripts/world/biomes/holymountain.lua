@@ -69,13 +69,31 @@ function spawn_all_shopitems( x, y )
 		return
 	end]]
 
-	local round = tonumber(GlobalsGetValue("holyMountainCount", "0"))
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0"))
 
-	local round_scaled = math.min(math.ceil(round / 2), 5)
+	-- how many rounds it takes for the shop level to increment
+	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
+	-- how much the shop level increments by
+	local shop_increment = tonumber(GlobalsGetValue("shop_jump", "1"))
+	-- the maximum shop level
+	local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
+	-- shop start level
+	local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
+
+	-- calculating how many times the shop level has been incremented
+	local num_increments = math.floor((rounds - 1) / shop_scaling)
+	-- calculating the current shop level including the start level and clamping it to the max level
+	local round_scaled = math.min(shop_start_level + num_increments * shop_increment, shop_max)
+	if(round_scaled < 0)then
+		round_scaled = 0
+	end
+	
+	print("Shop tier: "..round_scaled)
+
 
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	
-	print("Generated shop items for mountain #"..tostring(round))
+	print("Generated shop items for mountain #"..tostring(rounds))
 
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
@@ -92,7 +110,7 @@ function spawn_all_shopitems( x, y )
 	-- "Alternating" shop type switches between spells and wands every round.
 	if (shop_type == "alternating") then
 		-- Alternate which shop is presented
-		if (round % 2 == 0) then
+		if (rounds % 2 == 0) then
 			for i=1,count do
 				if( i == sale_item_i ) then
 					generate_shop_item( x + (i-1)*item_width, y, true, round_scaled, false )

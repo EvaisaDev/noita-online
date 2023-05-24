@@ -23,6 +23,27 @@ ArenaGameplay = {
         holyMountainCount = holyMountainCount - 1
         GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
     end,
+    GetRoundTier = function()
+        local rounds = ArenaGameplay.GetNumRounds()
+        -- how many rounds it takes for the shop level to increment
+        local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
+        -- how much the shop level increments by
+        local shop_increment = tonumber(GlobalsGetValue("shop_jump", "1"))
+        -- the maximum shop level
+        local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
+        -- shop start level
+        local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
+
+        -- calculating how many times the shop level has been incremented
+        local num_increments = math.floor((rounds - 1) / shop_scaling)
+        -- calculating the current shop level including the start level and clamping it to the max level
+        local round_scaled = math.min(shop_start_level + num_increments * shop_increment, shop_max)
+        if(round_scaled < 0)then
+            round_scaled = 0
+        end
+
+        return round_scaled
+    end,
     SendGameData = function(lobby, data)
         steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
@@ -923,7 +944,7 @@ ArenaGameplay = {
         end
 
         -- Give gold
-        local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
+        local rounds_limited = ArenaGameplay.GetRoundTier() --math.max(0, math.min(math.ceil(rounds / 2), 7))
 
         local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
 

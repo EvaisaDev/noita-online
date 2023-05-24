@@ -2,6 +2,9 @@ local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.l
 dofile_once("data/scripts/gun/procedural/gun_action_utils.lua")
 dofile_once("data/scripts/gun/gun_enums.lua")
 dofile( "data/scripts/perks/perk.lua" )
+local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+
+local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
 local function is_wand(entity_id)
     local ability_component = EntityGetFirstComponentIncludingDisabled(entity_id, "AbilityComponent")
@@ -688,7 +691,9 @@ upgrades = {
         func = function( entity_who_picked )
             local x,y = EntityGetTransform( entity_who_picked )
             
-            SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+            --SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+
+            local random = rng.new(entity_who_picked + x + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f) / 2)
 
             local wand = get_active_or_random_wand()
 
@@ -697,22 +702,22 @@ upgrades = {
                 local good_cards = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
 
        
-                local card = good_cards[ Random( 1, #good_cards ) ]
+                local card = good_cards[ random.range( 1, #good_cards ) ]
     
-                local r = Random( 1, 100 )
+                local r = random.range( 1, 100 )
                 local level = 6
     
                 if( r <= 50 ) then
-                    local p = Random(1,100)
+                    local p = random.range(1,100)
     
                     if( p <= 86 ) then
-                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
+                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
                     elseif( p <= 93 ) then
-                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
                     elseif ( p < 100 ) then
-                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
                     else
-                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
+                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
                     end
                 end
 

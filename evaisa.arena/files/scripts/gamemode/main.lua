@@ -45,10 +45,13 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.538,
+    version = 0.539,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
+    enable_presets = true,
+    default_presets = {
+    }, 
     settings = {
         {
             id = "perk_catchup",
@@ -83,6 +86,18 @@ ArenaMode = {
 			width = 100
 		},
         {
+            id = "shop_start_level",
+			name = "$arena_settings_shop_start_level_name",
+			description = "$arena_settings_shop_start_level_description",
+			type = "slider",
+			min = 0,
+			max = 10,
+			default = 0;
+			display_multiplier = 1,
+			formatting_string = " $0",
+			width = 100
+        },
+        {
 			id = "shop_random_ratio",
 			require = function(setting_self)
                 return GlobalsGetValue("setting_next_shop_type", "random") == "random"
@@ -98,12 +113,66 @@ ArenaMode = {
 			width = 100
 		},
         {
+            id = "shop_scaling",
+			name = "$arena_settings_shop_scaling_name",
+			description = "$arena_settings_shop_scaling_description",
+			type = "slider",
+			min = 1,
+			max = 10,
+			default = 2;
+			display_multiplier = 1,
+			formatting_string = " $0",
+			width = 100
+        },
+        {
+            id = "shop_jump",
+			name = "$arena_settings_shop_jump_name",
+			description = "$arena_settings_shop_jump_description",
+			type = "slider",
+			min = 0,
+			max = 10,
+			default = 1;
+			display_multiplier = 1,
+			formatting_string = " $0",
+			width = 100
+        },
+        {
+            id = "max_shop_level",
+			name = "$arena_settings_max_shop_level_name",
+			description = "$arena_settings_max_shop_level_description",
+			type = "slider",
+			min = 1,
+			max = 10,
+			default = 5;
+			display_multiplier = 1,
+			formatting_string = " $0",
+			width = 100
+        },
+        {
+            id = "shop_price_multiplier",
+			name = "$arena_settings_shop_price_multiplier_name",
+			description = "$arena_settings_shop_price_multiplier_description",
+			type = "slider",
+			min = 0,
+			max = 30,
+			default = 10;
+			display_multiplier = 0.1,
+            display_fractions = 1,
+            modifier = function(value) 
+                return math.floor(value)
+            end,
+			formatting_string = " $0",
+			width = 100
+        },
+        --[[
+        {
             id = "no_shop_cost",
             name = "$arena_settings_no_cost_name",
             description = "$arena_settings_no_cost_description",
             type = "bool",
             default = false
         },
+        ]]
         {
             id = "damage_cap",
             name = "$arena_settings_damage_cap_name",
@@ -216,12 +285,47 @@ ArenaMode = {
         end
         GlobalsSetValue("shop_random_ratio", tostring(shop_random_ratio))
 
-        local no_shop_cost = steam.matchmaking.getLobbyData(lobby, "setting_no_shop_cost")	
+        local shop_start_level = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_shop_start_level"))
+        if (shop_start_level == nil) then
+            shop_start_level = 0
+        end
+        GlobalsSetValue("shop_start_level", tostring(shop_start_level))
+
+        local shop_scaling = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_shop_scaling"))
+        if (shop_scaling == nil) then
+            shop_scaling = 2
+        end
+        GlobalsSetValue("shop_scaling", tostring(shop_scaling))
+
+        local shop_jump = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_shop_jump"))
+        if (shop_jump == nil) then
+            shop_jump = 1
+        end
+        GlobalsSetValue("shop_jump", tostring(shop_jump))
+
+        local max_shop_level = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_max_shop_level"))
+        if (max_shop_level == nil) then
+            max_shop_level = 5
+        end
+        GlobalsSetValue("max_shop_level", tostring(max_shop_level))
+
+        shop_price_multiplier = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_shop_price_multiplier"))
+        if (shop_price_multiplier == nil) then
+            shop_price_multiplier = 10
+        end
+        GlobalsSetValue("shop_price_multiplier", tostring(shop_price_multiplier * 0.1))
+        if(shop_price_multiplier < 1)then
+            GlobalsSetValue("no_shop_cost", "true")
+        else
+            GlobalsSetValue("no_shop_cost", "false")
+        end
+
+        --[[local no_shop_cost = steam.matchmaking.getLobbyData(lobby, "setting_no_shop_cost")	
         if (no_shop_cost == nil) then
             no_shop_cost = false
         end
         print("no_shop_cost: " .. tostring(no_shop_cost))
-        GlobalsSetValue("no_shop_cost", tostring(no_shop_cost))
+        GlobalsSetValue("no_shop_cost", tostring(no_shop_cost))]]
         
 
         local damage_cap = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_damage_cap"))

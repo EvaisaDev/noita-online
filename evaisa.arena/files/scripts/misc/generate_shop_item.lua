@@ -59,9 +59,11 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	-- Note( Petri ): Testing how much squaring the biomeid for prices affects things
 	local level = biomeid
 
-	if(level > 7)then
-		level = 7
+	
+	if(level > 10)then
+		level = 10
 	end
+	
 
 	item = RandomAction(level)--GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
 
@@ -112,6 +114,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		end
 	end
 	
+	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
+
+	cardcost = math.floor( cardcost * shop_price_multiplier )
+
 	offsetx = textwidth * 0.5 - 0.5
 	if( GlobalsGetValue("no_shop_cost") == "false")then
 			
@@ -224,8 +230,12 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 		biomeid = biomeid_
 	end
 
-	if( biomeid < 1 ) then biomeid = 1 end
-	if( biomeid > 6 ) then biomeid = 6 end
+	if(biomeid >= 10)then
+		biomeid = 10
+	else
+		if( biomeid < 1 ) then biomeid = 1 end
+		if( biomeid > 6 ) then biomeid = 6 end
+	end
 
 	local item = "data/entities/items/"
 
@@ -264,6 +274,10 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 			textwidth = textwidth + 3
 		end
 	end
+
+	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
+
+	wandcost = math.floor( wandcost * shop_price_multiplier )
 	
 	offsetx = textwidth * 0.5 - 0.5
 
