@@ -238,7 +238,7 @@ function handleModCheck()
 
 	local player_mods = ModData()
 
-	print(json.stringify(required_mods))
+	--print(json.stringify(required_mods))
 
 	
 	for i = #required_mods, 1, -1 do

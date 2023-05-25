@@ -736,13 +736,13 @@ local windows = {
 							preset_data[v.id] = v.default
 						end
 						reserved_preset_names[default_name] = true
-						table.insert(presets, {name=default_name, data=preset_data})
+						table.insert(presets, 1, {name=default_name, data=preset_data})
 					end
 
 					local function AddGamemodePresets()
 						for name, data in pairs(active_mode.default_presets)do
 							reserved_preset_names[name] = true
-							table.insert(presets, {name=name, data=data})
+							table.insert(presets, 1, {name=name, data=data})
 						end
 					end
 
@@ -778,6 +778,9 @@ local windows = {
 								end
 							end
 						end
+
+						AddGamemodePresets()
+						GenerateDefaultPreset()
 					end
 
 					local function SavePreset(name)
@@ -804,8 +807,6 @@ local windows = {
 
 					if(not was_lobby_presets_open)then
 						RefreshPresets()
-						GenerateDefaultPreset()
-						AddGamemodePresets()
 					end
 
 					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
@@ -826,6 +827,22 @@ local windows = {
 
 						if(GuiButton(menu_gui, NewID("open_presets_folder"), 0, 10, GameTextGetTranslatedOrNot("$mp_open_preset_folder")))then
 							os.execute("start \"\" \"" .. gamemode_preset_folder_name .. "\"")
+						end
+						if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
+							local table_string = "[\""..preset_name.."\"] = {\n"
+							for k, v in pairs(gamemode_settings)do
+								local value = v
+								--print("["..type(v).."] "..tostring(v))
+
+								if(type(v) == "string")then
+									value = "\"" .. v .. "\""
+								end
+								table_string = table_string .. "\t[\"" .. k .. "\"] = " .. tostring(value) .. ",\n"
+							end
+							table_string = table_string .. "}"
+							steam.utils.setClipboard(table_string)
+							print("Copied preset table to clipboard")
+							GamePrint("Copied preset table to clipboard")
 						end
 						if(GuiButton(menu_gui, NewID("refresh_presets"), 0, 0, GameTextGetTranslatedOrNot("$mp_refresh_presets")))then
 							RefreshPresets()

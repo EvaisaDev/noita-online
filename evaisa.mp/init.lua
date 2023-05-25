@@ -119,6 +119,7 @@ np = require("noitapatcher")
 bitser = require("bitser")
 binser = require("binser")
 profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
+delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
@@ -797,15 +798,19 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					--game_in_progress = false
+					
+					delay.new(30, function()
+						for k, setting in ipairs(lobby_gamemode.settings or {}) do
+							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
+								setting.id)
+						end
+	
+						if (lobby_gamemode.refresh) then
+							lobby_gamemode.refresh(lobby_code)
+						end
+					end, function(frames) end)
 
-					for k, setting in ipairs(lobby_gamemode.settings or {}) do
-						gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
-							setting.id)
-					end
 
-					if (lobby_gamemode.refresh) then
-						lobby_gamemode.refresh(lobby_code)
-					end
 				else
 					disconnect({
 						lobbyID = lobby_code,

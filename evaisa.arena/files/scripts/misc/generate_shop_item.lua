@@ -241,9 +241,17 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	local r = math.random(0,100)
 	if( r <= 50 ) then 
-		item = item .. "wand_level_0"
+		if(biomeid < 10)then
+			item = item .. "wand_level_0"
+		else
+			item = item .. "wand_level_"
+		end
 	else
-		item = item .. "wand_unshuffle_0"
+		if(biomeid < 10)then
+			item = item .. "wand_unshuffle_0"
+		else
+			item = item .. "wand_unshuffle_"
+		end
 	end
 
 	item = item .. tostring(biomeid) .. ".xml"

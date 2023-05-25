@@ -84,9 +84,12 @@ function spawn_all_shopitems( x, y )
 	local num_increments = math.floor((rounds - 1) / shop_scaling)
 	-- calculating the current shop level including the start level and clamping it to the max level
 	local round_scaled = math.min(shop_start_level + num_increments * shop_increment, shop_max)
+
+	round_scaled = math.floor(round_scaled + 0.5)
 	if(round_scaled < 0)then
 		round_scaled = 0
 	end
+	
 	
 	print("Shop tier: "..round_scaled)
 

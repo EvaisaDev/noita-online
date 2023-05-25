@@ -45,7 +45,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.539,
+    version = 0.5393,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
@@ -233,6 +233,25 @@ ArenaMode = {
             options = {{ "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
             default = "losers"
         },
+        {
+            id = "wand_removal",
+            name = "$arena_settings_wand_removal_name",
+            description = "$arena_settings_wand_removal_description",
+            type = "enum",
+            options = { { "disabled", "$arena_settings_wand_removal_enum_none" }, { "random", "$arena_settings_wand_removal_enum_random" }, { "all", "$arena_settings_wand_removal_enum_all" } },
+            default = "disabled"
+        },
+        {
+            id = "wand_removal_who",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_wand_removal", "disabled") ~= "disabled"
+            end,
+            name = "$arena_settings_upgrades_reward_system_name",
+            description = "$arena_settings_upgrades_reward_system_description",
+            type = "enum",
+            options = {{ "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
+            default = "everyone"
+        },
     },
     commands = {
         ready = function(command_name, arguments)
@@ -261,6 +280,8 @@ ArenaMode = {
         ready_players = "null",
     },
     refresh = function(lobby)
+        print("refreshing arena settings")
+
         local perk_catchup = steam.matchmaking.getLobbyData(lobby, "setting_perk_catchup")
         if (perk_catchup == nil) then
             perk_catchup = "losers"
@@ -271,6 +292,7 @@ ArenaMode = {
 		if (shop_type == nil) then
 			shop_type = "random"
 		end
+        print("shop_type: " .. shop_type)
 		GlobalsSetValue("shop_type", tostring(shop_type))
 
 		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")
@@ -363,6 +385,18 @@ ArenaMode = {
             upgrades_catchup = "losers"
         end
         GlobalsSetValue("upgrades_catchup", tostring(upgrades_catchup))
+
+        local wand_removal = steam.matchmaking.getLobbyData(lobby, "setting_wand_removal")
+        if (wand_removal == nil) then
+            wand_removal = "disabled"
+        end
+        GlobalsSetValue("wand_removal", tostring(wand_removal))
+
+        local wand_removal_who = steam.matchmaking.getLobbyData(lobby, "setting_wand_removal_who")
+        if (wand_removal_who == nil) then
+            wand_removal_who = "everyone"
+        end
+        GlobalsSetValue("wand_removal_who", tostring(wand_removal_who))
 
         arena_log:print("Lobby data refreshed")
     end,
