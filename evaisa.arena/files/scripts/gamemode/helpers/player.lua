@@ -406,7 +406,7 @@ player_helper.GetPerks = function()
         local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
 
 
-        if GameHasFlagRun(flag_name) or (pickup_count > 0) then
+        if GameHasFlagRun(flag_name) and (pickup_count > 0) then
             table.insert(perk_info, { id = perk_id, count = pickup_count })
         end
     end
@@ -435,9 +435,12 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
     local flag_name = get_perk_picked_flag_name(perk_id)
 
     -- update how many times the perk has been picked up this run -----------------
-    if not skip_count and not perk_data.one_off_effect and not perk_data.do_not_reapply then
+    if not skip_count then
         local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
         pickup_count = pickup_count + 1
+        if(perk_log)then
+            perk_log:print(perk_id .. " picked up " .. pickup_count .. " times")
+        end
         GlobalsSetValue(flag_name .. "_PICKUP_COUNT", tostring(pickup_count))
     end
 
@@ -458,7 +461,10 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
     local fake_perk_ent = EntityCreateNew()
     EntitySetTransform(fake_perk_ent, pos_x, pos_y)
 
-    if (not perk_data.one_off_effect and not perk_data.do_not_reapply) then
+    if (not perk_data.one_off_effect and ((not perk_data.do_not_reapply) or not skip_count)) then
+        if(perk_data.do_not_reapply)then
+            print("reapplying: " .. perk_id)
+        end
         -- add a game effect or two
         if perk_data.game_effect ~= nil then
             local game_effect_comp, game_effect_entity = GetGameEffectLoadTo(entity_who_picked, perk_data.game_effect,

@@ -123,7 +123,11 @@ SpectatorMode = {
         -- manage flags
         GameRemoveFlagRun("ready_check")
         GameRemoveFlagRun("first_death")
+        GameRemoveFlagRun("skip_perks")
         GameRemoveFlagRun("in_hm")
+        GameRemoveFlagRun("arena_winner")
+        GameRemoveFlagRun("arena_loser")
+        GameRemoveFlagRun("arena_first_death")
 
         data.state = "arena"
         data.preparing = true

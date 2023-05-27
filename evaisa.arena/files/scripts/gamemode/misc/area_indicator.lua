@@ -8,7 +8,7 @@ local area_size = tonumber(GlobalsGetValue("arena_area_size", "1000"))
 local area_size_cap = tonumber(GlobalsGetValue("arena_area_size_cap", "1000"))
 
 if(area_size ~= last_area_size)then
-    --GamePrint("Area size updated.")
+    GamePrint("Area size updated.")
 
     local circle_emitter = EntityGetFirstComponent(this, "ParticleEmitterComponent", "area_indicator_circle")
     local outer_emitter = EntityGetFirstComponent(this, "ParticleEmitterComponent", "area_indicator_outer")
@@ -24,7 +24,5 @@ if(area_size ~= last_area_size)then
         ComponentSetValue2(outer_emitter, "count_min", area_size)
         ComponentSetValue2(outer_emitter, "count_max", area_size_cap)
     end
-    
-
     last_area_size = area_size
 end

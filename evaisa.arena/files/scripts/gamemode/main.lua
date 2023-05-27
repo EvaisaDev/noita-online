@@ -1,4 +1,5 @@
 arena_log = logger.init("noita-arena.log")
+perk_log = logger.init("noita-arena-perk.log")
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
@@ -45,7 +46,7 @@ lobby_member_names = {}
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.5393,
+    version = 0.5395,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
@@ -246,8 +247,8 @@ ArenaMode = {
             require = function(setting_self)
                 return GlobalsGetValue("setting_next_wand_removal", "disabled") ~= "disabled"
             end,
-            name = "$arena_settings_upgrades_reward_system_name",
-            description = "$arena_settings_upgrades_reward_system_description",
+            name = "$arena_settings_wand_removal_who_name",
+            description = "$arena_settings_wand_removal_who_description",
             type = "enum",
             options = {{ "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
             default = "everyone"
@@ -458,23 +459,35 @@ ArenaMode = {
             ArenaGameplay.GracefulReset(lobby, data)
         end
 
+        
+        ArenaMode.refresh(lobby)
+
+        data = data_holder:New()
+        data.state = "lobby"
+        data.spectator_mode = steamutils.IsSpectator(lobby)
+        data:DefinePlayers(lobby)
+
+
+        gameplay_handler.ResetEverything(lobby)
+
         if (not was_in_progress) then
             GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        else
+            local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
+            local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
+    
+            if (unique_game_id_server ~= unique_game_id_client) then
+                arena_log:print("Unique game id mismatch, removing player data")
+                GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
+                steamutils.RemoveLocalLobbyData(lobby, "player_data")
+                steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+            else
+                gameplay_handler.GetGameData(lobby, data)
+            end
         end
 
-        gameplay_handler.ResetEverything(lobby)
-
-        local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
-        local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
-
-        if (unique_game_id_server ~= unique_game_id_client) then
-            arena_log:print("Unique game id mismatch, removing player data")
-            GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
-            steamutils.RemoveLocalLobbyData(lobby, "player_data")
-            steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
-        end
 
 
         GameAddFlagRun("player_unloaded")
@@ -485,12 +498,6 @@ ArenaMode = {
 
         local player_entity = player.Get()
 
-        ArenaMode.refresh(lobby)
-
-        data = data_holder:New()
-        data.state = "lobby"
-        data.spectator_mode = steamutils.IsSpectator(lobby)
-        data:DefinePlayers(lobby)
 
 
         local local_seed = data.random.range(100, 10000000)
@@ -504,8 +511,6 @@ ArenaMode = {
             local unique_game_id = data.random.range(100, 10000000)
             steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
         end
-
-        gameplay_handler.GetGameData(lobby, data)
 
         if (player_entity == nil) then
             gameplay_handler.LoadPlayer(lobby, data)
@@ -647,52 +652,15 @@ ArenaMode = {
         end
 
 
-        local player_ent = player.Get()
+        if(input:WasKeyPressed("f10"))then
+            local world_state = GameGetWorldStateEntity()
 
-        if (player_ent ~= nil) then
-            local controlsComp = EntityGetFirstComponentIncludingDisabled(player_ent, "ControlsComponent")
-            if (controlsComp ~= nil) then
-                local kick = ComponentGetValue2(controlsComp, "mButtonDownKick")
-                local kick_frame = ComponentGetValue2(controlsComp, "mButtonFrameKick")
-                if (kick and kick_frame == GameGetFrameNum()) then
-                    -- REMOVE THIS
-
-                    --[[
-                    local world_state = GameGetWorldStateEntity()
-
-                    EntityKill(world_state)
-                    ]]
-
-                    --[[
-                    local x, y = EntityGetTransform(player_ent)
-                    local tentacle = EntityLoad("data/entities/projectiles/deck/tentacle.xml", x, y)
-                    GameShootProjectile(player_ent, x, y, x + 400, y + 400, tentacle, true, player_ent)
-                    ]]
-
-                    --[[
-
-                    local component = EntityGetFirstComponent( player_ent, "Inventory2Component" );
-                    if component ~= nil then
-                        local mActiveItem =  ComponentGetValue2( component, "mActiveItem" );
-
-                        local wand = EZWand(mActiveItem)
-                        EntityKill(wand.entity_id)
-                        local new_wand = EZWand("data/entities/items/wand_unshuffle_06.xml")
-                        new_wand.capacity = 5
-                        new_wand:RemoveSpells()
-                        new_wand:AddSpells("LIGHT_BULLET")
-                        local serialized = new_wand:Serialize()
-                        EntityKill(new_wand.entity_id)
-                        local n = EZWand(serialized)
-                        n:PutInPlayersInventory()
-
-                    end
-                    ]]
-                end
-            end
+            EntityKill(world_state)
+        elseif(input:WasKeyPressed("f6"))then
+            local player_entity = EntityGetWithTag("player_unit")[1]
+            local x, y = EntityGetTransform(player_entity)
+            EntityInflictDamage(player_entity, 1000, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, player_entity, x, y, 0)
         end
-
-
 
         --print("Did something go wrong?")
     end,
@@ -751,6 +719,8 @@ ArenaMode = {
         print(tostring(unknown1))
         print(tostring(unknown2))
         print(tostring(unknown3))]]
+
+        print("Projectile fired")
 
         if (EntityHasTag(shooter_id, "client")) then
             EntityAddTag(shooter_id, "player_unit")

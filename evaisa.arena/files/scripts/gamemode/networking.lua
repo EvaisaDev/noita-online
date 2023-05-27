@@ -789,18 +789,18 @@ networking = {
 
                 local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
 
-                if GameHasFlagRun(flag_name) or (pickup_count > 0) then
+                if GameHasFlagRun(flag_name) and (pickup_count > 0) then
                     --print("Has flag: " .. perk_id)
                     table.insert(perk_info, { perk_id, pickup_count })
                 end
             end
 
-            if (#perk_info > 0) then
+            --if (#perk_info > 0) then
                 local message_data = { perk_info }
 
                 arena_log:print("Replied to perk requests!")
                 steamutils.sendToPlayer("perk_update", message_data, user, true)
-            end
+            --end
         end,
         player_data_update = function(lobby, message, user, data)
             --[[
@@ -1130,13 +1130,13 @@ networking = {
 
                 local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
 
-                if GameHasFlagRun(flag_name) or (pickup_count > 0) then
+                if GameHasFlagRun(flag_name) and (pickup_count > 0) then
                     --print("Has flag: " .. perk_id)
                     table.insert(perk_info, { perk_id, pickup_count })
                 end
             end
 
-            if (#perk_info > 0) then
+            --if (#perk_info > 0) then
                 local message_data = { perk_info }
                 local perk_string = bitser.dumps(message_data)
                 if (perk_string ~= data.client.previous_perk_string) then
@@ -1145,7 +1145,7 @@ networking = {
                     data.client.previous_perk_string = perk_string
                     data.client.perks = perk_info
                 end
-            end
+            --end
         end,
         fire_wand = function(lobby, rng, special_seed, to_spectators)
             local player = player.Get()

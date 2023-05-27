@@ -211,13 +211,11 @@ function spawn_all_perks( x, y )
 		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
 	
 		perk_spawn_many( x, y )
-	else
-		GameRemoveFlagRun("skip_perks")
 	end
 end
 
 function spawn_perk_reroll( x, y )
-	if(GameHasFlagRun("first_death"))then
+	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
 		EntityLoad( "data/entities/items/pickup/perk_reroll.xml", x, y )
 	end
 end

@@ -3,7 +3,6 @@ local reapply_fix_list = {
     PERKS_LOTTERY = true,
     EXTRA_SHOP_ITEM = true,
     HEARTS_MORE_EXTRA_HP = true,
-    GAMBLE = true,
 }
 
 local remove_list = {

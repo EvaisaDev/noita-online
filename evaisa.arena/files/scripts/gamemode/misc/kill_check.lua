@@ -3,14 +3,12 @@ local json = dofile("mods/evaisa.arena/lib/json.lua")
 
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
-    
-    -- check if would kill
 
     --local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     --if damageModelComponent ~= nil then
         --local health = ComponentGetValue2( damageModelComponent, "hp" )
         if(GameHasFlagRun("Immortal"))then
-            return 0, 0
+            return 1, 0
         --else
         --    GameAddFlagRun("took_damage")
         end
@@ -50,6 +48,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             world_pos = {216.21, 12.583},
         }
     ]]
+    print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
     GlobalsSetValue("last_damage_details", tostring(json.stringify(damage_details)))

@@ -530,9 +530,9 @@ upgrades = {
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
-                    local recharge_time = ComponentObjectGetValue2( comp, "gunaction_config", "reload_time" )
+                    local recharge_time = ComponentObjectGetValue2( comp, "gun_config", "reload_time" )
                     recharge_time = recharge_time * 0.8 - 5
-                    ComponentObjectSetValue2( comp, "gunaction_config", "reload_time", recharge_time)
+                    ComponentObjectSetValue2( comp, "gun_config", "reload_time", recharge_time)
                 end
             end
         end,

@@ -263,6 +263,12 @@ local upgrade_system = {
                     self.skip_selected = true
                     self.selected_index = nil
                 end
+
+                if(clicked)then
+                    if(self.skip_selected)then
+                        self:pick()
+                    end
+                end
             end
 
             local keys_pressed = {

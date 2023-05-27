@@ -4,6 +4,7 @@ local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.l
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
+local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
@@ -12,6 +13,15 @@ ArenaGameplay = {
     GetNumRounds = function()
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
         return holyMountainCount
+    end,
+    GetPlayerIndex = function(lobby)
+        local members = steamutils.getLobbyMembers(lobby)
+        for i, member in ipairs(members) do
+            if(member.id == steam.user.getSteamID())then
+                return i
+            end
+        end
+        return 1
     end,
     AddRound = function()
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -22,6 +32,23 @@ ArenaGameplay = {
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
         holyMountainCount = holyMountainCount - 1
         GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+    end,
+    GetSpawnPoints = function()
+        local spawns = {}
+        local spawn_points = EntityGetWithTag("spawn_point") or {}
+        if (spawn_points ~= nil and #spawn_points > 0) then
+            -- sort points by x and y
+            table.sort(spawn_points, function(a, b)
+                local ax, ay = EntityGetTransform(a)
+                local bx, by = EntityGetTransform(b)
+                if (ax == bx) then
+                    return ay < by
+                end
+                return ax < bx
+            end)
+            spawns = spawn_points
+        end
+        return spawns
     end,
     GetRoundTier = function()
         local rounds = ArenaGameplay.GetNumRounds()
@@ -94,6 +121,7 @@ ArenaGameplay = {
             if(match_data ~= nil)then
                 data.client.reroll_count = tonumber(match_data.reroll_count)
                 GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", tostring(data.client.reroll_count))
+                print("Reroll count overwritten: "..tostring(data.client.reroll_count))
                 GameAddFlagRun("picked_health")
                 GameAddFlagRun("picked_perk")
             end
@@ -179,7 +207,7 @@ ArenaGameplay = {
                     perk_data.func_remove(player)
                 end
             end
-
+            GameRemoveFlagRun(flag_name)
             GlobalsSetValue(flag_name .. "_PICKUP_COUNT", "0")
         end
 
@@ -196,9 +224,9 @@ ArenaGameplay = {
         GlobalsSetValue("PERK_SHIELD_COUNT", "0")
         GlobalsSetValue("PERK_ATTRACT_ITEMS_RANGE", "0")
         GlobalsSetValue("PERK_NO_MORE_SHUFFLE_WANDS", "0")
-        GlobalsSetValue("TEMPLE_PERK_COUNT", "3")
+        --[[GlobalsSetValue("TEMPLE_PERK_COUNT", "3")
         GlobalsSetValue("TEMPLE_PERK_DESTROY_CHANCE", "100")
-        GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
+        GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")]]
         GlobalsSetValue("TEMPLE_PEACE_WITH_GODS", "0")
         GlobalsSetValue("TEMPLE_SPAWN_GUARDIAN", "0")
         GameRemoveFlagRun("ATTACK_FOOT_CLIMBER")
@@ -211,6 +239,11 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_status_lukki_minion")
         GameRemoveFlagRun("exploding_gold")
         GameRemoveFlagRun("first_death")
+        GameRemoveFlagRun("skip_perks")
+        GameRemoveFlagRun("pick_upgrade")
+        GameRemoveFlagRun("arena_winner")
+        GameRemoveFlagRun("arena_loser")
+        GameRemoveFlagRun("arena_first_death")
 
         if (steamutils.IsOwner(lobby)) then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
@@ -697,6 +730,7 @@ ArenaGameplay = {
 
             -- check if winner is us!!!
             if(winner == steam.user.getSteamID())then
+                GameAddFlagRun("arena_winner")
                 local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                 if(catchup_mechanic == "winner")then
                     GameAddFlagRun("first_death")
@@ -748,6 +782,12 @@ ArenaGameplay = {
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
                 end
             end
+
+            if(data.deaths == 0)then
+                GameAddFlagRun("arena_first_death")
+            end
+
+            GameAddFlagRun("arena_loser")
 
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
             if(catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death"))then
@@ -964,7 +1004,7 @@ ArenaGameplay = {
         --GamePrint("You were granted " ..tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
 
-        arena_log:print("Loaded from data: " .. tostring(player_loaded_from_data))
+        arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
 
         RunWhenPlayerExists(function()
             if (not data.client.player_loaded_from_data) then
@@ -992,6 +1032,49 @@ ArenaGameplay = {
 
 
         RunWhenPlayerExists(function()
+            if(not first_entry)then
+                local was_winner = GameHasFlagRun("arena_winner")
+                local was_loser = GameHasFlagRun("arena_loser")
+                local was_first_death = GameHasFlagRun("arena_first_death")
+
+                local wand_removal = GlobalsGetValue("wand_removal", "disabled")
+                local who_remove = GlobalsGetValue("wand_removal_who", "everyone")
+
+                local wand_removal_types = {
+                    random = function()
+                        local wands = EZWand.GetAllWands()
+                        if (wands == nil or #wands == 0) then
+                            return nil
+                        end
+
+                        local player_entity = player.Get()
+
+                        local wand = data.random.range(1, #wands)
+                        GameKillInventoryItem(player_entity, wands[wand].entity_id)
+                    end,
+                    all = function()
+                        local wands = EZWand.GetAllWands()
+                        if (wands == nil or #wands == 0) then
+                            return nil
+                        end
+                        local player_entity = player.Get()
+
+                        for _, wand in ipairs(wands) do
+                            GameKillInventoryItem(player_entity, wand.entity_id)
+                        end
+                    end,
+                }
+
+                if(wand_removal ~= "disabled")then
+                    if(who_remove == "everyone" or 
+                    (who_remove == "winner" and was_winner) or 
+                    (who_remove == "losers" and was_loser) or
+                    (who_remove == "first_death" and was_first_death))then
+                        wand_removal_types[wand_removal]()
+                    end
+                end
+            end
+            
             -- give starting gear if first entry
             if (first_entry) then
                 player.GiveStartingGear()
@@ -1053,8 +1136,12 @@ ArenaGameplay = {
         -- manage flags
         GameRemoveFlagRun("ready_check")
         GameRemoveFlagRun("first_death")
+        GameRemoveFlagRun("skip_perks")
         GameRemoveFlagRun("in_hm")
-
+        GameRemoveFlagRun("arena_winner")
+        GameRemoveFlagRun("arena_loser")
+        GameRemoveFlagRun("arena_first_death")
+        
         data.state = "arena"
         data.preparing = true
         data.players_loaded = false
@@ -1233,6 +1320,10 @@ ArenaGameplay = {
             --message_handler.send.SendPerks(lobby)
             networking.send.perk_update(lobby, data)
         end
+
+        if(GameGetFrameNum() % 60)then
+            networking.send.request_perk_update(lobby)
+        end
     end,
     UpdateHealthbars = function(data)
         for k, v in pairs(data.players) do
@@ -1340,11 +1431,20 @@ ArenaGameplay = {
     end,
     ArenaUpdate = function(lobby, data)
         if (data.preparing) then
-            local spawn_points = EntityGetWithTag("spawn_point") or {}
+            local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+            local world_seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
+            local spawn_rng = rng.new(world_seed + ArenaGameplay.GetNumRounds())
+            local spawn_points = ArenaGameplay.GetSpawnPoints()
+            -- shuffle spawn points using spawn_rng.range(a, b)
+            for i = #spawn_points, 2, -1 do
+                local j = spawn_rng.range(1, i)
+                spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
+            end
+
             if (spawn_points ~= nil and #spawn_points > 0) then
                 data.ready_for_zone = true
 
-                local spawn_point = spawn_points[Random(1, #spawn_points)]
+                local spawn_point = spawn_points[ArenaGameplay.GetPlayerIndex(lobby)--[[Random(1, #spawn_points)]]]
                 local x, y = EntityGetTransform(spawn_point)
 
                 local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)

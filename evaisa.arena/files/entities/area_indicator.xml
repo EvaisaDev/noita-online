@@ -23,7 +23,7 @@
 		is_emitting="1" >
 	</ParticleEmitterComponent>
 
-<!--
+
     <ParticleEmitterComponent
 		_tags="area_indicator_outer"
 		emitted_material_name="spark_red_bright"
@@ -46,11 +46,12 @@
 		emit_cosmetic_particles="1"
 		is_emitting="1" >
 	</ParticleEmitterComponent>
--->
+
     <LuaComponent
         script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/area_indicator.lua"
         execute_on_added = "1"
         execute_every_n_frame = "1"
+		vm_type = "ONE_PER_COMPONENT_INSTANCE"
     />
 
 	<Entity name="chunk_loader">  
