@@ -1,4 +1,5 @@
 gamemodes = {
+	--[[
 	{
 		id = "cooptest",
 		name = "CoopTest",
@@ -42,6 +43,7 @@ gamemodes = {
 
 		end,
 	}
+	]]
 }
 
 return gamemodes
