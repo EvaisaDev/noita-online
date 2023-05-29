@@ -123,7 +123,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.443	
+MP_VERSION = 1.444	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -346,6 +346,21 @@ local function ReceiveMessages(gamemode)
 		end
 	end
 end
+
+----- debugging spell stuff ------
+
+
+--ModTextFileSetContent("mods/gun_flag.lua", [[
+--for i, action in ipairs(actions)do
+--	if(i > 4)then
+--		action.spawn_requires_flag = action.id
+--	end
+--end
+--]])
+
+--ModLuaFileAppend("data/scripts/gun/gun_actions.lua", "mods/gun_flag.lua")
+
+----------------------------------
 
 local spawned_popup = false
 local init_cleanup = false

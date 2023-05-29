@@ -43,10 +43,13 @@ end
 
 lobby_member_names = {}
 
+
+np.SetGameModeDeterministic(true)
+
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.5395,
+    version = 0.5396,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
@@ -409,6 +412,8 @@ ArenaMode = {
         if (player ~= nil) then
             EntityKill(player)
         end
+        
+        print("Game mode deterministic? "..tostring(GameIsModeFullyDeterministic()))
 
         --print("WE GOOD???")
 
