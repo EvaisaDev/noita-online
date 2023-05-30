@@ -48,7 +48,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             world_pos = {216.21, 12.583},
         }
     ]]
-    print(json.stringify(damage_details))
+    --print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
     GlobalsSetValue("last_damage_details", tostring(json.stringify(damage_details)))

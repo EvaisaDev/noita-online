@@ -105,6 +105,8 @@ local function LAAPatch()
 
 	os.execute("start "..batchname)
 end
+lobby_data_last_frame = {}
+lobby_data_updated_this_frame = {}
 
 ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
@@ -674,6 +676,7 @@ function OnWorldPostUpdate()
 			end
 		end
 	end
+	lobby_data_updated_this_frame = {}
 end
 
 function steam.matchmaking.onLobbyEnter(data)
@@ -712,7 +715,23 @@ function steam.matchmaking.onLobbyEnter(data)
 end
 
 function steam.matchmaking.onLobbyDataUpdate(data)
-	--pretty.table(data)
+	if(lobby_code ~= nil)then
+		local current_lobby_data = {}
+		local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
+		for i = 1, lobby_data_count do
+			local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
+			current_lobby_data[data.key] = data.value
+			--print("Lobby data: " .. data.key .. " = " .. data.value)
+			if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
+				lobby_data_updated_this_frame[data.key] = true
+				--print("Updated lobby data: " .. data.key .. " to " .. data.value)
+			end
+		end
+		lobby_data_last_frame = current_lobby_data
+	else
+		lobby_data_last_frame = {}
+		lobby_data_updated_this_frame = {}
+	end
 end
 
 function steam.matchmaking.onLobbyChatUpdate(data)
@@ -738,43 +757,6 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 	else
 		-- force refresh
 		refreshLobbies()
-	end
-end
-
-function StartGame()
-	local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-
-	if handleVersionCheck() and handleModCheck() then
-		if handleGamemodeVersionCheck(lobby_code) then
-			if (lobby_gamemode) then
-
-				spectating = steamutils.IsSpectator(lobby_code)
-
-				--print("Are we spectating? " .. tostring(spectating))
-
-				if (spectating) then
-					if (lobby_gamemode.spectate ~= nil) then
-						lobby_gamemode.spectate(lobby_code)
-					elseif (lobby_gamemode.start ~= nil) then
-						lobby_gamemode.start(lobby_code)
-					end
-				else
-					if (lobby_gamemode.start ~= nil) then
-						lobby_gamemode.start(lobby_code)
-					end
-				end
-
-				in_game = true
-				game_in_progress = true
-
-				gui_closed = true
-			else
-				disconnect({
-					lobbyID = lobby_code,
-					message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))
-				})
-			end
-		end
 	end
 end
 

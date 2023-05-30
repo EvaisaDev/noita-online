@@ -6,7 +6,8 @@ delay.reset = function()
 end
 
 delay.update = function()
-    for i, v in ipairs(delay_queue) do
+    for i = #delay_queue, 1, -1 do
+        local v = delay_queue[i]
         v.frames = v.frames - 1
         if(v.tick_callback)then
             v.tick_callback(v.frames)

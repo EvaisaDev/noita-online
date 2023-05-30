@@ -25,6 +25,7 @@ function playerinfo_menu:New()
         current_frame = 0,
         total_frames = 60,
         scroll_bar_visible = false,
+        player_index = 0,
     }
 
     o.gui = GuiCreate()
@@ -118,7 +119,6 @@ function playerinfo_menu:New()
         local player_perk_sprites = {}
         local perk_draw_x = 0
         local perk_draw_y = 0
-        local player_index = 0
 
         local scroll_offset = 0
 
@@ -128,15 +128,22 @@ function playerinfo_menu:New()
         local hovered_max_hp = 0
         local hovered_hp = 0
 
+        local text_height_self = 0
+        local text_height_other = 0
 
         GuiBeginScrollContainer(self.gui, new_id(), current_x, self.offset_y, self.width + scrollbar_offset, self.height)
         
         GuiLayoutBeginVertical(self.gui, 0, 0, true)
 
+        local DrawTextElement = function(formatting_string, value)
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+            GuiText(self.gui, 0, value and -2 or 0, string.format(GameTextGetTranslatedOrNot(formatting_string), tostring(value or "")))
+            local _, _, _, _, _, elem_w, elem_h = GuiGetPreviousWidgetInfo(self.gui)
+            return elem_h
+        end
 
         ------------- DRAW OUR OWN CARD (if not spectator) ---------------
-
- 
 
         if(not spectator)then
             
@@ -158,6 +165,7 @@ function playerinfo_menu:New()
             end
 
             local wins = ArenaGameplay.GetWins(lobby, player_id)
+            local winstreak = ArenaGameplay.GetWinstreak(lobby, player_id)
                         
 
 
@@ -179,16 +187,26 @@ function playerinfo_menu:New()
 
             GuiText(self.gui, 0, 0, username.." ("..GameTextGetTranslatedOrNot("$arena_playerinfo_you")..")")
 
-            local _, _, _, _, scroll_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
+            local _, _, _, _, scroll_y, _, name_height = GuiGetPreviousWidgetInfo(self.gui)
+            text_height_self = text_height_self + name_height
             scroll_offset = scroll_y - self.offset_y - 2
 
             if(self_ready)then
                 GuiLayoutEnd(self.gui)
             end
 
+            --[[
             GuiZSetForNextWidget(self.gui, 900)
             GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
             GuiText(self.gui, 0, self_ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
+
+            GuiZSetForNextWidget(self.gui, 900)
+            GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+            GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
+            ]]
+
+            text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_wins", wins)
+            text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak)
 
             local health_ratio = hp / max_hp
             local health_bar_width = 90
@@ -207,7 +225,7 @@ function playerinfo_menu:New()
             local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
 
             if(hp_hovered1)then
-                player_index = index
+                self.player_index = index
                 hovered_max_hp = max_hp
                 hovered_hp = hp
                 draw_hp_info = true
@@ -220,7 +238,7 @@ function playerinfo_menu:New()
             local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
 
             if(hp_hovered2)then
-                player_index = index
+                self.player_index = index
                 hovered_max_hp = max_hp
                 hovered_hp = hp
                 draw_hp_info = true
@@ -230,7 +248,7 @@ function playerinfo_menu:New()
             GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
             local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
             if(hovered)then
-                player_index = index
+                self.player_index = index
                 if(data.client.perks)then
                     for k, v in ipairs(data.client.perks)do
                         local perk = v[1]
@@ -293,24 +311,51 @@ function playerinfo_menu:New()
                     local a = 1
                     GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
                     GuiText(self.gui, 0, 0, username)
+                    local _, _, _, _, _, _, text_height = GuiGetPreviousWidgetInfo(self.gui)
 
                     if(v.ready)then
                         GuiLayoutEnd(self.gui)
                     end
 
+                    --[[
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, v.ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping))--[["Ping: "..tostring(v.ping).."ms"]])
+                    GuiText(self.gui, 0, v.ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping)))
+                    
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames))--[["Delay: "..tostring(v.delay_frames).." frames"]])
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames)))
 
                     local wins = ArenaGameplay.GetWins(lobby, playerid)
                     
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins))--[["Wins: "..tostring(wins)]])
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
                     
+                    local winstreak = ArenaGameplay.GetWinstreak(lobby, playerid)
+
+                    GuiZSetForNextWidget(self.gui, 900)
+                    GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
+                    GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
+
+                    ]]
+                    local ping_height = DrawTextElement("$arena_playerinfo_ping", v.ping)
+                    local delay_height = DrawTextElement("$arena_playerinfo_delay", v.delay_frames)
+                    local wins_height = DrawTextElement("$arena_playerinfo_wins", ArenaGameplay.GetWins(lobby, playerid))
+                    local winstreak_height = DrawTextElement("$arena_playerinfo_winstreak", ArenaGameplay.GetWinstreak(lobby, playerid))
+                    
+                    --print("index is "..tostring(index) .. " player_index is "..tostring(self.player_index))
+
+                    if(index == self.player_index)then
+                        --print("index is stuff")
+                        text_height_other = text_height_other + text_height
+                        text_height_other = text_height_other + ping_height
+                        text_height_other = text_height_other + delay_height
+                        text_height_other = text_height_other + wins_height
+                        text_height_other = text_height_other + winstreak_height
+                        text_height_other = text_height_other + 4
+                    end
+
                     local health_ratio = v.health / v.max_health
                     local health_bar_width = 90
                     local health_width = health_bar_width * health_ratio
@@ -331,7 +376,7 @@ function playerinfo_menu:New()
                     local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
     
                     if(hp_hovered1)then
-                        player_index = index
+                        self.player_index = index
                         hovered_max_hp = v.max_health
                         hovered_hp = v.health
                         draw_hp_info = true
@@ -344,7 +389,7 @@ function playerinfo_menu:New()
                     local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
     
                     if(hp_hovered2)then
-                        player_index = index
+                        self.player_index = index
                         hovered_max_hp = v.max_health
                         hovered_hp = v.health
                         draw_hp_info = true
@@ -354,7 +399,7 @@ function playerinfo_menu:New()
                     GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
                     local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
                     if(hovered)then
-                        player_index = index
+                        self.player_index = index
                         if(v.perks)then
                             for k, v in ipairs(v.perks)do
                                 local perk = v[1]
@@ -395,26 +440,27 @@ function playerinfo_menu:New()
         GuiLayoutEnd(self.gui)
 
         GuiEndScrollContainer(self.gui)
+
+        --print(tostring(text_height_self))
         
         local draw_pos = 0
-        if((not spectator) and player_index == 1)then
-            draw_pos = self.offset_y + 16
+        if((not spectator) and self.player_index == 1)then
+            draw_pos = self.offset_y + text_height_self
         else
-            local additional_offset = 76
-            local magic_number = 56
-            local player_index_offset = 2
+            local additional_offset = text_height_self
+            local magic_number = text_height_other
+            local player_index_offset = 1
             if(spectator)then
-                additional_offset = 38
-                magic_number = 56
-                player_index_offset = 1
+                player_index_offset = 0
             end
 
-            draw_pos = self.offset_y + additional_offset + (magic_number * (player_index - player_index_offset))
+            draw_pos = self.offset_y + additional_offset + (magic_number * (self.player_index - player_index_offset))
+            draw_pos = draw_pos + 4
         end
 
         draw_pos = draw_pos + scroll_offset
 
-        draw_pos = draw_pos + 10
+        --draw_pos = draw_pos + 11
 
         if(draw_perks)then
             perk_draw_x = perk_draw_x + 11

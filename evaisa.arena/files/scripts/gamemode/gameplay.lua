@@ -72,6 +72,53 @@ ArenaGameplay = {
 
         return round_scaled
     end,
+    CheckWinCondition = function(lobby, data)
+        local conditions = {
+            ["first_to"] = function(value)
+                local members = steamutils.getLobbyMembers(lobby)
+                for k, member in pairs(members) do
+                    local wins = ArenaGameplay.GetWins(lobby, member.id)
+                    if(wins >= value)then
+                        return member.id
+                    end
+                end
+            end,
+            ["best_of"] = function(value)
+                local current_round = ArenaGameplay.GetNumRounds() + 1
+                if(current_round >= value)then
+                    local members = steamutils.getLobbyMembers(lobby)
+                    local best_player = nil
+                    local best_wins = 0
+                    for k, member in pairs(members) do
+                        local wins = ArenaGameplay.GetWins(lobby, member.id)
+                        if(wins > best_wins)then
+                            best_player = member.id
+                            best_wins = wins
+                        end
+                    end
+                    return best_player
+                end
+            end,
+            ["winstreak"] = function(value)
+                local members = steamutils.getLobbyMembers(lobby)
+                for k, member in pairs(members) do
+                    local winstreak = ArenaGameplay.GetWinstreak(lobby, member.id)
+                    print("Checking winstreak: " .. winstreak .. " - " .. value)
+                    if(winstreak >= value)then
+                        return member.id
+                    end
+                end
+            end,
+        }
+        local type = GlobalsGetValue("win_condition", "unlimited")
+        local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
+
+        print("Checking win condition: " .. type .. " - " .. value)
+
+        if (conditions[type] ~= nil) then
+            return conditions[type](value)
+        end
+    end,
     SendGameData = function(lobby, data)
         steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
@@ -255,6 +302,8 @@ ArenaGameplay = {
             for k, member in pairs(members) do
                 local winner_key = tostring(member.id) .. "_wins"
                 steam.matchmaking.deleteLobbyData(lobby, winner_key)
+                local winstreak_key = tostring(member.id) .. "_winstreak"
+                steam.matchmaking.deleteLobbyData(lobby, winstreak_key)
             end
 
             local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
@@ -266,6 +315,7 @@ ArenaGameplay = {
 
             for k, key in pairs(winner_keys) do
                 steam.matchmaking.deleteLobbyData(lobby, key)
+                steam.matchmaking.deleteLobbyData(lobby, key .. "treak")
             end
 
             steam.matchmaking.deleteLobbyData(lobby, "winner_keys")
@@ -679,6 +729,9 @@ ArenaGameplay = {
     GetWins = function(lobby, user)
         return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
     end,
+    GetWinstreak = function(lobby, user)
+        return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+    end,
     WinnerCheck = function(lobby, data)
         
         --[[if(true)then
@@ -690,7 +743,7 @@ ArenaGameplay = {
             return
         end
 
-        print("WinnerCheck (gameplay)")
+        -- print("WinnerCheck (gameplay)")
 
         local alive = data.client.alive and 1 or 0
         local winner = steam.user.getSteamID()
@@ -701,29 +754,59 @@ ArenaGameplay = {
             end
         end
 
-        print("Alive count: "..tostring(alive))
+        -- print("Alive count: "..tostring(alive))
 
         if (alive == 1) then
-            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
-
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
                 local winner_key = tostring(winner) .. "_wins"
+                local winstreak_key = tostring(winner) .. "_winstreak"
 
                 local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
+                
                 if (winner_keys == nil) then
                     winner_keys = {}
                 else
                     winner_keys = bitser.loads(winner_keys)
                 end
 
+
+                for k, v in pairs(winner_keys) do
+                    if (v ~= winner_key) then
+                        print(v .. "treak")
+                        steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
+                    end
+                end
+
+
                 if (not table.contains(winner_keys, winner_key)) then
                     table.insert(winner_keys, winner_key)
                     steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
                 end
 
+
+                for k, v in pairs(data.players) do
+                    local id = v.id
+                    if (id ~= winner) then
+                        steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
+                    end
+                end
+
                 local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
+                local current_winstreak = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winstreak_key)) or "0")
+
+                print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
                 steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
+                steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
+
+                wait.new(function() 
+                    return steam.matchmaking.getLobbyData(lobby, winner_key) == tostring(current_wins + 1)
+                end, function()
+                    networking.send.allow_round_end(lobby)
+                    data.allow_round_end = true
+                end)
+
+
             end
 
             
@@ -744,27 +827,78 @@ ArenaGameplay = {
                 end
             end
 
-            GameAddFlagRun("round_finished")
+            -- data.allow_round_end = false
 
-            delay.new(5 * 60, function()
-                ArenaGameplay.LoadLobby(lobby, data, false)
-            end, function(frames)
-                if (frames % 60 == 0) then
-                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+            local updated_was_wins = false
+            wait.new(function()  
+                if(lobby_data_updated_this_frame[tostring(winner) .. "_wins"])then
+                    updated_was_wins = lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
                 end
+                return lobby_data_updated_this_frame[tostring(winner) .. "_wins"] or lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]
+            end, function() 
+
+                wait.new(function()  
+                    print("winstreak updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]))
+                    print("wins updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_wins"]))
+                    print("updated_was_wins: "..tostring(updated_was_wins))
+
+                    return updated_was_wins and lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"] or lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
+                end, function() 
+                    print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner)))
+                    print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner)))
+                    GameAddFlagRun("round_finished")
+                    local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
+
+                    if(win_condition_user ~= nil)then
+                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
+                    else
+                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                    end
+
+                    if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
+                        delay.new(5 * 60, function()
+                            ArenaGameplay.LoadLobby(lobby, data, false)
+                        end, function(frames)
+                            if (frames % 60 == 0) then
+                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                            end
+                        end)
+                    else
+                        delay.new(10 * 60, function()
+                            StopGame()
+                        end, function(frames)
+                            if (frames % 60 == 0) then
+                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
+                            end
+                        end)
+                    end
+                end)
             end)
         elseif (alive == 0) then
-            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+
+            local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
 
             GameAddFlagRun("round_finished")
 
-            delay.new(5 * 60, function()
-                ArenaGameplay.LoadLobby(lobby, data, false)
-            end, function(frames)
-                if (frames % 60 == 0) then
-                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
-                end
-            end)
+            if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
+                GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                delay.new(5 * 60, function()
+                    ArenaGameplay.LoadLobby(lobby, data, false)
+                end, function(frames)
+                    if (frames % 60 == 0) then
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                    end
+                end)
+            else
+                delay.new(10 * 60, function()
+                    StopGame()
+                end, function(frames)
+                    if (frames % 60 == 0) then
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
+                    end
+                end)
+            end
+
         end
     end,
     KillCheck = function(lobby, data)
@@ -791,7 +925,12 @@ ArenaGameplay = {
 
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
             if(catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death"))then
-                GameAddFlagRun("first_death")
+                if(catchup_mechanic == "losers" and not GameHasFlagRun("arena_winner"))then
+                    GameAddFlagRun("first_death")
+                elseif(catchup_mechanic == "first_death")then
+                    GameAddFlagRun("first_death")
+                end
+                
                 GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
             end
             if(GlobalsGetValue("upgrades_system", "false") == "true")then
@@ -886,6 +1025,7 @@ ArenaGameplay = {
         data.selected_player = nil
         data.selected_player_name = nil
         data.client.previous_spectate_data = nil
+        data.allow_round_end = false
         GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
@@ -1321,7 +1461,7 @@ ArenaGameplay = {
             networking.send.perk_update(lobby, data)
         end
 
-        if(GameGetFrameNum() % 60)then
+        if(GameGetFrameNum() % 60 == 0)then
             networking.send.request_perk_update(lobby)
         end
     end,

@@ -514,3 +514,68 @@ function refreshLobbies()
 
 	return lobbies
 end
+
+function StartGame()
+	local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+	if handleVersionCheck() and handleModCheck() then
+		if handleGamemodeVersionCheck(lobby_code) then
+			if (lobby_gamemode) then
+
+				spectating = steamutils.IsSpectator(lobby_code)
+
+				--print("Are we spectating? " .. tostring(spectating))
+
+				if (spectating) then
+					if (lobby_gamemode.spectate ~= nil) then
+						lobby_gamemode.spectate(lobby_code)
+					elseif (lobby_gamemode.start ~= nil) then
+						lobby_gamemode.start(lobby_code)
+					end
+				else
+					if (lobby_gamemode.start ~= nil) then
+						lobby_gamemode.start(lobby_code)
+					end
+				end
+
+				in_game = true
+				game_in_progress = true
+
+				gui_closed = true
+			else
+				disconnect({
+					lobbyID = lobby_code,
+					message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(steam.matchmaking.getLobbyData(lobby_code, "gamemode")))
+				})
+			end
+		end
+	end
+end
+
+function StopGame()
+	local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+	if handleVersionCheck() and handleModCheck() then
+		if handleGamemodeVersionCheck(lobby_code) then
+			if (lobby_gamemode) then
+				if (lobby_gamemode.stop ~= nil) then
+					lobby_gamemode.stop(lobby_code)
+				end
+
+				if(steamutils.IsOwner(lobby_code))then
+					steam.matchmaking.setLobbyData(lobby_code, "in_progress", "false")
+				end
+
+				in_game = false
+				game_in_progress = false
+
+				gui_closed = false
+			else
+				disconnect({
+					lobbyID = lobby_code,
+					message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(steam.matchmaking.getLobbyData(lobby_code, "gamemode")))
+				})
+			end
+		end
+	end
+end

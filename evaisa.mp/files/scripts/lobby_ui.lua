@@ -955,7 +955,7 @@ local windows = {
 
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
-							GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
+							--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
 						else
 							if(setting.type == "bool" and type(gamemode_settings[setting.id]) == "string")then
 								if(gamemode_settings[setting.id] == "true")then
@@ -967,6 +967,16 @@ local windows = {
 								gamemode_settings[setting.id] = tonumber(gamemode_settings[setting.id])
 							end
 						end
+
+						if(gamemode_settings[setting.id] ~= nil)then
+							local setting_next = GlobalsGetValue("setting_next_"..setting.id)
+							if(setting_next ~= nil)then
+								if(setting_next ~= tostring(gamemode_settings[setting.id]))then
+									GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+								end
+							end
+						end
+
 
 						if(setting.require == nil or setting.require(setting))then
 							if(setting.type == "enum")then
@@ -993,7 +1003,7 @@ local windows = {
 										selected_index = 1
 									end
 									gamemode_settings[setting.id] = setting.options[selected_index][1]
-									GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
+									--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
@@ -1012,7 +1022,7 @@ local windows = {
 
 									--print(tostring(gamemode_settings[setting.id]))
 
-									GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+									--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 

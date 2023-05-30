@@ -6,6 +6,7 @@ game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 
 delay = dofile("mods/evaisa.arena/files/scripts/utilities/delay.lua")
+wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
@@ -55,8 +56,58 @@ ArenaMode = {
     disable_spectator_system = true,
     enable_presets = true,
     default_presets = {
+        ["Wand Locked"] = {
+            ["zone_speed"] = 30,
+            ["shop_start_level"] = 0,
+            ["shop_random_ratio"] = 50,
+            ["shop_type"] = "spell_only",
+            ["shop_jump"] = 1,
+            ["zone_step_interval"] = 30,
+            ["upgrades_catchup"] = "losers",
+            ["damage_cap"] = "0.25",
+            ["shop_scaling"] = 2,
+            ["zone_shrink"] = "static",
+            ["shop_wand_chance"] = 40,
+            ["max_shop_level"] = 5,
+            ["shop_price_multiplier"] = 0,
+            ["perk_catchup"] = "losers",
+            ["upgrades_system"] = true,
+        }
     }, 
     settings = {
+        {
+            id = "win_condition",
+            name = "$arena_settings_win_condition_name",
+            description = "$arena_settings_win_condition_description",
+            type = "enum",
+            options = { { "unlimited", "$arena_settings_win_condition_enum_unlimited" }, { "first_to", "$arena_settings_win_condition_enum_first_to" }, { "best_of", "$arena_settings_win_condition_enum_best_of" }, { "winstreak", "$arena_settings_win_condition_enum_winstreak" }},
+            default = "unlimited"
+        },
+        {
+			id = "win_condition_value",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_win_condition", "unlimited") ~= "unlimited"
+            end,
+			name = "$arena_settings_win_condition_value_name",
+			description = "$arena_settings_win_condition_value_description",
+			type = "slider",
+			min = 1,
+			max = 20,
+			default = 5;
+			display_multiplier = 1,
+			formatting_string = " $0",
+			width = 100
+		},
+        {
+            id = "win_condition_end_match",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_win_condition", "unlimited") ~= "unlimited"
+            end,
+            name = "$arena_settings_win_condition_end_match_name",
+            description = "$arena_settings_win_condition_end_match_description",
+            type = "bool",
+            default = true
+        },
         {
             id = "perk_catchup",
             name = "$arena_settings_perk_reward_system_name",
@@ -286,6 +337,28 @@ ArenaMode = {
     refresh = function(lobby)
         print("refreshing arena settings")
 
+        local win_condition = steam.matchmaking.getLobbyData(lobby, "setting_win_condition")
+        if (win_condition == nil)then
+            win_condition = "unlimited"
+        end
+        GlobalsSetValue("win_condition", tostring(win_condition))
+
+        local win_condition_value = steam.matchmaking.getLobbyData(lobby, "setting_win_condition_value")
+        if (win_condition_value == nil)then
+            win_condition_value = 5
+        end
+        GlobalsSetValue("win_condition_value", tostring(math.floor(win_condition_value)))
+
+        local win_condition_end_match = steam.matchmaking.getLobbyData(lobby, "setting_win_condition_end_match")
+        if (win_condition_end_match == nil)then
+            win_condition_end_match = "true"
+        end
+        if(win_condition_end_match == "true")then
+            GameAddFlagRun("win_condition_end_match")
+        else
+            GameRemoveFlagRun("win_condition_end_match")
+        end
+
         local perk_catchup = steam.matchmaking.getLobbyData(lobby, "setting_perk_catchup")
         if (perk_catchup == nil) then
             perk_catchup = "losers"
@@ -455,11 +528,30 @@ ArenaMode = {
         ]]
         --message_handler.send.Handshake(lobby)
     end,
+    stop = function(lobby)
+        arena_log:print("Stop called!!!")
+        delay.reset()
+        wait.reset()
+        if (data ~= nil) then
+            ArenaGameplay.GracefulReset(lobby, data)
+        end
+
+        ArenaMode.refresh(lobby)
+        
+        gameplay_handler.ResetEverything(lobby)
+
+        data = nil
+
+        steamutils.RemoveLocalLobbyData(lobby, "player_data")
+        steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+
+        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
+    end,
     start = function(lobby, was_in_progress)
         arena_log:print("Start called!!!")
 
         delay.reset()
-
+        wait.reset()
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -537,7 +629,7 @@ ArenaMode = {
         arena_log:print("Spectate called!!!")
 
         delay.reset()
-
+        wait.reset()
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -599,6 +691,12 @@ ArenaMode = {
         end
 
         delay.update()
+        wait.update()
+
+        if (data == nil) then
+            return
+        end
+
         data.spectator_mode = steamutils.IsSpectator(lobby)
 
         data.using_controller = GameGetIsGamepadConnected()
@@ -725,7 +823,7 @@ ArenaMode = {
         print(tostring(unknown2))
         print(tostring(unknown3))]]
 
-        print("Projectile fired")
+        --print("Projectile fired")
 
         if (EntityHasTag(shooter_id, "client")) then
             EntityAddTag(shooter_id, "player_unit")

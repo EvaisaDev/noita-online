@@ -50,6 +50,12 @@ networking = {
                 end
             end
         end,
+        allow_round_end = function(lobby, message, user, data)
+            if(steamutils.IsOwner(lobby, user))then
+                data.allow_round_end = true
+                print("Allowing round to end.")
+            end
+        end,
         arena_loaded = function(lobby, message, user, data)
             local username = steamutils.getTranslatedPersonaName(user)
 
@@ -639,13 +645,16 @@ networking = {
                             -- split the damage into as many parts as there are damage types
                             local damage_per_type = damage / #damage_types
 
+                            local blood_multiplier = damage_details.blood_multiplier
+
+                            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
+                            local old_blood_multiplier = tonumber(ComponentGetValue2(damage_model_comp, "blood_multiplier"))
+                            ComponentSetValue2(damage_model_comp, "blood_multiplier", blood_multiplier)
                             for i, damage_type in ipairs(damage_types) do
-
-                                
-
                                 EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
                                 ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], nil, damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
                             end
+                            ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                         else
                             EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
                             "NONE", 0, 0, nil)
@@ -687,9 +696,9 @@ networking = {
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 data.players[tostring(user)].can_fire = true
 
-                GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[4]))
+                GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
 
-                data.players[tostring(user)].projectile_rng_stack = message[3]
+                data.players[tostring(user)].projectile_rng_stack = message[4]
 
                 local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
                     "ControlsComponent")
@@ -708,7 +717,10 @@ networking = {
                         local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                         local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
 
-                        local wand_x, wand_y = EntityGetTransform(mActiveItem)
+                        local wand_x, wand_y, wand_r = message[1], message[2], message[3]
+
+                        EntitySetTransform(mActiveItem, wand_x, wand_y, wand_r)
+                        EntityApplyTransform(mActiveItem, wand_x, wand_y, wand_r)
 
                         local x = wand_x + (aimNormal_x * 2)
                         local y = wand_y + (aimNormal_y * 2)
@@ -719,8 +731,8 @@ networking = {
 
                         EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
 
-                        EntitySetTransform(mActiveItem, message[1], message[2])
-                        EntityApplyTransform(mActiveItem, message[1], message[2])
+
+                        --print("Firing wand at " .. tostring(x) .. ", " .. tostring(y) .. ", " .. tostring(r))
 
                         EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                         np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x,
@@ -1153,11 +1165,12 @@ networking = {
                 local wand = EntityHelper.GetHeldItem(player)
 
                 if (wand ~= nil) then
-                    local x, y = EntityGetTransform(wand)
+                    local x, y, r = EntityGetTransform(wand)
 
                     local data = {
                         x,
                         y,
+                        r,
                         rng,
                         special_seed
                     }
@@ -1206,6 +1219,9 @@ networking = {
                 end
             end
 
+        end,
+        allow_round_end = function(lobby)
+            steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }
