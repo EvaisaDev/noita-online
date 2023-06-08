@@ -684,7 +684,7 @@ function OnWorldPostUpdate()
 					end
 				end
 				]]
-				ReceiveMessages(lobby_gamemode)
+				--ReceiveMessages(lobby_gamemode)
 			end
 		end
 	end
