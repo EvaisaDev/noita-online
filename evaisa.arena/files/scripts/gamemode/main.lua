@@ -697,6 +697,14 @@ ArenaMode = {
             return
         end
 
+        if(GameGetFrameNum() % 10 == 0)then
+            local mortals = EntityGetWithTag("mortal")
+            for i = 0, #mortals do
+                local mortal = mortals[i]
+                EntityAddTag(mortal, "homing_target")
+            end
+        end
+
         data.spectator_mode = steamutils.IsSpectator(lobby)
 
         data.using_controller = GameGetIsGamepadConnected()
