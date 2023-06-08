@@ -8,7 +8,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     --if damageModelComponent ~= nil then
         --local health = ComponentGetValue2( damageModelComponent, "hp" )
         if(GameHasFlagRun("Immortal"))then
-            return 1, 0
+            return 0, 0
         --else
         --    GameAddFlagRun("took_damage")
         end

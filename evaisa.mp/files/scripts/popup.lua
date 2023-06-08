@@ -74,11 +74,37 @@ popups.update = function()
             GuiText(popup.gui, (screen_width / 2), (screen_height / 2) - (text_height / 2), popup.name)
         end
         if (popup.description) then
-            GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
-            local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.description)
-            GuiZSetForNextWidget(popup.gui, z_index - 1)
-            GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
-            GuiText(popup.gui, (screen_width / 2), 0, popup.description)
+            if(type(popup.description) == "string")then
+                GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
+                local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.description)
+                GuiZSetForNextWidget(popup.gui, z_index - 1)
+                GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
+                GuiText(popup.gui, (screen_width / 2), 0, popup.description)
+            elseif(type(popup.description) == "table")then
+                for i, line in ipairs(popup.description) do
+                    if(type(line) == "string")then
+                        GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
+                        local text_width, text_height = GuiGetTextDimensions(popup.gui, line)
+                        GuiZSetForNextWidget(popup.gui, z_index - 1)
+                        GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
+                        GuiText(popup.gui, (screen_width / 2), 0, line)
+                    elseif(type(line) == "table")then
+                        local text_string = line.text
+                        local text_color = line.color
+
+                        if(text_color)then
+                            GuiColorSetForNextWidget(popup.gui, text_color[1], text_color[2], text_color[3], text_color[4])
+                        else
+                            GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
+                        end
+
+                        local text_width, text_height = GuiGetTextDimensions(popup.gui, text_string)
+                        GuiZSetForNextWidget(popup.gui, z_index - 1)
+                        GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
+                        GuiText(popup.gui, (screen_width / 2), 0, text_string)
+                    end
+                end
+            end
         end
 
 

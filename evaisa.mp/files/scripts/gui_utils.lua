@@ -61,6 +61,39 @@ function GetGuiMousePosition(gui)
 	return 0, 0
 end
 
+function ParseStringColors(str)
+    -- Define pattern: # followed by [digits,digits,digits]
+    local pattern = "#%[(%d+),(%d+),(%d+)%]"
+
+    -- Initialize the output table
+    local output = {}
+
+    -- Initialize the last match position and color
+    local last_pos, last_color = 1, nil
+
+    -- Iterate through the input string, matching the pattern
+    for r, g, b, pos in string.gmatch(str, "()" .. pattern .. "()") do
+        -- Extract the text before the color marker or between the pre-existing color markers
+        local text = string.sub(str, last_pos, pos - #pattern - 1)
+
+        -- Add an entry to the output table
+        table.insert(output, {text = text, color = last_color})
+
+        -- Update the last match position and color
+        last_pos = pos
+        last_color = {tonumber(r), tonumber(g), tonumber(b)}
+    end
+
+    -- Add the remaining text after the last color marker
+    local remaining_text = string.sub(str, last_pos)
+    if remaining_text ~= "" then
+        table.insert(output, {text = remaining_text, color = last_color})
+    end
+
+    return output
+end
+
+
 function GetMouseDown()
 	local players = get_players()
 	if(players ~= nil)then

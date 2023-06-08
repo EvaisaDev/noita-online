@@ -50,7 +50,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.5396,
+    version = 0.5397,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,

@@ -155,12 +155,12 @@ end
 
 local noita_version_hash = GetNoitaVersionHash()
 
-last_noita_version = ModSettingGet("evaisa.mp.last_noita_version") or ""
+last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
 laa_check_done = false
 if(noita_version_hash ~= nil)then
 	mp_log:print("Noita version hash: " .. noita_version_hash)
 	if(last_noita_version ~= noita_version_hash)then
-		ModSettingSet("evaisa.mp.last_noita_version", noita_version_hash)
+		ModSettingSet("evaisa.mp.last_noita_version_hash", noita_version_hash)
 		laa_check_done = false
 	else
 		laa_check_done = true
@@ -283,6 +283,7 @@ http_get = function(url, callback)
 	end)
 
 end]]
+
 if type(Steam) == 'boolean' then Steam = nil end
 
 instance = instance or nil
@@ -368,6 +369,7 @@ local spawned_popup = false
 local init_cleanup = false
 local connection_popup_open = false
 local connection_popup_was_open_timer = 0
+local laa_check_busy = false
 
 function OnWorldPreUpdate()
 
@@ -404,211 +406,221 @@ function OnWorldPreUpdate()
 
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
 
-		--[[
+
 		if(not laa_check_done)then
 			laa_enabled = checkLAA("noita.exe")
 			print("LAA: " .. tostring(laa_enabled))
 
 			
-			popup.create("update_message", "Do you want to enable LAA?", "Enabling Large Address Aware lets noita use up to 4GB of memory. \nWhich helps prevent crashes.", {
-				{
-					text = GameTextGetTranslatedOrNot("Patch"),
-					callback = function()
-						LAAPatch("noita.exe", "noita")
-					end
-				},
-				{
-					text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-					callback = function()
-						
-					end
-				},
-			}, -6000)
-
-			laa_check_done = true
-		end
-		]]
-
-		if(not steam.utils.loggedOn())then
-			if(GameGetFrameNum() % (60 * 5) == 0)then
-				GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
-			end
-			
-			if(connection_popup_was_open_timer > 0)then
-				connection_popup_was_open_timer = connection_popup_was_open_timer - 1
-			end
-
-
-
-			if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
-				connection_popup_open = true
-				connection_popup_was_open_timer = 60 * 60 * 2
-				popup.create("update_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
-				GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
+			if(not laa_enabled)then
+				laa_check_busy = true
+				popup.create("update_message", GameTextGetTranslatedOrNot("$mp_laa_message"), {
+					GameTextGetTranslatedOrNot("$mp_laa_description"),
+					{
+						text = GameTextGetTranslatedOrNot("$mp_laa_warning"),
+						color = {217 / 255,52 / 255,52 / 255, 1}
+					}
+				}, {
+					{
+						text = GameTextGetTranslatedOrNot("$mp_laa_patch"),
+						callback = function()
+							LAAPatch("noita.exe", "noita")
+							laa_check_busy = false
+						end
+					},
 					{
 						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
 						callback = function()
-							if(lobby_code ~= nil)then
-								connection_popup_open = false
-							end
+							laa_check_busy = false
 						end
-					}
+					},
 				}, -6000)
 			end
+			laa_check_done = true
 		end
-
-
-		if(input == nil)then
-			input = dofile_once("mods/evaisa.mp/lib/input.lua")
-		end
-
-		if(init_cleanup == false)then
-			local lastCode = ModSettingGet("last_lobby_code")
-			--print("Code: "..tostring(lastCode))
-			if (steam) then
-				if (lastCode ~= nil and lastCode ~= "") then
-					local lobCode = steam.extra.parseUint64(lastCode)
-					if (tostring(lobCode) ~= "0") then
-						if (steam.extra.isSteamIDValid(lobCode)) then
-							gamemode_settings = {}
-							steam.matchmaking.leaveLobby(lobCode)
-						end
-					end
-					ModSettingRemove("last_lobby_code")
-					lobby_code = nil
-				end
-			end
-			init_cleanup = true
-		end
-
-		--pretty.table(steam.networking)
-		lobby_code = lobby_code or nil
 		
-		ResetID()
-		ResetWindowStack()
+		if(not laa_check_busy)then
+			if(not steam.utils.loggedOn())then
+				if(GameGetFrameNum() % (60 * 5) == 0)then
+					GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
+				end
+				
+				if(connection_popup_was_open_timer > 0)then
+					connection_popup_was_open_timer = connection_popup_was_open_timer - 1
+				end
 
-		if (not IsPaused()) then
-			dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
-			dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
-		end
-		if (GameGetFrameNum() % (60 * 10) == 0) then
-			steamutils.CheckLocalLobbyData()
-		end
 
-		if (lobby_code ~= nil) then
-			local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-			if (lobby_gamemode == nil) then
-				return
-			end
-
-			if(Starting ~= nil)then
-				Starting = Starting - 1
-				if(Starting < 0)then
-					Starting = 0
+				if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
+					connection_popup_open = true
+					connection_popup_was_open_timer = 60 * 60 * 2
+					popup.create("update_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
+					GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
+						{
+							text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+							callback = function()
+								if(lobby_code ~= nil)then
+									connection_popup_open = false
+								end
+							end
+						}
+					}, -6000)
 				end
 			end
 
-			if(Starting == 0)then
-				StartGame()
-				Starting = nil
+
+			if(input == nil)then
+				input = dofile_once("mods/evaisa.mp/lib/input.lua")
 			end
 
-			--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
-
-			--print("a")
-
-			if (GameGetFrameNum() % 10 == 0) then
-				-- get lobby members
-				local current_members = {}
-				for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_code) do
-					local h = steam.matchmaking.getLobbyMemberByIndex(lobby_code, i - 1)
-					if (not active_members[tostring(h)]) then
-						active_members[tostring(h)] = h
+			if(init_cleanup == false)then
+				local lastCode = ModSettingGet("last_lobby_code")
+				--print("Code: "..tostring(lastCode))
+				if (steam) then
+					if (lastCode ~= nil and lastCode ~= "") then
+						local lobCode = steam.extra.parseUint64(lastCode)
+						if (tostring(lobCode) ~= "0") then
+							if (steam.extra.isSteamIDValid(lobCode)) then
+								gamemode_settings = {}
+								steam.matchmaking.leaveLobby(lobCode)
+							end
+						end
+						ModSettingRemove("last_lobby_code")
+						lobby_code = nil
 					end
-					if (not member_message_frames[tostring(h)]) then
-						member_message_frames[tostring(h)] = 0
-					end
-					current_members[tostring(h)] = true
 				end
-				for k, v in pairs(active_members) do
-					if (not current_members[k]) then
-						active_members[k] = nil
-						member_message_frames[k] = nil
-						steam.networking.closeSession(v)
-						mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
-						-- run gamemode on_leave
-						if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
-							lobby_gamemode.disconnected(lobby_code, v)
+				init_cleanup = true
+			end
+
+			--pretty.table(steam.networking)
+			lobby_code = lobby_code or nil
+			
+			ResetID()
+			ResetWindowStack()
+
+			if (not IsPaused()) then
+				dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
+				dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
+			end
+			if (GameGetFrameNum() % (60 * 10) == 0) then
+				steamutils.CheckLocalLobbyData()
+			end
+
+			if (lobby_code ~= nil) then
+				local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+
+				if (lobby_gamemode == nil) then
+					return
+				end
+
+				if(Starting ~= nil)then
+					Starting = Starting - 1
+					if(Starting < 0)then
+						Starting = 0
+					end
+				end
+
+				if(Starting == 0)then
+					StartGame()
+					Starting = nil
+				end
+
+				--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+
+				--print("a")
+
+				if (GameGetFrameNum() % 10 == 0) then
+					-- get lobby members
+					local current_members = {}
+					for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_code) do
+						local h = steam.matchmaking.getLobbyMemberByIndex(lobby_code, i - 1)
+						if (not active_members[tostring(h)]) then
+							active_members[tostring(h)] = h
+						end
+						if (not member_message_frames[tostring(h)]) then
+							member_message_frames[tostring(h)] = 0
+						end
+						current_members[tostring(h)] = true
+					end
+					for k, v in pairs(active_members) do
+						if (not current_members[k]) then
+							active_members[k] = nil
+							member_message_frames[k] = nil
+							steam.networking.closeSession(v)
+							mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
+							-- run gamemode on_leave
+							if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
+								lobby_gamemode.disconnected(lobby_code, v)
+							end
 						end
 					end
 				end
-			end
 
-			--print("b")
+				--print("b")
 
-			if (GameGetFrameNum() % 60 == 0) then
-				last_bytes_sent = bytes_sent
-				last_bytes_received = bytes_received
-				bytes_sent = 0
-				bytes_received = 0
-			end
-			--[[
-			local players = get_players()
-			
-			if(players[1] ~= nil)then
-				local player = players[1]
+				if (GameGetFrameNum() % 60 == 0) then
+					last_bytes_sent = bytes_sent
+					last_bytes_received = bytes_received
+					bytes_sent = 0
+					bytes_received = 0
+				end
+				--[[
+				local players = get_players()
 				
-				GetUpdatedEntityID = function()
-					return player
-				end
-				dofile("mods/evaisa.mp/files/scripts/player_update.lua")
-			end
-			]]
-			--print("c")
-
-			byte_rate_gui = byte_rate_gui or GuiCreate()
-			GuiStartFrame(byte_rate_gui)
-
-			local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
-
-			local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or
-				tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
-
-			local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or
-				tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
-
-			local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
-				"in: " .. input_string .. " | out: " .. output_string)
-
-			GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
-				output_string)
-
-			--print("d")
-
-			--print("Game in progress: "..tostring(game_in_progress))
-
-			if (game_in_progress) then
-				--print("the hell??")
-
-				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
-
-
-
-				--print("e")
-				if (owner == steam.user.getSteamID()) then
-					if (GameGetFrameNum() % 2 == 0) then
-						local seed = tostring(math.random(1, 1000000))
-
-						--print("f")
-
-						steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
+				if(players[1] ~= nil)then
+					local player = players[1]
+					
+					GetUpdatedEntityID = function()
+						return player
 					end
+					dofile("mods/evaisa.mp/files/scripts/player_update.lua")
 				end
+				]]
+				--print("c")
 
-				lobby_gamemode.update(lobby_code)
+				byte_rate_gui = byte_rate_gui or GuiCreate()
+				GuiStartFrame(byte_rate_gui)
 
-				ReceiveMessages(lobby_gamemode)
+				local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
+
+				local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or
+					tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
+
+				local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or
+					tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
+
+				local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
+					"in: " .. input_string .. " | out: " .. output_string)
+
+				GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
+					output_string)
+
+				--print("d")
+
+				--print("Game in progress: "..tostring(game_in_progress))
+
+				if (game_in_progress) then
+					--print("the hell??")
+
+					local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
+
+
+					--print("e")
+					if (owner == steam.user.getSteamID()) then
+						if (GameGetFrameNum() % 2 == 0) then
+							local seed = tostring(math.random(1, 1000000))
+
+							--print("f")
+
+							steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
+						end
+					end
+
+					lobby_gamemode.update(lobby_code)
+
+					ReceiveMessages(lobby_gamemode)
+				end
 			end
 		end
 	end
