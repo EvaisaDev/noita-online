@@ -383,6 +383,10 @@ upgrades = {
                     end
                 end
 
+                if(card == nil)then
+                    goto continue
+                end
+
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
@@ -397,7 +401,7 @@ upgrades = {
                         GamePrintImportant( "$log_always_cast_failed", "$logdesc_always_cast_failed" )
                     end
                 end
-      
+                ::continue::
             end
         end,
     },
@@ -721,6 +725,10 @@ upgrades = {
                     end
                 end
 
+                if(card == nil)then
+                    goto continue
+                end
+
                 local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
                 
                 if ( comp ~= nil ) then
@@ -735,7 +743,7 @@ upgrades = {
                         GamePrintImportant( "$log_always_cast_failed", "$logdesc_always_cast_failed" )
                     end
                 end
-      
+                ::continue::
             end
         end,
     },

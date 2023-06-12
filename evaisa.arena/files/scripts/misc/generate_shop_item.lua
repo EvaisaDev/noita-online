@@ -67,6 +67,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 
 	item = RandomAction(level)--GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
 
+	if item == nil then
+		return
+	end
+
 	biomeid = biomeid * biomeid
 
 	cardcost = 0

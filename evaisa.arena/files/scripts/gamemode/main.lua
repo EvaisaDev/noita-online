@@ -326,6 +326,22 @@ ArenaMode = {
                 table.sort(sorted_perk_list, function(a, b)
                     return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
                 end)
+                
+                if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                    for i, perk in ipairs(sorted_perk_list)do
+                        lobby_data_last_frame["perk_blacklist_"..perk.id] = "true"
+                        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "true")
+                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                    end
+                end
+
+                if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                    for i, perk in ipairs(sorted_perk_list)do
+                        lobby_data_last_frame["perk_blacklist_"..perk.id] = "false"
+                        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "false")
+                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                    end
+                end
 
                 for i, perk in ipairs(sorted_perk_list)do
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
@@ -382,6 +398,23 @@ ArenaMode = {
                         return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
                     end)
                 end
+
+                if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                    for i, spell in ipairs(sorted_spell_list)do
+                        lobby_data_last_frame["spell_blacklist_"..spell.id] = "true"
+                        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "true")
+                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                    end
+                end
+
+                if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                    for i, spell in ipairs(sorted_spell_list)do
+                        lobby_data_last_frame["spell_blacklist_"..spell.id] = "false"
+                        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "false")
+                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                    end
+                end
+
                 for i, spell in ipairs(sorted_spell_list)do
                    
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)

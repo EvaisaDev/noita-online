@@ -12,6 +12,12 @@ local random = rng.new((GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() +
 local spell_list = {}
 
 for _, v in ipairs(actions) do
+
+    if GameHasFlagRun("spell_blacklist_"..v.id) then
+        goto continue
+    end
+
+
     local spawn_levels = {}
     for spawn_level in string.gmatch(v.spawn_level or "", "([^,]+)") do
         table.insert(spawn_levels, tonumber(spawn_level))
@@ -32,6 +38,8 @@ for _, v in ipairs(actions) do
             type = v.type
         })
     end
+
+    ::continue::
 end
 
 function RandomAction(max_level)
@@ -58,6 +66,8 @@ function RandomAction(max_level)
             return action.id
         end
     end
+
+    return "LIGHT_BULLET"
 end
 
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
@@ -90,4 +100,6 @@ function RandomActionWithType(max_level, action_type)
             return action.id
         end
     end
+
+    return "LIGHT_BULLET"
 end

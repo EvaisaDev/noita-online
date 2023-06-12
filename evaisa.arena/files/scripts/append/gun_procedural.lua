@@ -12,7 +12,7 @@ local random = rng.new(random_seed)
 
 GetRandomActionWithType = function( x, y, level, type, i)
 	--print("Custom get action called!")
-	return RandomActionWithType( level, type )
+	return RandomActionWithType( level, type ) or "LIGHT_BULLET"
 end
 
 Random = function(a, b)
