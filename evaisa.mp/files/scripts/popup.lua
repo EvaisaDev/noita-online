@@ -25,11 +25,11 @@ popups.create = function(id, name, description, options, z_index)
     popup.description = description
     popup.options = options
     popup.gui = GuiCreate()
-    popup.current_id = 0
+    popup.current_id = 124
     popup.z_index = z_index or 0
     popup.start = function(self)
         GuiStartFrame(popup.gui)
-        self.current_id = 0
+        self.current_id = 124
     end
     popup.new_id = function(self)
         self.current_id = self.current_id + 1
