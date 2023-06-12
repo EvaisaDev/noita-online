@@ -95,7 +95,7 @@ local function TryUpdateData(lobby)
     end
 
 
-    if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not stemautils.IsOwner(lobby))then
+    if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steamutils.IsOwner(lobby))then
         print("version mismatch!")
         return
     end
