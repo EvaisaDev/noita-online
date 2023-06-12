@@ -11,24 +11,33 @@ function NewID(identifier, force)
 	end
 	return generated_id
 end]]
-local id_pool = {
+string.bytes = function(str)
+	local bytes = 0
+	for i = 1, #str do
+		bytes = bytes + str:byte(i)
+	end
+	return bytes
+end
+
+id_pool = id_pool or {
 	default = 1000
 }
-function NewID(identifier, force)
+function NewID(identifier, force, start_point)
 	if(identifier == nil)then
 		identifier = "default"
 	end
 	if(id_pool[identifier] == nil)then
-		id_pool[identifier] = 1000
+		id_pool[identifier] = 1000 + (string.bytes(identifier) * 214) + (start_point or 0)
 	end
 	id_pool[identifier] = id_pool[identifier] + 1
 	if(force)then
-		id_pool[identifier] = 1000
+		id_pool[identifier] = 1000 + (string.bytes(identifier) * 214) + (start_point or 0)
 	end
+	--print(identifier .. tostring(id_pool[identifier]))
 	return id_pool[identifier]
 end
 
-function ResetID()
+function ResetIDs()
 	id_pool = {
 		default = 1000
 	}

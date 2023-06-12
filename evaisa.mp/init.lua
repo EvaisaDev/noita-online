@@ -495,7 +495,7 @@ function OnWorldPreUpdate()
 			--pretty.table(steam.networking)
 			lobby_code = lobby_code or nil
 			
-			ResetID()
+			ResetIDs()
 			ResetWindowStack()
 
 			if (not IsPaused()) then
