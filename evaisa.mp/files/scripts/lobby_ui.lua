@@ -45,6 +45,8 @@ if(is_in_lobby)then
 	menu_status = status.lobby
 end
 
+active_custom_menu = active_custom_menu or nil
+
 local screen_width, screen_height = GuiGetScreenDimensions( menu_gui );
 
 -- replace each letter in string with *
@@ -273,9 +275,58 @@ local windows = {
 				
 			end, true, function(window_x, window_y, window_width, window_height)
 				
-				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
+
 
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
+
+
+				--local _, _, _, _, _, width, height = GuiGetPreviousWidgetInfo(menu_gui)
+
+				local current_button_height = 0
+
+		
+				local lobby_presets_translation = GameTextGetTranslatedOrNot("$mp_lobby_presets")
+				local lobby_presets_button_text = lobby_presets_open and lobby_presets_translation.." >" or lobby_presets_translation.." <"
+				local text_width, text_height = GuiGetTextDimensions(menu_gui, lobby_presets_button_text)
+				current_button_height = current_button_height + text_height
+				local button_x_position = window_width - text_width
+				GuiLayoutBeginVertical(menu_gui, button_x_position, 0, true, 0, 0)
+				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, lobby_presets_button_text))then
+					lobby_presets_open = not lobby_presets_open
+					active_custom_menu = nil
+					invite_menu_open = false
+					selected_player = nil
+				end
+				--current_button_offset = current_button_offset + text_height
+
+				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+				if(active_mode ~= nil)then
+					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
+						if(lobby_menu.button_location == nil or lobby_menu.button_location == "main_window")then
+							local button_text = active_custom_menu == lobby_menu.id and GameTextGetTranslatedOrNot(lobby_menu.button_text).." >" or GameTextGetTranslatedOrNot(lobby_menu.button_text).." <"
+							local text_width, text_height = GuiGetTextDimensions(menu_gui, button_text)
+							local button_x_position = window_width - text_width
+							current_button_height = current_button_height + text_height
+							if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, button_text))then
+								if(active_custom_menu == lobby_menu.id)then
+									active_custom_menu = nil
+								else
+									active_custom_menu = lobby_menu.id
+								end
+
+								lobby_presets_open = false
+								invite_menu_open = false
+								selected_player = nil
+							end
+							--current_button_offset = current_button_offset + text_height
+						end
+					end
+				end
+				GuiLayoutEnd(menu_gui)
+
+				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
+
 
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_leave_lobby")))then
 					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
@@ -294,17 +345,6 @@ local windows = {
 					return
 				end
 
-				local _, _, _, _, _, width, height = GuiGetPreviousWidgetInfo(menu_gui)
-
-				local lobby_presets_translation = GameTextGetTranslatedOrNot("$mp_lobby_presets")
-				local lobby_presets_button_text = lobby_presets_open and lobby_presets_translation.." >" or lobby_presets_translation.." <"
-				local text_width, text_height = GuiGetTextDimensions(menu_gui, lobby_presets_button_text)
-				local button_x_position = window_width - text_width
-				if(GuiButton(menu_gui, NewID("Lobby"), button_x_position, -height, lobby_presets_button_text))then
-					lobby_presets_open = not lobby_presets_open
-					invite_menu_open = false
-					selected_player = nil
-				end
 
 				local invite_translation = GameTextGetTranslatedOrNot("$mp_invite_players")
 				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, invite_menu_open and "< "..invite_translation or "> "..invite_translation))then
@@ -318,6 +358,21 @@ local windows = {
 					invite_menu_open = false
 				end
 
+				local _, _, _, position_x, position_y = GuiGetPreviousWidgetInfo(menu_gui)
+
+				position_y = position_y + text_height
+
+				-- calculate relative offset from window_y
+				local relative_offset = math.abs(position_y - window_y)
+
+				--GamePrint("relative_offset: "..tostring(relative_offset).."; current_button_height: "..tostring(current_button_height))
+
+				local offset = 0
+				if(current_button_height > relative_offset)then
+					offset = current_button_height - relative_offset
+				end
+
+				GuiLayoutBeginVertical(menu_gui, 0, offset, true, 0, 0)
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steamutils.IsSpectator(lobby_code)
@@ -330,6 +385,7 @@ local windows = {
 						end
 					end
 				end
+				
 
 				GuiText(menu_gui, 0, -6, " ")
 
@@ -425,6 +481,7 @@ local windows = {
 						end
 						if(GuiButton(menu_gui, NewID("Lobby"), -5, 0, tostring(v.name)))then
 							lobby_presets_open = false
+							active_custom_menu = nil
 							if(selected_player == v.id)then
 								selected_player = nil
 							else
@@ -440,6 +497,7 @@ local windows = {
 
 						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, tostring(v.name)))then
 							lobby_presets_open = false
+							active_custom_menu = nil
 							if(selected_player == v.id)then
 								selected_player = nil
 							else
@@ -460,6 +518,8 @@ local windows = {
 					end, -5100, 0, 0)
 					]]
 	
+					GuiLayoutEnd(menu_gui)
+
 					GuiLayoutEnd(menu_gui)
 					GuiText(menu_gui, 0, -6, " ")
 				end
@@ -873,6 +933,32 @@ local windows = {
 				was_lobby_presets_open = false
 			end
 
+			if(active_custom_menu ~= nil)then
+				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+				if(active_mode ~= nil)then
+					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
+						if(lobby_menu.id == active_custom_menu)then
+							DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function()
+								get_widget_info = function()
+									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
+									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
+									local window_height = window_height
+									
+									--[[GuiLayoutBeginLayer(menu_gui)
+									GuiText(menu_gui, 0, window_y, "------------------")
+									GuiText(menu_gui, 0, window_y + window_height, "------------------")
+									GuiLayoutEndLayer(menu_gui)]]
+
+									return (y > window_y and y < window_y + window_height), clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height
+								end
+								if(lobby_menu.draw)then
+									lobby_menu.draw(lobby_code, menu_gui, function() return NewID(lobby_menu.id) end)
+								end
+							end, lobby_menu.close, lobby_menu.id)	
+						end
+					end
+				end
+			end
 
 			if(lobby_settings_open)then
 				

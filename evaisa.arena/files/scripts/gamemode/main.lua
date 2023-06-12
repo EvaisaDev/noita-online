@@ -50,7 +50,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.5397,
+    version = 0.54,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
@@ -308,6 +308,114 @@ ArenaMode = {
             default = "everyone"
         },
     },
+    lobby_menus = {
+        {
+            id = "perk_blacklist",
+            name = "$arena_settings_perk_blacklist_name",
+            button_text = "$arena_settings_perk_blacklist_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+                dofile("data/scripts/perks/perk_list.lua")
+
+                local sorted_perk_list = {}
+                -- sort perk list by ui_name
+                for _, perk in pairs(perk_list)do
+                    table.insert(sorted_perk_list, perk)
+                end
+
+                table.sort(sorted_perk_list, function(a, b)
+                    return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
+                end)
+
+                for i, perk in ipairs(sorted_perk_list)do
+                    GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
+                    local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
+                    GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
+                    local visible, clicked, _, hovered = get_widget_info(gui)
+
+                    if(visible and clicked)then
+                        if(steamutils.IsOwner(lobby))then
+                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, is_blacklisted and "false" or "true")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                        end
+                    end
+                    if(visible and hovered)then
+                        GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
+                    end
+                    local icon_width, icon_height = GuiGetImageDimensions(gui, perk.ui_icon)
+                    SetRandomSeed(i * 21, i * 245)
+                    local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                    local offset = 0
+                    if(is_blacklisted)then
+                        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                        GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                        offset = 2
+                    end
+                    local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
+                    GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name)
+                    GuiLayoutEnd(gui)
+                end
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
+        {
+            id = "spell_blacklist",
+            name = "$arena_settings_spell_blacklist_name",
+            button_text = "$arena_settings_spell_blacklist_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+                dofile("data/scripts/gun/gun_actions.lua")
+
+                local sorted_spell_list = {}
+                -- sort spell list by ui_name
+                for _, spell in pairs(actions)do
+                    table.insert(sorted_spell_list, spell)
+                end
+
+                table.sort(sorted_spell_list, function(a, b)
+                    return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
+                end)
+
+                for i, spell in ipairs(sorted_spell_list)do
+                    GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
+                    local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
+                    GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                    local visible, clicked, _, hovered = get_widget_info(gui)
+
+                    if(visible and clicked)then
+                        if(steamutils.IsOwner(lobby))then
+                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, is_blacklisted and "false" or "true")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                        end
+                    end
+                    if(visible and hovered)then
+                        GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
+                    end
+                    local icon_width, icon_height = GuiGetImageDimensions(gui, spell.sprite)
+                    SetRandomSeed(i * 21, i * 245)
+                    local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                    local offset = 0
+                    if(is_blacklisted)then
+                        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                        GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                        offset = 2
+                    end
+                    local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
+                    GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
+                    GuiLayoutEnd(gui)
+                end
+
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
+        
+    },
     commands = {
         ready = function(command_name, arguments)
             if(GameHasFlagRun("lock_ready_state"))then
@@ -336,6 +444,27 @@ ArenaMode = {
     },
     refresh = function(lobby)
         print("refreshing arena settings")
+
+        dofile("data/scripts/perks/perk_list.lua")
+        dofile("data/scripts/gun/gun_actions.lua")
+
+        for i, perk in ipairs(perk_list)do
+            local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("perk_blacklist_"..perk.id)
+            else
+                GameRemoveFlagRun("perk_blacklist_"..perk.id)
+            end
+        end
+
+        for _, spell in pairs(actions)do
+            local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("spell_blacklist_"..spell.id)
+            else
+                GameRemoveFlagRun("spell_blacklist_"..spell.id)
+            end
+        end
 
         local win_condition = steam.matchmaking.getLobbyData(lobby, "setting_win_condition")
         if (win_condition == nil)then

@@ -544,6 +544,7 @@ local function add_spell_at_pos(wand, action_id, pos)
   ComponentSetValue2(item_component, "inventory_slot", pos-1, 0)
   return true
 end
+
 -- ##########################
 -- ####    UTILS END     ####
 -- ##########################
@@ -607,8 +608,7 @@ function wand:new(from, rng_seed_x, rng_seed_y)
       end      
       o:AttachSpells(values.always_cast_spells)
       o:SetSprite(values.sprite_image_file, values.offset_x, values.offset_y, values.tip_x, values.tip_y)
-      o:HideWorldStuff()
-    -- Load a wand by xml
+      o:HideWorldStuff()    -- Load a wand by xml
     elseif ends_with(from, ".xml") then
       local x, y = GameGetCameraPos()
       protected.entity_id = EntityLoad(from, rng_seed_x or x, rng_seed_y or y)
@@ -864,6 +864,7 @@ function wand:GetSpells()
 			end
 		end
   end
+  
   table.sort(spells, function(a, b) return a.inventory_x < b.inventory_x end)
 	return spells, always_cast_spells
 end
@@ -947,14 +948,6 @@ function wand:SetSprite(item_file, offset_x, offset_y, tip_x, tip_y)
     ComponentSetValue2(hotspot_comp, "offset", tip_x, tip_y)
 	end
 end
-
---[[
-wand_data = {}
-
-for k, v in ipairs(wands)do
-  wand_data[v.file] = v
-end
-]]
 
 function wand:GetSprite()
   local sprite_file, offset_x, offset_y, tip_x, tip_y = "", 0, 0, 0, 0
@@ -1098,7 +1091,6 @@ function wand:HideWorldStuff()
 		EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
   end
 end
-
 function wand:PutInPlayersInventory()
   local inventory_id = EntityGetWithName("inventory_quick")
   -- Get number of wands currently already in inventory
@@ -1148,20 +1140,36 @@ function wand:PickUp(entity)
   end
 
 end
-
 -- Turns the wand properties etc into a string
 -- Output string looks like:
 -- EZWv(version);shuffle[1|0];spellsPerCast;castDelay;rechargeTime;manaMax;mana;manaChargeSpeed;capacity;spread;speedMultiplier;
 -- SPELL_ONE,SPELL_TWO;ALWAYS_CAST_ONE,ALWAYS_CAST_TWO;sprite.png;offset_x;offset_y;tip_x;tip_y
-function wand:Serialize(include_mana, include_offsets)
-  include_mana = include_mana or false
-  include_offsets = include_offsets or false
+function wand:Serialize(wand_disarray, decay_chance)
+  if(wand_disarray == nil) then wand_disarray = true end
+  if(decay_chance == nil) then decay_chance = 0 end
   local spells_string = ""
   local always_casts_string = ""
   local spells, always_casts = self:GetSpells()
   local slots = {}
+  local extra_spells = {}
+
+  local x, y = EntityGetTransform(self.entity_id)
+
   for i, spell in ipairs(spells) do
-    slots[spell.inventory_x+1] = spell
+    SetRandomSeed(GameGetFrameNum() * (self.entity_id * 10) * ((i + 1) * 100), (x + y * self.entity_id) * ((i + 1) * 100))
+    if(Random(0, 100) <= decay_chance)then
+      goto continue
+    end
+    if(wand_disarray)then
+      if(Random(0, 100) >= 50)then
+        slots[spell.inventory_x+1] = spell
+      else
+        table.insert(extra_spells, spell.action_id)
+      end
+    else
+      slots[spell.inventory_x+1] = spell
+    end
+    ::continue::
   end
   for i=1, self.capacity do
     spells_string = spells_string .. (i == 1 and "" or ",") .. (slots[i] and slots[i].action_id or "")
@@ -1194,15 +1202,15 @@ function wand:Serialize(include_mana, include_offsets)
     self.castDelay,
     self.rechargeTime,
     self.manaMax,
-    include_mana and self.mana or self.manaMax,
+    self.manaMax,
     self.manaChargeSpeed,
     self.capacity,
     self.spread,
     self.speedMultiplier,
-    spells_string == "" and "-" or spells_string,
+    spells_string == ""  and "-" or spells_string,
     always_casts_string == "" and "-" or always_casts_string,
-    sprite_image_file, include_offsets and offset_x or 0, include_offsets and offset_y or 0, include_offsets and tip_x or 0, include_offsets and tip_y or 0
-  )
+    sprite_image_file, offset_x, offset_y, tip_x, tip_y
+  ), extra_spells
 
 end
 
@@ -1225,7 +1233,6 @@ function wand:RenderTooltip(origin_x, origin_y, gui_)
     error(error_msg, 2)
   end
 end
-
 local function get_all_wands()
   local wands = {}
 	local player = EntityGetWithTag("player_unit")

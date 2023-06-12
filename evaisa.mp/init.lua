@@ -125,7 +125,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.444	
+MP_VERSION = 1.445	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -909,7 +909,68 @@ function OnWorldInitialized()
 	ModTextFileSetContent = set_content
 end
 
+local fix_falsely_enabled_gamemodes = function()
+	print("Fixing falsely enabled gamemodes")
+	local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
+	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
+		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
+
+	local things = {}
+
+	for k, v in ipairs(ModGetActiveModIDs()) do
+		things[v] = true
+	end
+
+	local file, err = io.open(save_folder, 'rb')
+	if file then
+		
+		local content = file:read("*all")
+
+		local parsedModData = nxml.parse(content)
+		for elem in parsedModData:each_child() do
+			if (elem.name == "Mod") then
+				local modID = elem.attr.name
+				local steamID = elem.attr.workshop_item_id
+
+				if (things[modID]) then
+					local infoFile = "mods/" .. modID .. "/mod.xml"
+					if (steamID ~= "0") then
+						infoFile = "../../workshop/content/881100/" .. steamID .. "/mod.xml"
+					end
+
+					local file2, err = io.open(infoFile, 'rb')
+					if file2 then
+						local content2 = file2:read("*all")
+						local parsedModInfo = nxml.parse(content2)
+
+						local download_link = parsedModInfo.attr.download_link
+						local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+
+						if (elem.attr.enabled == "1" and is_game_mode) then
+							elem.attr.enabled = "0"
+							print("Disabling " .. modID)
+						end
+					end
+				end
+			end
+		end
+		file:close()
+
+
+		local new_content = tostring(parsedModData)
+		
+		local file, err = io.open(save_folder, 'wb')
+		if file then
+			file:write(new_content)
+			file:close()
+		end
+		
+	end
+end
+
 function OnPlayerSpawned(player)
+
+	fix_falsely_enabled_gamemodes()
 	ModSettingRemove("lobby_data_store")
 	GameRemoveFlagRun("game_paused")
 	rand = rng.new(os.time()+GameGetFrameNum())
