@@ -92,6 +92,16 @@ steam_utils.doesLobbyExist = function(lobby_id, callback)
 end
 
 
+
+steam_utils.GetLobbyData = function(key)
+	local value = lobby_data_last_frame[key]
+	if (value == nil or value == "") then
+		return nil
+	end
+	return value
+end
+
+
 local data_store = dofile("mods/evaisa.mp/lib/data_store.lua")
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)

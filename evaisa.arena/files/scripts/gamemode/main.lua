@@ -329,12 +329,13 @@ ArenaMode = {
 
                 for i, perk in ipairs(sorted_perk_list)do
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
+                    local is_blacklisted = steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
                     GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
                     local visible, clicked, _, hovered = get_widget_info(gui)
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
+                            lobby_data_last_frame["perk_blacklist_"..perk.id] = is_blacklisted and "false" or "true"
                             steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, is_blacklisted and "false" or "true")
                             steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
                         end
@@ -367,26 +368,30 @@ ArenaMode = {
             button_text = "$arena_settings_spell_blacklist_name",
             draw = function(lobby, gui, new_id)
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
-                dofile("data/scripts/gun/gun_actions.lua")
+                dofile_once("data/scripts/gun/gun_actions.lua")
 
-                local sorted_spell_list = {}
+                sorted_spell_list = sorted_spell_list or nil
                 -- sort spell list by ui_name
-                for _, spell in pairs(actions)do
-                    table.insert(sorted_spell_list, spell)
+                if(sorted_spell_list == nil)then
+                    sorted_spell_list = {}
+                    for _, spell in pairs(actions)do
+                        table.insert(sorted_spell_list, spell)
+                    end
+
+                    table.sort(sorted_spell_list, function(a, b)
+                        return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
+                    end)
                 end
-
-                table.sort(sorted_spell_list, function(a, b)
-                    return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
-                end)
-
                 for i, spell in ipairs(sorted_spell_list)do
+                   
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
-                    --GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
-                    --local visible, clicked, _, hovered = get_widget_info(gui)
+                    local is_blacklisted = steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
+                    GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                    local visible, clicked, _, hovered = get_widget_info(gui)
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
+                            lobby_data_last_frame["spell_blacklist_"..spell.id] = is_blacklisted and "false" or "true"
                             steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, is_blacklisted and "false" or "true")
                             steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
                         end
@@ -406,6 +411,7 @@ ArenaMode = {
                     local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
                     GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
                     GuiLayoutEnd(gui)
+                    
                 end
 
                 GuiLayoutEnd(gui)
