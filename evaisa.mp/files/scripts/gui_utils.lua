@@ -11,13 +11,7 @@ function NewID(identifier, force)
 	end
 	return generated_id
 end]]
-string.bytes = function(str)
-	local bytes = 0
-	for i = 1, #str do
-		bytes = bytes + str:byte(i)
-	end
-	return bytes
-end
+
 
 id_pool = id_pool or {
 	default = 1000

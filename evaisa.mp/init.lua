@@ -19,6 +19,14 @@ local function load(modulename)
 	return errmsg
 end
 
+string.bytes = function(str)
+	local bytes = 0
+	for i = 1, #str do
+		bytes = bytes + str:byte(i)
+	end
+	return bytes
+end
+
 get_content = ModTextFileGetContent
 set_content = ModTextFileSetContent
 

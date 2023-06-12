@@ -57,14 +57,15 @@ local function TryUpdateData(lobby)
     dofile("data/scripts/perks/perk_list.lua")
     dofile("data/scripts/gun/gun_actions.lua")
     
-    content_hash = 0
+    
     if(sorted_spell_list == nil)then
+        content_hash = 0
         sorted_spell_list = {}
         sorted_spell_list_ids = {}
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
             table.insert(sorted_spell_list_ids, spell)
-            content_hash = content_hash + string.byte(spell.id)
+            content_hash = content_hash + string.bytes(spell.id)
         end
 
         table.sort(sorted_spell_list, function(a, b)
@@ -82,7 +83,7 @@ local function TryUpdateData(lobby)
         for _, perk in pairs(perk_list)do
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
-            content_hash = content_hash + string.byte(perk.id)
+            content_hash = content_hash + string.bytes(perk.id)
         end
 
         table.sort(sorted_perk_list, function(a, b)
