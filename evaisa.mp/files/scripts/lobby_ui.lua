@@ -954,7 +954,10 @@ local windows = {
 								if(lobby_menu.draw)then
 									lobby_menu.draw(lobby_code, menu_gui, function() return NewID(lobby_menu.id) end)
 								end
-							end, lobby_menu.close, lobby_menu.id)	
+							end, function() 
+								active_custom_menu = nil
+								lobby_menu.close() 
+							end, lobby_menu.id)	
 						end
 					end
 				end

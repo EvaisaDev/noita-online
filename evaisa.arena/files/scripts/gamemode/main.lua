@@ -44,6 +44,90 @@ end
 
 lobby_member_names = {}
 
+perk_blacklist_data = perk_blacklist_data or {}
+perk_blacklist_string = perk_blacklist_string or ""
+spell_blacklist_data = spell_blacklist_data or {}
+spell_blacklist_string = spell_blacklist_string or ""
+sorted_spell_list = sorted_spell_list or nil
+sorted_perk_list = sorted_perk_list or nil
+local function TryUpdateData()
+    dofile("data/scripts/perks/perk_list.lua")
+    dofile("data/scripts/gun/gun_actions.lua")
+
+    if(sorted_spell_list == nil)then
+        sorted_spell_list = {}
+        for _, spell in pairs(actions)do
+            table.insert(sorted_spell_list, spell)
+        end
+
+        table.sort(sorted_spell_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
+        end)
+    end
+
+    if(sorted_perk_list == nil)then
+        sorted_perk_list = {}
+        for _, perk in pairs(perk_list)do
+            table.insert(sorted_perk_list, perk)
+        end
+
+        table.sort(sorted_perk_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
+        end)
+    end
+
+    if(lobby_data_last_frame["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= lobby_data_last_frame["perk_blacklist_data"])then
+        -- split byte string into table
+        perk_blacklist_data = {}
+        for i = 1, #perk_blacklist_string do
+            local enabled = perk_blacklist_string:sub(i, i) == "1"
+            perk_blacklist_data[sorted_perk_list[i].id] = enabled
+        end
+    end
+
+    if(lobby_data_last_frame["spell_blacklist_data"] ~= nil and spell_blacklist_string ~= lobby_data_last_frame["spell_blacklist_data"])then
+        -- split byte string into table
+        spell_blacklist_data = {}
+        for i = 1, #spell_blacklist_string do
+            local enabled = spell_blacklist_string:sub(i, i) == "1"
+            spell_blacklist_data[sorted_spell_list[i].id] = enabled
+        end
+    end
+end
+
+local function SendLobbyData(lobby)
+
+    if(sorted_perk_list)then
+        local perk_blacklist_string_temp = ""
+        for _, perk in pairs(sorted_perk_list)do
+            if(perk_blacklist_data[perk.id] == nil)then
+                perk_blacklist_string_temp = perk_blacklist_string_temp .. "0"
+            else
+                perk_blacklist_string_temp = perk_blacklist_string_temp .. (perk_blacklist_data[perk.id] and "1" or "0")
+            end
+        end
+        print(perk_blacklist_string_temp)
+        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_data", perk_blacklist_string_temp)
+        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+    end
+
+    if(sorted_spell_list)then
+        local spell_blacklist_string_temp = ""
+        for _, spell in pairs(sorted_spell_list)do
+            if(spell_blacklist_data[spell.id] == nil)then
+                spell_blacklist_string_temp = spell_blacklist_string_temp .. "0"
+            else
+                spell_blacklist_string_temp = spell_blacklist_string_temp .. (spell_blacklist_data[spell.id] and "1" or "0")
+            end
+        end
+        print(spell_blacklist_string_temp)
+        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
+        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+    end
+        
+
+end
+
 
 np.SetGameModeDeterministic(true)
 
@@ -315,45 +399,44 @@ ArenaMode = {
             button_text = "$arena_settings_perk_blacklist_name",
             draw = function(lobby, gui, new_id)
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
-                dofile("data/scripts/perks/perk_list.lua")
-
-                local sorted_perk_list = {}
-                -- sort perk list by ui_name
-                for _, perk in pairs(perk_list)do
-                    table.insert(sorted_perk_list, perk)
-                end
-
-                table.sort(sorted_perk_list, function(a, b)
-                    return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
-                end)
                 
-                if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
-                    for i, perk in ipairs(sorted_perk_list)do
-                        lobby_data_last_frame["perk_blacklist_"..perk.id] = "true"
-                        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "true")
-                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
-                    end
-                end
+                TryUpdateData()
 
-                if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
-                    for i, perk in ipairs(sorted_perk_list)do
-                        lobby_data_last_frame["perk_blacklist_"..perk.id] = "false"
-                        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "false")
-                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                if(steamutils.IsOwner(lobby))then
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, perk in ipairs(sorted_perk_list)do
+                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = "true"
+                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "true")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            perk_blacklist_data[perk.id] = true
+                        end
+                        SendLobbyData(lobby)
+                    end
+
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        for i, perk in ipairs(sorted_perk_list)do
+                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = "false"
+                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "false")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            perk_blacklist_data[perk.id] = false
+                        end
+                        SendLobbyData(lobby)
                     end
                 end
 
                 for i, perk in ipairs(sorted_perk_list)do
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
+                    local is_blacklisted = perk_blacklist_data[perk.id]--steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
                     GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
                     local visible, clicked, _, hovered = get_widget_info(gui)
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
-                            lobby_data_last_frame["perk_blacklist_"..perk.id] = is_blacklisted and "false" or "true"
+                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = is_blacklisted and "false" or "true"
                             steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, is_blacklisted and "false" or "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            perk_blacklist_data[perk.id] = not is_blacklisted
+                            SendLobbyData(lobby)
                         end
                     end
                     if(visible and hovered)then
@@ -384,49 +467,45 @@ ArenaMode = {
             button_text = "$arena_settings_spell_blacklist_name",
             draw = function(lobby, gui, new_id)
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
-                dofile_once("data/scripts/gun/gun_actions.lua")
 
-                sorted_spell_list = sorted_spell_list or nil
-                -- sort spell list by ui_name
-                if(sorted_spell_list == nil)then
-                    sorted_spell_list = {}
-                    for _, spell in pairs(actions)do
-                        table.insert(sorted_spell_list, spell)
+                TryUpdateData()
+
+                if(steamutils.IsOwner(lobby))then
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, spell in ipairs(sorted_spell_list)do
+                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = "true"
+                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "true")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            spell_blacklist_data[spell.id] = true
+                        end
+                        SendLobbyData(lobby)
                     end
 
-                    table.sort(sorted_spell_list, function(a, b)
-                        return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
-                    end)
-                end
-
-                if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
-                    for i, spell in ipairs(sorted_spell_list)do
-                        lobby_data_last_frame["spell_blacklist_"..spell.id] = "true"
-                        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "true")
-                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
-                    end
-                end
-
-                if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
-                    for i, spell in ipairs(sorted_spell_list)do
-                        lobby_data_last_frame["spell_blacklist_"..spell.id] = "false"
-                        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "false")
-                        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        for i, spell in ipairs(sorted_spell_list)do
+                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = "false"
+                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "false")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            spell_blacklist_data[spell.id] = false
+                        end
+                        SendLobbyData(lobby)
                     end
                 end
 
                 for i, spell in ipairs(sorted_spell_list)do
                    
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
+                    local is_blacklisted = spell_blacklist_data[spell.id] --steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
                     GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
                     local visible, clicked, _, hovered = get_widget_info(gui)
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
-                            lobby_data_last_frame["spell_blacklist_"..spell.id] = is_blacklisted and "false" or "true"
+                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = is_blacklisted and "false" or "true"
                             steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, is_blacklisted and "false" or "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
+                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+                            spell_blacklist_data[spell.id] = not is_blacklisted
+                            SendLobbyData(lobby)
                         end
                     end
                     if(visible and hovered)then
@@ -484,11 +563,13 @@ ArenaMode = {
     refresh = function(lobby)
         print("refreshing arena settings")
 
+        TryUpdateData()
+
         dofile("data/scripts/perks/perk_list.lua")
         dofile("data/scripts/gun/gun_actions.lua")
 
         for i, perk in ipairs(perk_list)do
-            local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
+            local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
             if(is_blacklisted)then
                 GameAddFlagRun("perk_blacklist_"..perk.id)
             else
@@ -497,7 +578,7 @@ ArenaMode = {
         end
 
         for _, spell in pairs(actions)do
-            local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
+            local is_blacklisted = spell_blacklist_data[spell.id]--steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
             if(is_blacklisted)then
                 GameAddFlagRun("spell_blacklist_"..spell.id)
             else
