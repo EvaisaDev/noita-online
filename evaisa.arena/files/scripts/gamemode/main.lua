@@ -58,20 +58,15 @@ local function TryUpdateData()
 
     if(sorted_spell_list == nil)then
         sorted_spell_list = {}
+        sorted_spell_list_ids = {}
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
+            table.insert(sorted_spell_list_ids, spell)
         end
 
         table.sort(sorted_spell_list, function(a, b)
             return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
         end)
-    end
-
-    if(sorted_spell_list_ids == nil)then
-        sorted_spell_list_ids = {}
-        for _, spell in pairs(actions)do
-            table.insert(sorted_spell_list_ids, spell)
-        end
 
         table.sort(sorted_spell_list_ids, function(a, b)
             return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
@@ -80,20 +75,15 @@ local function TryUpdateData()
 
     if(sorted_perk_list == nil)then
         sorted_perk_list = {}
+        sorted_perk_list_ids = {}
         for _, perk in pairs(perk_list)do
             table.insert(sorted_perk_list, perk)
+            table.insert(sorted_perk_list_ids, perk)
         end
 
         table.sort(sorted_perk_list, function(a, b)
             return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
         end)
-    end
-
-    if(sorted_perk_list_ids == nil)then
-        sorted_perk_list_ids = {}
-        for _, perk in pairs(perk_list)do
-            table.insert(sorted_perk_list_ids, perk)
-        end
 
         table.sort(sorted_perk_list_ids, function(a, b)
             return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
