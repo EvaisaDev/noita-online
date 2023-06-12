@@ -429,6 +429,7 @@ ArenaMode = {
         },
     },
     lobby_menus = {
+
         {
             id = "perk_blacklist",
             name = "$arena_settings_perk_blacklist_name",
@@ -441,9 +442,7 @@ ArenaMode = {
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
-                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = "true"
-                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+  
                             perk_blacklist_data[perk.id] = true
                         end
                         SendLobbyData(lobby)
@@ -451,9 +450,7 @@ ArenaMode = {
 
                     if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
-                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = "false"
-                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, "false")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+ 
                             perk_blacklist_data[perk.id] = false
                         end
                         SendLobbyData(lobby)
@@ -468,9 +465,7 @@ ArenaMode = {
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
-                            --[[lobby_data_last_frame["perk_blacklist_"..perk.id] = is_blacklisted and "false" or "true"
-                            steam.matchmaking.setLobbyData(lobby, "perk_blacklist_"..perk.id, is_blacklisted and "false" or "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
+
                             perk_blacklist_data[perk.id] = not is_blacklisted
                             SendLobbyData(lobby)
                         end
@@ -509,9 +504,6 @@ ArenaMode = {
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
-                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = "true"
-                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
                             spell_blacklist_data[spell.id] = true
                         end
                         SendLobbyData(lobby)
@@ -519,9 +511,6 @@ ArenaMode = {
 
                     if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
-                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = "false"
-                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, "false")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
                             spell_blacklist_data[spell.id] = false
                         end
                         SendLobbyData(lobby)
@@ -537,9 +526,6 @@ ArenaMode = {
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
-                            --[[lobby_data_last_frame["spell_blacklist_"..spell.id] = is_blacklisted and "false" or "true"
-                            steam.matchmaking.setLobbyData(lobby, "spell_blacklist_"..spell.id, is_blacklisted and "false" or "true")
-                            steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")]]
                             spell_blacklist_data[spell.id] = not is_blacklisted
                             SendLobbyData(lobby)
                         end
@@ -639,6 +625,7 @@ ArenaMode = {
 				}, -6000)
             end
         end
+  
 
         dofile("data/scripts/perks/perk_list.lua")
         dofile("data/scripts/gun/gun_actions.lua")

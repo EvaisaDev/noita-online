@@ -373,6 +373,8 @@ local windows = {
 					offset = current_button_height - relative_offset
 				end
 
+				GuiLayoutEnd(menu_gui)
+
 				GuiLayoutBeginVertical(menu_gui, 0, offset, true, 0, 0)
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
@@ -521,7 +523,7 @@ local windows = {
 	
 					GuiLayoutEnd(menu_gui)
 
-					GuiLayoutEnd(menu_gui)
+					--GuiLayoutEnd(menu_gui)
 					GuiText(menu_gui, 0, -6, " ")
 				end
 	
