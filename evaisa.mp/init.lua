@@ -698,6 +698,7 @@ function OnWorldPostUpdate()
 			end
 		end
 	end
+	GameRemoveFlagRun("chat_bind_disabled")
 	lobby_data_updated_this_frame = {}
 end
 

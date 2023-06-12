@@ -884,6 +884,13 @@ local windows = {
 						GuiLayoutBeginHorizontal(menu_gui, 0, 0)
 						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_preset_name"))
 						preset_name = GuiTextInput(menu_gui, NewID("save_preset_name"), 0, 0, preset_name, 90, 15, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ ")
+						local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+
+						if(hover)then
+							GameAddFlagRun("chat_bind_disabled")
+						end
+
+						
 						GuiLayoutEnd(menu_gui)
 
 						if(GuiButton(menu_gui, NewID("save_preset"), 0, 0, GameTextGetTranslatedOrNot("$mp_save_preset")))then
@@ -981,7 +988,7 @@ local windows = {
 									return (y > window_y and y < window_y + window_height), clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height
 								end
 								if(lobby_menu.draw)then
-									lobby_menu.draw(lobby_code, menu_gui, function() return NewID(lobby_menu.id) end)
+									lobby_menu.draw(lobby_code, menu_gui, function(id, force) return NewID(id or lobby_menu.id, force) end)
 								end
 							end, function() 
 								active_custom_menu = nil
@@ -1042,6 +1049,10 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
 					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
+					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+					if(hover)then
+						GameAddFlagRun("chat_bind_disabled")
+					end
 					if(lobby_name_value ~= edit_lobby_name and owner == steam.user.getSteamID())then
 						edit_lobby_name = lobby_name_value
 					end
@@ -1058,6 +1069,10 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 4, GameTextGetTranslatedOrNot("$mp_world_seed")..": ")
 					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 120, 10, "1234567890")
+					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+					if(hover)then
+						GameAddFlagRun("chat_bind_disabled")
+					end
 					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam.user.getSteamID())then
 						edit_lobby_seed = edit_lobby_seed_value
 					end

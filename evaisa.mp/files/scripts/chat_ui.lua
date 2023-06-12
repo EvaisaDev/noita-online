@@ -90,7 +90,7 @@ if (lobby_code ~= nil) then
 		hit_enter = true
 	end
 
-	if (input:WasKeyPressed("t")) then
+	if (input:WasKeyPressed("t") and not GameHasFlagRun("chat_bind_disabled")) then
 		if (chat_open == false) then
 			chat_open = true
 			chat_opened_with_bind = true

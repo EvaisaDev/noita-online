@@ -452,7 +452,15 @@ ArenaMode = {
                 
                 TryUpdateData(lobby)
 
-                perk_search_content = GuiTextInput(gui, new_id(), 0, 0, perk_search_content or "", 140, 20)
+                local id = new_id("perk_search_input")
+
+                perk_search_content = GuiTextInput(gui, id, 0, 0, perk_search_content or "", 140, 20)
+
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
 
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
@@ -519,8 +527,15 @@ ArenaMode = {
 
                 TryUpdateData(lobby)
 
-                spell_search_content = GuiTextInput(gui, new_id(), 0, 0, spell_search_content or "", 140, 20)
+                local id = new_id("spell_search_input")
 
+                spell_search_content = GuiTextInput(gui, id, 0, 0, spell_search_content or "", 140, 20)
+                
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
 
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
