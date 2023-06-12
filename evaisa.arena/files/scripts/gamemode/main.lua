@@ -382,8 +382,8 @@ ArenaMode = {
                 for i, spell in ipairs(sorted_spell_list)do
                     GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
                     local is_blacklisted = steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
-                    GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
-                    local visible, clicked, _, hovered = get_widget_info(gui)
+                    --GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                    --local visible, clicked, _, hovered = get_widget_info(gui)
 
                     if(visible and clicked)then
                         if(steamutils.IsOwner(lobby))then
