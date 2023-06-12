@@ -292,7 +292,7 @@ local windows = {
 				current_button_height = current_button_height + text_height
 				local button_x_position = window_width - text_width
 				GuiLayoutBeginVertical(menu_gui, button_x_position, 0, true, 0, 0)
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, lobby_presets_button_text))then
+				if(GuiButton(menu_gui, NewID("lobby_presets_button"), 0, 0, lobby_presets_button_text))then
 					lobby_presets_open = not lobby_presets_open
 					active_custom_menu = nil
 					invite_menu_open = false
@@ -308,7 +308,7 @@ local windows = {
 							local text_width, text_height = GuiGetTextDimensions(menu_gui, button_text)
 							local button_x_position = window_width - text_width
 							current_button_height = current_button_height + text_height
-							if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, button_text))then
+							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), 0, 0, button_text))then
 								if(active_custom_menu == lobby_menu.id)then
 									active_custom_menu = nil
 								else
@@ -328,7 +328,7 @@ local windows = {
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
 
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_leave_lobby")))then
+				if(GuiButton(menu_gui, NewID("lobby_leave_button"), 0, 0, GameTextGetTranslatedOrNot("$mp_leave_lobby")))then
 					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 					if(active_mode)then
 						active_mode.leave(lobby_code)
@@ -348,29 +348,27 @@ local windows = {
 
 
 				local invite_translation = GameTextGetTranslatedOrNot("$mp_invite_players")
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, invite_menu_open and "< "..invite_translation or "> "..invite_translation))then
+				if(GuiButton(menu_gui, NewID("lobby_invite_button"), 0, 0, invite_menu_open and "< "..invite_translation or "> "..invite_translation))then
 					invite_menu_open = not invite_menu_open
 					lobby_settings_open = false
 				end
 
 				local lobby_settings_translation = GameTextGetTranslatedOrNot("$mp_lobby_settings")
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, lobby_settings_open and "< "..lobby_settings_translation or "> "..lobby_settings_translation))then
+				if(GuiButton(menu_gui, NewID("lobby_settings_button"), 0, 0, lobby_settings_open and "< "..lobby_settings_translation or "> "..lobby_settings_translation))then
 					lobby_settings_open = not lobby_settings_open
 					invite_menu_open = false
 				end
 
-				local _, _, _, position_x, position_y = GuiGetPreviousWidgetInfo(menu_gui)
-
-				position_y = position_y + text_height
-
 				-- calculate relative offset from window_y
-				local relative_offset = math.abs(position_y - window_y)
+				local relative_offset = 33
 
 				--GamePrint("relative_offset: "..tostring(relative_offset).."; current_button_height: "..tostring(current_button_height))
 
 				local offset = 0
 				if(current_button_height > relative_offset)then
-					offset = current_button_height - relative_offset
+					offset = current_button_height
+				else
+					offset = relative_offset
 				end
 
 				GuiLayoutEnd(menu_gui)
@@ -380,7 +378,7 @@ local windows = {
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steamutils.IsSpectator(lobby_code)
 				if(active_mode and active_mode.spectate ~= nil and active_mode.disable_spectator_system ~= true)then
-					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
+					if(GuiButton(menu_gui, NewID("lobby_spectate_button"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
 						else
@@ -400,7 +398,7 @@ local windows = {
 						start_string = GameTextGetTranslatedOrNot("$mp_restart_game")
 					end
 
-					if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, start_string ))then
+					if(GuiButton(menu_gui, NewID("lobby_start_button"), 0, 0, start_string ))then
 						gui_closed = not gui_closed
 						invite_menu_open = false
 						if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
@@ -418,7 +416,7 @@ local windows = {
 
 				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 				if(lobby_in_progress and not in_game)then
-					if GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
+					if GuiButton(menu_gui, NewID("lobby_enter_button"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
 						
 						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
@@ -460,29 +458,29 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 	
 					if(v.id ~= steam.user.getSteamID() and owner == steam.user.getSteamID())then
-						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
+						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_kick_notification"))
 						end
-						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_ban")))then
+						if(GuiButton(menu_gui, NewID("lobby_player"), 0, 0, GameTextGetTranslatedOrNot("$mp_ban")))then
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
 							steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 							banned_members[tostring(v.id)] = true
 						end
-						if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_owner")))then
+						if(GuiButton(menu_gui, NewID("lobby_player"), 0, 0, GameTextGetTranslatedOrNot("$mp_owner")))then
 							steam.matchmaking.setLobbyOwner(lobby_code, v.id)
 							banned_members = {}
 						end
 					end
 					
 					if(v.id == owner)then
-						GuiImage(menu_gui, NewID("Lobby"), 2, -3, "mods/evaisa.mp/files/gfx/ui/crown.png", 1, 1, 1, 0)
+						GuiImage(menu_gui, NewID("lobby_player"), 2, -3, "mods/evaisa.mp/files/gfx/ui/crown.png", 1, 1, 1, 0)
 						--selected_player
 						if(selected_player == v.id)then
 							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, 1 )
 						else
 							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
 						end
-						if(GuiButton(menu_gui, NewID("Lobby"), -5, 0, tostring(v.name)))then
+						if(GuiButton(menu_gui, NewID("lobby_player"), -5, 0, tostring(v.name)))then
 							lobby_presets_open = false
 							active_custom_menu = nil
 							if(selected_player == v.id)then
@@ -498,7 +496,7 @@ local windows = {
 							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
 						end
 
-						if(GuiButton(menu_gui, NewID("Lobby"), 2, 0, tostring(v.name)))then
+						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, tostring(v.name)))then
 							lobby_presets_open = false
 							active_custom_menu = nil
 							if(selected_player == v.id)then

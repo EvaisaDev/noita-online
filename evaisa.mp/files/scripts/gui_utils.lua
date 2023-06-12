@@ -1,4 +1,5 @@
 dofile_once("data/scripts/lib/utilities.lua")
+--[[
 local generated_id = 1000
 function NewID(identifier, force)
 	generated_id = generated_id + 1
@@ -9,9 +10,28 @@ function NewID(identifier, force)
 		end
 	end
 	return generated_id
+end]]
+local id_pool = {
+	default = 1000
+}
+function NewID(identifier, force)
+	if(identifier == nil)then
+		identifier = "default"
+	end
+	if(id_pool[identifier] == nil)then
+		id_pool[identifier] = 1000
+	end
+	id_pool[identifier] = id_pool[identifier] + 1
+	if(force)then
+		id_pool[identifier] = 1000
+	end
+	return id_pool[identifier]
 end
+
 function ResetID()
-	generated_id = 1000
+	id_pool = {
+		default = 1000
+	}
 end
 
 local old_window_stack = {}

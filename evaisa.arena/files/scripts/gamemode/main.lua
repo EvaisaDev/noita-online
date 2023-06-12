@@ -53,7 +53,7 @@ sorted_spell_list = sorted_spell_list or nil
 sorted_spell_list_ids = sorted_spell_list_ids or nil
 sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
-local function TryUpdateData()
+local function TryUpdateData(lobby)
     dofile("data/scripts/perks/perk_list.lua")
     dofile("data/scripts/gun/gun_actions.lua")
     
@@ -94,6 +94,12 @@ local function TryUpdateData()
         end)
     end
 
+
+    if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not stemautils.IsOwner(lobby))then
+        print("version mismatch!")
+        return
+    end
+
     if(lobby_data_last_frame["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= lobby_data_last_frame["perk_blacklist_data"])then
         print("Updating perk blacklist data")
         -- split byte string into table
@@ -123,6 +129,7 @@ local function TryUpdateData()
             end
         end
     end
+    
 end
 
 local function SendLobbyData(lobby)
@@ -437,7 +444,7 @@ ArenaMode = {
             draw = function(lobby, gui, new_id)
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
                 
-                TryUpdateData()
+                TryUpdateData(lobby)
 
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
@@ -499,7 +506,7 @@ ArenaMode = {
             draw = function(lobby, gui, new_id)
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
 
-                TryUpdateData()
+                TryUpdateData(lobby)
 
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
@@ -601,7 +608,7 @@ ArenaMode = {
         print("refreshing arena settings")
         GamePrint("refreshing arena settings")
 
-        TryUpdateData()
+        TryUpdateData(lobby)
 
         if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash"))then
             if(steamutils.IsOwner(lobby))then
