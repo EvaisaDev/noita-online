@@ -46,6 +46,7 @@ lobby_member_names = {}
 
 perk_blacklist_data = perk_blacklist_data or {}
 perk_blacklist_string = perk_blacklist_string or ""
+content_hash = content_hash or 0
 spell_blacklist_data = spell_blacklist_data or {}
 spell_blacklist_string = spell_blacklist_string or ""
 sorted_spell_list = sorted_spell_list or nil
@@ -55,13 +56,15 @@ sorted_perk_list_ids = sorted_perk_list_ids or nil
 local function TryUpdateData()
     dofile("data/scripts/perks/perk_list.lua")
     dofile("data/scripts/gun/gun_actions.lua")
-
+    
+    content_hash = 0
     if(sorted_spell_list == nil)then
         sorted_spell_list = {}
         sorted_spell_list_ids = {}
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
             table.insert(sorted_spell_list_ids, spell)
+            content_hash = content_hash + string.byte(spell.id)
         end
 
         table.sort(sorted_spell_list, function(a, b)
@@ -79,6 +82,7 @@ local function TryUpdateData()
         for _, perk in pairs(perk_list)do
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
+            content_hash = content_hash + string.byte(perk.id)
         end
 
         table.sort(sorted_perk_list, function(a, b)
@@ -91,20 +95,32 @@ local function TryUpdateData()
     end
 
     if(lobby_data_last_frame["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= lobby_data_last_frame["perk_blacklist_data"])then
+        print("Updating perk blacklist data")
         -- split byte string into table
         perk_blacklist_data = {}
+        perk_blacklist_string = lobby_data_last_frame["perk_blacklist_data"]
         for i = 1, #perk_blacklist_string do
             local enabled = perk_blacklist_string:sub(i, i) == "1"
-            perk_blacklist_data[sorted_perk_list_ids[i].id] = enabled
+            if(enabled)then
+                perk_blacklist_data[sorted_perk_list_ids[i].id] = enabled
+            else
+                perk_blacklist_data[sorted_perk_list_ids[i].id] = nil
+            end
         end
     end
 
     if(lobby_data_last_frame["spell_blacklist_data"] ~= nil and spell_blacklist_string ~= lobby_data_last_frame["spell_blacklist_data"])then
+        print("Updating spell blacklist data")
         -- split byte string into table
         spell_blacklist_data = {}
+        spell_blacklist_string = lobby_data_last_frame["spell_blacklist_data"]
         for i = 1, #spell_blacklist_string do
             local enabled = spell_blacklist_string:sub(i, i) == "1"
-            spell_blacklist_data[sorted_spell_list_ids[i].id] = enabled
+            if(enabled)then
+                spell_blacklist_data[sorted_spell_list_ids[i].id] = enabled
+            else
+                spell_blacklist_data[sorted_spell_list_ids[i].id] = nil
+            end
         end
     end
 end
@@ -120,7 +136,7 @@ local function SendLobbyData(lobby)
                 perk_blacklist_string_temp = perk_blacklist_string_temp .. (perk_blacklist_data[perk.id] and "1" or "0")
             end
         end
-        print(perk_blacklist_string_temp)
+        --print(perk_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "perk_blacklist_data", perk_blacklist_string_temp)
         steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
     end
@@ -134,7 +150,7 @@ local function SendLobbyData(lobby)
                 spell_blacklist_string_temp = spell_blacklist_string_temp .. (spell_blacklist_data[spell.id] and "1" or "0")
             end
         end
-        print(spell_blacklist_string_temp)
+        --print(spell_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
         steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
     end
@@ -149,27 +165,33 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 0.54,
+    version_display = function(version_string)
+        return version_string .. " - " .. tostring(content_hash)
+    end,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = true,
     enable_presets = true,
     default_presets = {
         ["Wand Locked"] = {
-            ["zone_speed"] = 30,
-            ["shop_start_level"] = 0,
-            ["shop_random_ratio"] = 50,
-            ["shop_type"] = "spell_only",
-            ["shop_jump"] = 1,
-            ["zone_step_interval"] = 30,
-            ["upgrades_catchup"] = "losers",
-            ["damage_cap"] = "0.25",
-            ["shop_scaling"] = 2,
-            ["zone_shrink"] = "static",
-            ["shop_wand_chance"] = 40,
-            ["max_shop_level"] = 5,
-            ["shop_price_multiplier"] = 0,
-            ["perk_catchup"] = "losers",
-            ["upgrades_system"] = true,
+            ["version"] = 2,
+            ["settings"] = {
+                ["zone_speed"] = 30,
+                ["shop_start_level"] = 0,
+                ["shop_random_ratio"] = 50,
+                ["shop_type"] = "spell_only",
+                ["shop_jump"] = 1,
+                ["zone_step_interval"] = 30,
+                ["upgrades_catchup"] = "losers",
+                ["damage_cap"] = "0.25",
+                ["shop_scaling"] = 2,
+                ["zone_shrink"] = "static",
+                ["shop_wand_chance"] = 40,
+                ["max_shop_level"] = 5,
+                ["shop_price_multiplier"] = 0,
+                ["perk_catchup"] = "losers",
+                ["upgrades_system"] = true,         
+            }
         }
     }, 
     settings = {
@@ -574,10 +596,49 @@ ArenaMode = {
         holyMountainCount = "0",
         ready_players = "null",
     },
+    save_preset = function(lobby, preset_data)
+        preset_data.perk_blacklist_data = perk_blacklist_data
+        preset_data.spell_blacklist_data = spell_blacklist_data
+        return preset_data
+    end,
+    load_preset = function(lobby, preset_data)
+        perk_blacklist_data = preset_data.perk_blacklist_data or {}
+        spell_blacklist_data = preset_data.spell_blacklist_data or {}
+
+        --print(json.stringify(perk_blacklist_data))
+
+        if(steamutils.IsOwner(lobby))then
+            SendLobbyData(lobby)
+        end
+    end,
     refresh = function(lobby)
         print("refreshing arena settings")
+        GamePrint("refreshing arena settings")
 
         TryUpdateData()
+
+        if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash"))then
+            if(steamutils.IsOwner(lobby))then
+                print("content hash mismatch, updating")
+                steam.matchmaking.setLobbyData(lobby, "content_hash", content_hash)
+            else
+                content_hash_popup_active = content_hash_popup_active or false
+                popup.create("content_mismatch", GameTextGetTranslatedOrNot("$arena_content_mismatch_name"),{
+					{
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
+				}, {
+					{
+						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+						callback = function()
+                            content_hash_popup_active = false
+						end
+					}
+				}, -6000)
+            end
+        end
 
         dofile("data/scripts/perks/perk_list.lua")
         dofile("data/scripts/gun/gun_actions.lua")
@@ -782,6 +843,7 @@ ArenaMode = {
         upgrade_translation_values_file:write(upgrade_translation_values)
         upgrade_translation_values_file:close()
 
+        ArenaMode.refresh(lobby)
 
         --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"

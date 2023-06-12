@@ -60,6 +60,7 @@ function disconnect(data)
 	if (active_mode) then
 		active_mode.leave(data.lobbyID)
 	end
+	delay.reset()
 	gui_closed = false
 	gamemode_settings = {}
 	steam.matchmaking.leaveLobby(data.lobbyID)

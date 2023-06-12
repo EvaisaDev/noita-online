@@ -414,7 +414,7 @@ function OnWorldPreUpdate()
 			
 			if(not laa_enabled)then
 				laa_check_busy = true
-				popup.create("update_message", GameTextGetTranslatedOrNot("$mp_laa_message"), {
+				popup.create("laa_message", GameTextGetTranslatedOrNot("$mp_laa_message"), {
 					GameTextGetTranslatedOrNot("$mp_laa_description"),
 					{
 						text = GameTextGetTranslatedOrNot("$mp_laa_warning"),
@@ -454,7 +454,7 @@ function OnWorldPreUpdate()
 				if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
 					connection_popup_open = true
 					connection_popup_was_open_timer = 60 * 60 * 2
-					popup.create("update_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
+					popup.create("connection_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
 					GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
 						{
 							text = GameTextGetTranslatedOrNot("$mp_close_popup"),
@@ -512,6 +512,8 @@ function OnWorldPreUpdate()
 				if (lobby_gamemode == nil) then
 					return
 				end
+
+				delay.update()
 
 				if(Starting ~= nil)then
 					Starting = Starting - 1
@@ -807,7 +809,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					--game_in_progress = false
-					
+					print("Refreshing lobby data in 30 frames")
 					delay.new(30, function()
 						for k, setting in ipairs(lobby_gamemode.settings or {}) do
 							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
@@ -974,6 +976,7 @@ function OnPlayerSpawned(player)
 	ModSettingRemove("lobby_data_store")
 	GameRemoveFlagRun("game_paused")
 	rand = rng.new(os.time()+GameGetFrameNum())
+	delay.reset()
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

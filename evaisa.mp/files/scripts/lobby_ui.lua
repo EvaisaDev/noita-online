@@ -332,6 +332,7 @@ local windows = {
 					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 					if(active_mode)then
 						active_mode.leave(lobby_code)
+						delay.reset()
 					end
 					gui_closed = false
 					gamemode_settings = {}
@@ -789,11 +790,12 @@ local windows = {
 					presets = presets or {}
 					reserved_preset_names = reserved_preset_names or {}
 
+					local preset_version = 2
 					local function GenerateDefaultPreset()
 						local default_name = GameTextGetTranslatedOrNot("$mp_default_preset_name")
-						local preset_data = {}
+						local preset_data = {version = preset_version, settings = {}}
 						for k, v in ipairs(active_mode.settings)do
-							preset_data[v.id] = v.default
+							preset_data.settings[v.id] = v.default
 						end
 						reserved_preset_names[default_name] = true
 						table.insert(presets, 1, {name=default_name, data=preset_data})
@@ -845,7 +847,13 @@ local windows = {
 
 					local function SavePreset(name)
 						if(not reserved_preset_names[name])then
-							local settings_data = gamemode_settings
+
+							local settings_data = {version = preset_version, settings = gamemode_settings}
+
+							if(active_mode.save_preset)then
+								settings_data = active_mode.save_preset(lobby_code, settings_data)
+							end
+
 							local serialized_data = bitser.dumps(settings_data)
 							print(json.stringify(settings_data))
 							local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. ".mp_preset", "w")
@@ -890,6 +898,8 @@ local windows = {
 						end
 						if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
 							local table_string = "[\""..preset_name.."\"] = {\n"
+							table_string = table_string .. "\t[\"version\"] = "..tostring(preset_version)..",\n"
+							table_string = table_string .. "\t[\"settings\"] = {\n"
 							for k, v in pairs(gamemode_settings)do
 								local value = v
 								--print("["..type(v).."] "..tostring(v))
@@ -897,8 +907,9 @@ local windows = {
 								if(type(v) == "string")then
 									value = "\"" .. v .. "\""
 								end
-								table_string = table_string .. "\t[\"" .. k .. "\"] = " .. tostring(value) .. ",\n"
+								table_string = table_string .. "\t\t[\"" .. k .. "\"] = " .. tostring(value) .. ",\n"
 							end
+							table_string = table_string .. "\t},\n"
 							table_string = table_string .. "}"
 							steam.utils.setClipboard(table_string)
 							print("Copied preset table to clipboard")
@@ -917,8 +928,26 @@ local windows = {
 								RefreshPresets()
 							end
 							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, preset.name))then
-								gamemode_settings = preset.data
-								preset_name = preset.name
+								print(json.stringify(preset))
+								local preset_info = preset
+								if(preset.data.version == nil or preset.data.version == 1)then
+									preset_info = {
+										outdated = true,
+										name = preset.name,
+										data = {
+											version = preset.data.version or 1,
+											settings = preset.data
+										}
+									}
+								end
+
+								
+
+								if(active_mode.load_preset)then
+									active_mode.load_preset(lobby_code, preset_info.data)
+								end
+								gamemode_settings = preset_info.data.settings
+								preset_name = preset_info.name
 							end
 							GuiLayoutEnd(menu_gui)
 						end
@@ -1488,6 +1517,9 @@ if(not gui_closed)then
 		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		if(active_mode ~= nil)then
 			version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name).." "..tostring(active_mode.version)..(active_mode.version_flavor_text and " "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text) or "")
+			if(active_mode.version_display)then
+				version_string = active_mode.version_display(version_string)
+			end
 		end
 	end
 	local text_width, text_height = GuiGetTextDimensions(menu_gui, version_string)
