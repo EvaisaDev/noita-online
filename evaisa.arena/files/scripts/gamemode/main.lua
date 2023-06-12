@@ -53,6 +53,11 @@ sorted_spell_list = sorted_spell_list or nil
 sorted_spell_list_ids = sorted_spell_list_ids or nil
 sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
+
+local function ifind(s, pattern, init, plain)
+    return string.find(s:lower(), pattern:lower(), init, plain)
+end
+
 local function TryUpdateData(lobby)
     dofile("data/scripts/perks/perk_list.lua")
     dofile("data/scripts/gun/gun_actions.lua")
@@ -97,7 +102,7 @@ local function TryUpdateData(lobby)
 
 
     if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steamutils.IsOwner(lobby))then
-        print("version mismatch!")
+        print("content mismatch!")
         return
     end
 
@@ -447,6 +452,8 @@ ArenaMode = {
                 
                 TryUpdateData(lobby)
 
+                perk_search_content = GuiTextInput(gui, new_id(), 0, 0, perk_search_content or "", 140, 20)
+
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
@@ -464,35 +471,38 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
-
+                local iteration = 0
                 for i, perk in ipairs(sorted_perk_list)do
-                    GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = perk_blacklist_data[perk.id]--steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
-                    GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
-                    local visible, clicked, _, hovered = get_widget_info(gui)
+                    if(perk_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(perk.ui_name)), string.lower(perk_search_content), 1, true)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
+                        local is_blacklisted = perk_blacklist_data[perk.id]--steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
+                        GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
 
-                    if(visible and clicked)then
-                        if(steamutils.IsOwner(lobby))then
+                        if(visible and clicked)then
+                            if(steamutils.IsOwner(lobby))then
 
-                            perk_blacklist_data[perk.id] = not is_blacklisted
-                            SendLobbyData(lobby)
+                                perk_blacklist_data[perk.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
                         end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, perk.ui_icon)
+                        SetRandomSeed(iteration * 21, iteration * 245)
+                        local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                        local offset = 0
+                        if(is_blacklisted)then
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                            offset = 2
+                        end
+                        local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
+                        GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name)
+                        GuiLayoutEnd(gui)
                     end
-                    if(visible and hovered)then
-                        GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
-                    end
-                    local icon_width, icon_height = GuiGetImageDimensions(gui, perk.ui_icon)
-                    SetRandomSeed(i * 21, i * 245)
-                    local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
-                    local offset = 0
-                    if(is_blacklisted)then
-                        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
-                        GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
-                        offset = 2
-                    end
-                    local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
-                    GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name)
-                    GuiLayoutEnd(gui)
                 end
                 GuiLayoutEnd(gui)
             end,
@@ -509,6 +519,9 @@ ArenaMode = {
 
                 TryUpdateData(lobby)
 
+                spell_search_content = GuiTextInput(gui, new_id(), 0, 0, spell_search_content or "", 140, 20)
+
+
                 if(steamutils.IsOwner(lobby))then
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
@@ -524,37 +537,57 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
+                
+                --GuiIdPushString(gui, "spell_blacklist")
+
+                --[[local id = 21
+                local new_id = function()
+                    id = id + 1
+                    return id
+                end]]
+
+                local iteration = 0
 
                 for i, spell in ipairs(sorted_spell_list)do
-                   
-                    GuiLayoutBeginHorizontal(gui, 0, -((i - 1) * 2), true)
-                    local is_blacklisted = spell_blacklist_data[spell.id] --steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
-                    GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
-                    local visible, clicked, _, hovered = get_widget_info(gui)
-
-                    if(visible and clicked)then
-                        if(steamutils.IsOwner(lobby))then
-                            spell_blacklist_data[spell.id] = not is_blacklisted
-                            SendLobbyData(lobby)
-                        end
-                    end
-                    if(visible and hovered)then
-                        GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
-                    end
-                    local icon_width, icon_height = GuiGetImageDimensions(gui, spell.sprite)
-                    SetRandomSeed(i * 21, i * 245)
-                    local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
-                    local offset = 0
-                    if(is_blacklisted)then
-                        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
-                        GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
-                        offset = 2
-                    end
-                    local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
-                    GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
-                    GuiLayoutEnd(gui)
                     
+                    if(spell_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(spell.name)), string.lower(spell_search_content), 1, true)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
+                        local is_blacklisted = spell_blacklist_data[spell.id] --steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
+                        GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
+
+                        if(visible and clicked)then
+                            if(steamutils.IsOwner(lobby))then
+                                spell_blacklist_data[spell.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, spell.sprite)
+                        SetRandomSeed(iteration * 21, iteration * 245)
+                        local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                        local offset = 0
+                        if(is_blacklisted)then
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                            offset = 2
+                        end
+                        local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
+                        --GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), spell.name))then
+                            if(steamutils.IsOwner(lobby))then
+                                spell_blacklist_data[spell.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        GuiLayoutEnd(gui)
+                    end
                 end
+
+                --GuiIdPop(gui)
 
                 GuiLayoutEnd(gui)
             end,
@@ -607,7 +640,7 @@ ArenaMode = {
     end,
     refresh = function(lobby)
         print("refreshing arena settings")
-        GamePrint("refreshing arena settings")
+        --GamePrint("refreshing arena settings")
 
         TryUpdateData(lobby)
 
@@ -688,7 +721,7 @@ ArenaMode = {
 		if (shop_type == nil) then
 			shop_type = "random"
 		end
-        print("shop_type: " .. shop_type)
+        --print("shop_type: " .. shop_type)
 		GlobalsSetValue("shop_type", tostring(shop_type))
 
 		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")

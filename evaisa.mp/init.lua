@@ -817,7 +817,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			if handleGamemodeVersionCheck(lobby_code) then
 				if (lobby_gamemode) then
 					--game_in_progress = false
-					print("Refreshing lobby data in 30 frames")
+					--print("Refreshing lobby data in 30 frames")
 					delay.new(30, function()
 						for k, setting in ipairs(lobby_gamemode.settings or {}) do
 							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
