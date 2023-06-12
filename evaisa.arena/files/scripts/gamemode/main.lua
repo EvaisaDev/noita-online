@@ -49,7 +49,9 @@ perk_blacklist_string = perk_blacklist_string or ""
 spell_blacklist_data = spell_blacklist_data or {}
 spell_blacklist_string = spell_blacklist_string or ""
 sorted_spell_list = sorted_spell_list or nil
+sorted_spell_list_ids = sorted_spell_list_ids or nil
 sorted_perk_list = sorted_perk_list or nil
+sorted_perk_list_ids = sorted_perk_list_ids or nil
 local function TryUpdateData()
     dofile("data/scripts/perks/perk_list.lua")
     dofile("data/scripts/gun/gun_actions.lua")
@@ -65,6 +67,17 @@ local function TryUpdateData()
         end)
     end
 
+    if(sorted_spell_list_ids == nil)then
+        sorted_spell_list_ids = {}
+        for _, spell in pairs(actions)do
+            table.insert(sorted_spell_list_ids, spell)
+        end
+
+        table.sort(sorted_spell_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+    end
+
     if(sorted_perk_list == nil)then
         sorted_perk_list = {}
         for _, perk in pairs(perk_list)do
@@ -76,12 +89,23 @@ local function TryUpdateData()
         end)
     end
 
+    if(sorted_perk_list_ids == nil)then
+        sorted_perk_list_ids = {}
+        for _, perk in pairs(perk_list)do
+            table.insert(sorted_perk_list_ids, perk)
+        end
+
+        table.sort(sorted_perk_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+    end
+
     if(lobby_data_last_frame["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= lobby_data_last_frame["perk_blacklist_data"])then
         -- split byte string into table
         perk_blacklist_data = {}
         for i = 1, #perk_blacklist_string do
             local enabled = perk_blacklist_string:sub(i, i) == "1"
-            perk_blacklist_data[sorted_perk_list[i].id] = enabled
+            perk_blacklist_data[sorted_perk_list_ids[i].id] = enabled
         end
     end
 
@@ -90,16 +114,16 @@ local function TryUpdateData()
         spell_blacklist_data = {}
         for i = 1, #spell_blacklist_string do
             local enabled = spell_blacklist_string:sub(i, i) == "1"
-            spell_blacklist_data[sorted_spell_list[i].id] = enabled
+            spell_blacklist_data[sorted_spell_list_ids[i].id] = enabled
         end
     end
 end
 
 local function SendLobbyData(lobby)
 
-    if(sorted_perk_list)then
+    if(sorted_perk_list_ids)then
         local perk_blacklist_string_temp = ""
-        for _, perk in pairs(sorted_perk_list)do
+        for _, perk in pairs(sorted_perk_list_ids)do
             if(perk_blacklist_data[perk.id] == nil)then
                 perk_blacklist_string_temp = perk_blacklist_string_temp .. "0"
             else
@@ -111,9 +135,9 @@ local function SendLobbyData(lobby)
         steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
     end
 
-    if(sorted_spell_list)then
+    if(sorted_spell_list_ids)then
         local spell_blacklist_string_temp = ""
-        for _, spell in pairs(sorted_spell_list)do
+        for _, spell in pairs(sorted_spell_list_ids)do
             if(spell_blacklist_data[spell.id] == nil)then
                 spell_blacklist_string_temp = spell_blacklist_string_temp .. "0"
             else
