@@ -14,39 +14,43 @@ end
 local random = rng.new(random_seed)
 
 
+local generate_spell_list = function()
+    local spell_list = {}
 
-local spell_list = {}
-
-for _, v in ipairs(actions) do
-
-    if GameHasFlagRun("spell_blacklist_"..v.id) then
-        goto continue
+    for _, v in ipairs(actions) do
+    
+        if GameHasFlagRun("spell_blacklist_"..v.id) then
+            goto continue
+        end
+    
+    
+        local spawn_levels = {}
+        for spawn_level in string.gmatch(v.spawn_level or "", "([^,]+)") do
+            table.insert(spawn_levels, tonumber(spawn_level))
+        end
+    
+        local spawn_probabilities = {}
+        for spawn_probability in string.gmatch(v.spawn_probability or "", "([^,]+)") do
+            table.insert(spawn_probabilities, tonumber(spawn_probability))
+        end
+    
+        for k, level in ipairs(spawn_levels) do
+            local key = "level_" .. tostring(level)
+            spell_list[key] = spell_list[key] or {}
+    
+            table.insert(spell_list[key], {
+                id = v.id,
+                probability = spawn_probabilities[k],
+                type = v.type
+            })
+        end
+    
+        ::continue::
     end
 
-
-    local spawn_levels = {}
-    for spawn_level in string.gmatch(v.spawn_level or "", "([^,]+)") do
-        table.insert(spawn_levels, tonumber(spawn_level))
-    end
-
-    local spawn_probabilities = {}
-    for spawn_probability in string.gmatch(v.spawn_probability or "", "([^,]+)") do
-        table.insert(spawn_probabilities, tonumber(spawn_probability))
-    end
-
-    for k, level in ipairs(spawn_levels) do
-        local key = "level_" .. tostring(level)
-        spell_list[key] = spell_list[key] or {}
-
-        table.insert(spell_list[key], {
-            id = v.id,
-            probability = spawn_probabilities[k],
-            type = v.type
-        })
-    end
-
-    ::continue::
+    return spell_list
 end
+
 
 local get_new_seed = function()
     local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -67,6 +71,8 @@ function RandomAction(max_level)
             random_seed = seed
         end
     end
+
+    local spell_list = generate_spell_list()
 
     local available_actions = {}
 
@@ -104,6 +110,9 @@ function RandomActionWithType(max_level, action_type)
             random_seed = seed
         end
     end
+
+    local spell_list = generate_spell_list()
+
     local available_actions = {}
 
     for level = 0, max_level do

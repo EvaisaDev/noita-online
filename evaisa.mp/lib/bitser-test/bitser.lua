@@ -30,6 +30,7 @@ local buf = nil
 local buf_is_writable = true
 local writable_buf = nil
 local writable_buf_size = nil
+local corrupt = false
 local includeMetatables = true -- togglable with bitser.includeMetatables(false)
 local SEEN_LEN = {}
 
@@ -45,6 +46,7 @@ local function Buffer_clear()
 	buf_size = -1
 	buf = nil
 	buf_is_writable = true
+	corrupt = false
 	writable_buf = nil
 	writable_buf_size = nil
 end
@@ -52,6 +54,7 @@ end
 local function Buffer_makeBuffer(size)
 	if not buf_is_writable then
 		buf = writable_buf
+		corrupt = false
 		buf_size = writable_buf_size
 		writable_buf = nil
 		writable_buf_size = nil
@@ -72,6 +75,7 @@ local function Buffer_newDataReader(data, size)
 		writable_buf_size = buf_size
 	end
 	buf_is_writable = false
+	corrupt = false
 	buf_pos = 0
 	buf_size = size
 	buf = ffi.cast("uint8_t*", data)
@@ -109,19 +113,28 @@ end
 
 local function Buffer_ensure(numbytes)
 	if buf_pos + numbytes > buf_size then
-		error("malformed serialized data")
+		print("malformed serialized data")
+		corrupt = true
+		return false
 	end
+	return true
 end
 
 local function Buffer_read_byte()
-	Buffer_ensure(1)
+	if(not Buffer_ensure(1))then
+
+		return nil
+	end
+
 	local x = buf[buf_pos]
 	buf_pos = buf_pos + 1
 	return x
 end
 
 local function Buffer_read_string(len)
-	Buffer_ensure(len)
+	if(not Buffer_ensure(len))then
+		return nil
+	end
 	local x = ffi.string(buf + buf_pos, len)
 	buf_pos = buf_pos + len
 	return x
@@ -298,7 +311,16 @@ local function reserve_seen(seen)
 end
 
 local function deserialize_value(seen)
+	if(corrupt)then
+		return nil
+	end
+
 	local t = Buffer_read_byte()
+
+	if(t == nil)then
+		return nil
+	end
+
 	if t < 128 then
 		--small int
 		return t - 27
@@ -307,10 +329,18 @@ local function deserialize_value(seen)
 		return seen[t - 127]
 	elseif t < 224 then
 		--small string
-		return add_to_seen(Buffer_read_string(t - 192), seen)
+		local buffer_data = Buffer_read_string(t - 192)
+		if(buffer_data == nil)then
+			return nil
+		end
+		return add_to_seen(buffer_data, seen)
 	elseif t < 240 then
 		--small resource
-		return add_to_seen(resource_registry[Buffer_read_string(t - 224)], seen)
+		local buffer_data = Buffer_read_string(t - 224)
+		if(buffer_data == nil)then
+			return nil
+		end
+		return add_to_seen(resource_registry[buffer_data], seen)
 	elseif t == 240 or t == 253 then
 		--table
 		local v = add_to_seen({}, seen)
@@ -360,7 +390,11 @@ local function deserialize_value(seen)
 		return seen[deserialize_value(seen) + 1]
 	elseif t == 244 then
 		--long string
-		return add_to_seen(Buffer_read_string(deserialize_value(seen)), seen)
+		local buffer_data = Buffer_read_string(deserialize_value(seen))
+		if(buffer_data == nil)then
+			return nil
+		end
+		return add_to_seen(buffer_data, seen)
 	elseif t == 245 then
 		--long int
 		return Buffer_read_data("int32_t[1]", 4)[0]

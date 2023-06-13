@@ -37,7 +37,7 @@ table.insert(package.loaders, 2, load)
 logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
---debug_log = logger.init("debugging.log")
+debug_log = logger.init("debugging.log")
 
 ------ TRANSLATIONS -------
 
@@ -46,6 +46,7 @@ dofile("mods/evaisa.mp/lib/translations.lua")
 register_localizations("mods/evaisa.mp/translations.csv", 2)
 
 ---------------------------
+
 
 
 local function readWord(file)
@@ -133,7 +134,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.45	
+MP_VERSION = 1.451	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -201,6 +202,13 @@ np.InstallShootProjectileFiredCallbacks()
 np.EnableGameSimulatePausing(false)
 np.InstallDamageDetailsPatch()
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
+--[[np.EnableExtendedLogging(true)
+np.EnableLogFiltering(true)
+
+function FilterLog(source, function_name, line, ...)
+	debug_log:print(source .. " " .. function_name .. " " .. line .. " " .. table.concat({...}, " "))
+	return false
+end]]
 
 --GameSDK = require("game_sdk")
 

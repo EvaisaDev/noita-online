@@ -826,16 +826,20 @@ local windows = {
 
 							-- if filename ends in .mp_preset
 							if(filename:sub(-10) == ".mp_preset")then
-								local preset = {}
+								local preset_data = {}
 								local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
 								if(file ~= nil)then
 									local data = file:read("*all")
 									file:close()
-									preset_data = bitser.loads(data)
-									if(preset ~= nil)then
-										-- remove extension
-										filename = filename:gsub(".mp_preset", "")
+									filename = filename:gsub(".mp_preset", "")
+									local valid, preset_data = pcall(bitser.loads, data)
+									if(valid and preset_data ~= nil)then
 										table.insert(presets, {name = filename, data = preset_data})
+									else
+										table.insert(presets, {name = filename,	corrupt = true, data = {
+											version = preset_version,
+											settings = {}
+										}})
 									end
 								end
 							end
@@ -934,7 +938,7 @@ local windows = {
 								RemovePreset(preset.name)
 								RefreshPresets()
 							end
-							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, preset.name))then
+							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "")) .. preset.name)then
 								print(json.stringify(preset))
 								local preset_info = preset
 								if(preset.data.version == nil or preset.data.version == 1)then

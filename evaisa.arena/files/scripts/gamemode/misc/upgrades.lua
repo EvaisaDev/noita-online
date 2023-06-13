@@ -55,7 +55,7 @@ end
 
 upgrades = {
     -- increase max mana all wands
-    {
+    --[[{
 		id = "MAX_MANA_ALL",
 		ui_name = "$arena_upgrades_max_mana_all_name",
 		ui_description = "$arena_upgrades_max_mana_all_description",
@@ -340,7 +340,7 @@ upgrades = {
                 end
             end
         end,
-    },
+    },]]
     -- add always cast all wands
     {
         id = "ADD_ALWAYS_CAST_ALL",
@@ -361,13 +361,25 @@ upgrades = {
             
                 SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), wand + y + GameGetFrameNum() )
 
-                local good_cards = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
-
-       
-                local card = good_cards[ Random( 1, #good_cards ) ]
+                dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
+                GetRandomActionWithType = function( x, y, level, type, i)
+                    --print("Custom get action called!")
+                    return RandomActionWithType( level, type ) or "LIGHT_BULLET"
+                end
     
+                local good_cards = {}
+                local good_cards_init = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
+                
+                for k, v in ipairs(good_cards_init)do
+                    if(not GameHasFlagRun("spell_blacklist_"..v))then
+                        table.insert(good_cards, v)
+                    end
+                end
+                
                 local r = Random( 1, 100 )
                 local level = 6
+    
+                local card = good_cards[ Random( 1, #good_cards ) ] or RandomAction(level)
     
                 if( r <= 50 ) then
                     local p = Random(1,100)
@@ -406,7 +418,7 @@ upgrades = {
         end,
     },
     -- unshuffle all wands
-    {
+    --[[{
         id = "UNSHUFFLE_ALL",
         ui_name = "$arena_upgrades_unshuffle_all_name",
         ui_description = "$arena_upgrades_unshuffle_all_description",
@@ -703,13 +715,25 @@ upgrades = {
 
             if(wand ~= nil)then
 
-                local good_cards = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
-
-       
-                local card = good_cards[ random.range( 1, #good_cards ) ]
+                dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
+                GetRandomActionWithType = function( x, y, level, type, i)
+                    --print("Custom get action called!")
+                    return RandomActionWithType( level, type ) or "LIGHT_BULLET"
+                end
     
-                local r = random.range( 1, 100 )
+                local good_cards = {}
+                local good_cards_init = { "DAMAGE", "CRITICAL_HIT", "HOMING", "SPEED", "ACID_TRAIL", "SINEWAVE" }
+                
+                for k, v in ipairs(good_cards_init)do
+                    if(not GameHasFlagRun("spell_blacklist_"..v))then
+                        table.insert(good_cards, v)
+                    end
+                end
+                
+                local r = Random( 1, 100 )
                 local level = 6
+    
+                local card = good_cards[ Random( 1, #good_cards ) ] or RandomAction(level)
     
                 if( r <= 50 ) then
                     local p = random.range(1,100)
@@ -827,5 +851,5 @@ upgrades = {
             end
 
         end,
-    }
+    }]]
 }

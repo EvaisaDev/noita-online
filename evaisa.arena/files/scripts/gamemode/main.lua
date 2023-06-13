@@ -182,7 +182,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.54,
+    version = 0.542,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -529,7 +529,7 @@ ArenaMode = {
                         local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name))then
                             if(steamutils.IsOwner(lobby))then
-                                spell_blacklist_data[spell.id] = not is_blacklisted
+                                perk_blacklist_data[perk.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
                         end
