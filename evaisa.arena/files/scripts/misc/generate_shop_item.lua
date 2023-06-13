@@ -5,7 +5,13 @@ dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
-	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	if(GameHasFlagRun("shop_sync"))then
+		local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
+		SetRandomSeed( (x * 325) + local_seed, (y * 453) + local_seed)
+	else
+		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	end
+	
 
 
 	local biomes =
@@ -184,7 +190,12 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
 	-- this makes the shop items deterministic
-	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	if(GameHasFlagRun("shop_sync"))then
+		local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
+		SetRandomSeed( (x * 325) + local_seed, (y * 453) + local_seed)
+	else
+		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	end
 
 	local biomes =
 	{

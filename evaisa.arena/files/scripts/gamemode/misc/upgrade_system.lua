@@ -23,7 +23,14 @@ local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 local upgrade_system = {
     create = function(option_count, callback)
 
-        local random = rng.new(os.time() + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()) / 2)
+        local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+        local random_seed = os.time() + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()) / 2
+        if(GameHasFlagRun("card_sync"))then
+            random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+        end
+
+
+        local random = rng.new(random_seed)
 
         local function getRandomWeightedChoice(upgrades)
             local totalWeight = 0

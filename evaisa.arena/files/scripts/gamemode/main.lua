@@ -47,6 +47,7 @@ lobby_member_names = {}
 perk_blacklist_data = perk_blacklist_data or {}
 perk_blacklist_string = perk_blacklist_string or ""
 content_hash = content_hash or 0
+content_string = content_string or ""
 spell_blacklist_data = spell_blacklist_data or {}
 spell_blacklist_string = spell_blacklist_string or ""
 sorted_spell_list = sorted_spell_list or nil
@@ -71,6 +72,7 @@ local function TryUpdateData(lobby)
             table.insert(sorted_spell_list, spell)
             table.insert(sorted_spell_list_ids, spell)
             content_hash = content_hash + string.bytes(spell.id)
+            content_string = content_string .. spell.id .. "\n"
         end
 
         table.sort(sorted_spell_list, function(a, b)
@@ -89,6 +91,7 @@ local function TryUpdateData(lobby)
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
             content_hash = content_hash + string.bytes(perk.id)
+            content_string = content_string .. perk.id .. "\n"
         end
 
         table.sort(sorted_perk_list, function(a, b)
@@ -100,6 +103,8 @@ local function TryUpdateData(lobby)
         end)
     end
 
+
+    GlobalsSetValue("content_string", tostring(content_string))
 
     if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steamutils.IsOwner(lobby))then
         print("content mismatch!")
@@ -249,6 +254,13 @@ ArenaMode = {
             options = { { "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
             default = "losers"
         },
+        {
+            id = "perk_sync",
+            name = "$arena_settings_perk_sync_name",
+            description = "$arena_settings_perk_sync_description",
+            type = "bool",
+            default = false
+        },  
 		{
 			id = "shop_type",
 			name = "$arena_settings_shop_type_name",
@@ -258,6 +270,13 @@ ArenaMode = {
 				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" } },
 			default = "random"
 		},
+        {
+            id = "shop_sync",
+            name = "$arena_settings_shop_sync_name",
+            description = "$arena_settings_shop_sync_description",
+            type = "bool",
+            default = false
+        },  
 		{
 			id = "shop_wand_chance",
             require = function(setting_self)
@@ -508,7 +527,16 @@ ArenaMode = {
                             offset = 2
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
-                        GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name)
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name))then
+                            if(steamutils.IsOwner(lobby))then
+                                spell_blacklist_data[spell.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
+                        end
                         GuiLayoutEnd(gui)
                     end
                 end
@@ -530,7 +558,7 @@ ArenaMode = {
                 local id = new_id("spell_search_input")
 
                 spell_search_content = GuiTextInput(gui, id, 0, 0, spell_search_content or "", 140, 20)
-                
+
                 local _, _, hover = GuiGetPreviousWidgetInfo(gui)
 
                 if(hover)then
@@ -597,6 +625,10 @@ ArenaMode = {
                                 spell_blacklist_data[spell.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
+                        end
+                        local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
                         end
                         GuiLayoutEnd(gui)
                     end
@@ -732,12 +764,33 @@ ArenaMode = {
         end
         GlobalsSetValue("perk_catchup", tostring(perk_catchup))
 
+        local perk_sync = steam.matchmaking.getLobbyData(lobby, "setting_perk_sync")
+        if (perk_sync == nil) then
+            perk_sync = "false"
+        end
+        if(perk_sync == "true")then
+            GameAddFlagRun("perk_sync")
+        else
+            GameRemoveFlagRun("perk_sync")
+        end
+        
+
 		local shop_type = steam.matchmaking.getLobbyData(lobby, "setting_shop_type")
 		if (shop_type == nil) then
 			shop_type = "random"
 		end
         --print("shop_type: " .. shop_type)
 		GlobalsSetValue("shop_type", tostring(shop_type))
+
+        local shop_sync = steam.matchmaking.getLobbyData(lobby, "setting_shop_sync")
+        if (shop_sync == nil) then
+            shop_sync = "false"
+        end
+        if(shop_sync == "true")then
+            GameAddFlagRun("shop_sync")
+        else
+            GameRemoveFlagRun("shop_sync")
+        end
 
 		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")
 		if (shop_wand_chance == nil) then
@@ -960,6 +1013,7 @@ ArenaMode = {
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
         SetWorldSeed(seed)
+        GlobalsSetValue("world_seed", tostring(seed))
 
         local player_entity = player.Get()
 

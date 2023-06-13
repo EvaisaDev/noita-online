@@ -12,29 +12,40 @@ function NewID(identifier, force)
 	return generated_id
 end]]
 
+local start_values = {}
+local reserved_id_space = 3000
+local next_start_value = reserved_id_space
 
-id_pool = id_pool or {
-	default = 1000
-}
-function NewID(identifier, force, start_point)
-	if(identifier == nil)then
-		identifier = "default"
-	end
-	if(id_pool[identifier] == nil)then
-		id_pool[identifier] = 1000 + (string.bytes(identifier) * 214) + (start_point or 0)
-	end
-	id_pool[identifier] = id_pool[identifier] + 1
-	if(force)then
-		id_pool[identifier] = 1000 + (string.bytes(identifier) * 214) + (start_point or 0)
-	end
-	--print(identifier .. tostring(id_pool[identifier]))
-	return id_pool[identifier]
+local function get_start_value(identifier)
+    if not start_values[identifier] then
+        start_values[identifier] = next_start_value
+        next_start_value = next_start_value + reserved_id_space
+    end
+
+    return start_values[identifier]
+end
+
+local id_pool = {}
+
+function NewID(identifier, force)
+    identifier = identifier or "default"
+    
+    if not id_pool[identifier] then
+        id_pool[identifier] = start_values[identifier] or get_start_value(identifier)
+    end
+    
+    id_pool[identifier] = id_pool[identifier] + 1
+    
+    if force then
+        id_pool[identifier] = start_values[identifier] or get_start_value(identifier)
+    end
+    
+    return id_pool[identifier]
 end
 
 function ResetIDs()
-	id_pool = {
-		default = 1000
-	}
+    id_count = 1
+    id_pool = {}
 end
 
 local old_window_stack = {}

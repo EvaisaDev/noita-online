@@ -5,7 +5,13 @@ local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
 local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
-local random = rng.new((GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f) / 2)
+local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+local random_seed = (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f) / 2
+if(GameHasFlagRun("shop_sync"))then
+    random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+end
+
+local random = rng.new(random_seed)
 
 
 
@@ -42,7 +48,26 @@ for _, v in ipairs(actions) do
     ::continue::
 end
 
+local get_new_seed = function()
+    local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+    local a, b, c, d, e, f = GameGetDateAndTimeLocal()
+    local seed = (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f) / 2
+    if(GameHasFlagRun("shop_sync"))then
+        seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+    end
+    return seed
+end
+
+
 function RandomAction(max_level)
+    if(GameHasFlagRun("shop_sync"))then
+        local seed = get_new_seed()
+        if(seed ~= random_seed)then
+            random = rng.new(seed)
+            random_seed = seed
+        end
+    end
+
     local available_actions = {}
 
     for level = 0, max_level do
@@ -72,6 +97,13 @@ end
 
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
 function RandomActionWithType(max_level, action_type)
+    if(GameHasFlagRun("shop_sync"))then
+        local seed = get_new_seed()
+        if(seed ~= random_seed)then
+            random = rng.new(seed)
+            random_seed = seed
+        end
+    end
     local available_actions = {}
 
     for level = 0, max_level do

@@ -62,14 +62,17 @@ function spawn_all_shopitems( x, y )
 	
 	print("random_seed = "..tostring(random_seed))
 	
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	if(GameHasFlagRun("shop_sync"))then
+		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+	end
+
 	local random = rng.new(random_seed)
 
 	--[[local spawn_shop, spawn_perks = temple_random( x, y )
 	if( spawn_shop == "0" ) then
 		return
 	end]]
-
-	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0"))
 
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
@@ -99,8 +102,12 @@ function spawn_all_shopitems( x, y )
 	print("Generated shop items for mountain #"..tostring(rounds))
 
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
-	SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
-
+	if(GameHasFlagRun("shop_sync"))then
+		local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
+		SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
+	else
+		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	end
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count
@@ -208,8 +215,13 @@ end
 function spawn_all_perks( x, y )
 	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
 		a, b, c, d, e, f = GameGetDateAndTimeLocal()
-		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
-	
+		local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+		if(GameHasFlagRun("shop_sync"))then
+			local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
+			SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
+		else
+			SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+		end
 		perk_spawn_many( x, y )
 	end
 end
