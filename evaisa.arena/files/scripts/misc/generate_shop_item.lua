@@ -71,7 +71,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	end
 	
 
-	item = RandomAction(level)--GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
+	item = RandomAction(level, x, y)--GetRandomAction( x + math.random(-10000, 10000), y + math.random(-10000, 10000), level, 0 )
 
 	if item == nil then
 		return
@@ -111,6 +111,11 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	-- SetRandomSeed( x, y )
 	
 	local offsetx = 6
+
+	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
+
+	cardcost = math.floor( cardcost * shop_price_multiplier )
+
 	local text = tostring(cardcost)
 	local textwidth = 0
 	
@@ -124,9 +129,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 		end
 	end
 	
-	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
 
-	cardcost = math.floor( cardcost * shop_price_multiplier )
 
 	offsetx = textwidth * 0.5 - 0.5
 	if( GlobalsGetValue("no_shop_cost") == "false")then
@@ -141,7 +144,7 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 			update_transform_rotation="0",
 			text=tostring(cardcost),
 			z_index="-1",
-		} )
+		} )	
 
 		local stealable_value = "0"
 		if( is_stealable ) then 
@@ -254,7 +257,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	local item = "data/entities/items/"
 
-	local r = math.random(0,100)
+	local r = Random(0,100)
 	if( r <= 50 ) then 
 		if(biomeid < 10)then
 			item = item .. "wand_level_0"
@@ -274,7 +277,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	
 	-- Note( Petri ): Testing how much squaring the biomeid for prices affects things
 	biomeid = (0.5 * biomeid) + ( 0.5 * biomeid * biomeid )
-	local wandcost = ( 50 + biomeid * 210 ) + ( math.random( -15, 15 ) * 10 )
+	local wandcost = ( 50 + biomeid * 210 ) + ( Random( -15, 15 ) * 10 )
 
 	if( cheap_item ) then
 		wandcost = 0.5 * wandcost
@@ -285,6 +288,11 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	end
 	
 	local offsetx = 6
+
+	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
+
+	wandcost = math.floor( wandcost * shop_price_multiplier )
+
 	local text = tostring(wandcost)
 	local textwidth = 0
 	
@@ -298,9 +306,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 		end
 	end
 
-	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
 
-	wandcost = math.floor( wandcost * shop_price_multiplier )
 	
 	offsetx = textwidth * 0.5 - 0.5
 

@@ -68,6 +68,7 @@
     <LuaComponent script_death="mods/evaisa.arena/files/entities/dummy_target/respawn_dummy.lua"/>
 	<LuaComponent
 		script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/dummy_damage.lua"
+		script_damage_received="mods/evaisa.arena/files/scripts/gamemode/misc/dummy_damage.lua"
 	>
 	</LuaComponent>
 

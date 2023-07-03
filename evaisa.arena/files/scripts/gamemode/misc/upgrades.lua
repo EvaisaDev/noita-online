@@ -55,7 +55,7 @@ end
 
 upgrades = {
     -- increase max mana all wands
-    --[[{
+    {
 		id = "MAX_MANA_ALL",
 		ui_name = "$arena_upgrades_max_mana_all_name",
 		ui_description = "$arena_upgrades_max_mana_all_description",
@@ -340,7 +340,7 @@ upgrades = {
                 end
             end
         end,
-    },]]
+    },
     -- add always cast all wands
     {
         id = "ADD_ALWAYS_CAST_ALL",
@@ -418,7 +418,7 @@ upgrades = {
         end,
     },
     -- unshuffle all wands
-    --[[{
+    {
         id = "UNSHUFFLE_ALL",
         ui_name = "$arena_upgrades_unshuffle_all_name",
         ui_description = "$arena_upgrades_unshuffle_all_description",
@@ -851,5 +851,5 @@ upgrades = {
             end
 
         end,
-    }]]
+    }
 }

@@ -291,6 +291,8 @@ ArenaGameplay = {
         GameRemoveFlagRun("arena_winner")
         GameRemoveFlagRun("arena_loser")
         GameRemoveFlagRun("arena_first_death")
+        GlobalsSetValue("smash_knockback", "1" )
+        GlobalsSetValue("smash_knockback_dummy", "1")
 
         if (steamutils.IsOwner(lobby)) then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
@@ -1008,16 +1010,19 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-
-        local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
-        if(catchup_mechanic == "everyone")then
-            GameAddFlagRun("first_death")
-        end
-        if(GlobalsGetValue("upgrades_system", "false") == "true")then
-            local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
-            if(catchup_mechanic_upgrades == "everyone")then
-                GameAddFlagRun("pick_upgrade")
+        if(not steamutils.IsSpectator(lobby))then
+            local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+            if(catchup_mechanic == "everyone")then
+                GameAddFlagRun("first_death")
             end
+            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                if(catchup_mechanic_upgrades == "everyone")then
+                    GameAddFlagRun("pick_upgrade")
+                end
+            end
+        else
+            print("Loading lobby as spectator")
         end
 
         ArenaGameplay.GracefulReset(lobby, data)
@@ -1030,6 +1035,8 @@ ArenaGameplay = {
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
         GameRemoveFlagRun("round_finished")
+        GlobalsSetValue("smash_knockback", "1" )
+        GlobalsSetValue("smash_knockback_dummy", "1")
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -1038,30 +1045,26 @@ ArenaGameplay = {
         np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
         np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
 
-        if (not first_entry) then
-            ArenaGameplay.SavePlayerData(lobby, data, true)
+        if(not steamutils.IsSpectator(lobby))then
+            if (not first_entry) then
+                ArenaGameplay.SavePlayerData(lobby, data, true)
+                ArenaGameplay.ClearWorld()
+            end
+
+            if (data.client.serialized_player) then
+                first_entry = false
+            end
+
+            player.Immortal(true)
+
+            RunWhenPlayerExists(function()
+                if (first_entry and player.Get()) then
+                    GameDestroyInventoryItems(player.Get())
+                end
+            end)
+        else
             ArenaGameplay.ClearWorld()
         end
-
-        if (data.client.serialized_player) then
-            first_entry = false
-        end
-
-        --[[
-        local current_player = player.Get()
-
-        if(current_player == nil)then
-            ArenaGameplay.LoadPlayer(lobby, data)
-        end
-        ]]
-
-        player.Immortal(true)
-
-        RunWhenPlayerExists(function()
-            if (first_entry and player.Get()) then
-                GameDestroyInventoryItems(player.Get())
-            end
-        end)
 
         -- clean other player's data
         ArenaGameplay.CleanMembers(lobby, data)
@@ -1075,8 +1078,9 @@ ArenaGameplay = {
         data.tweens = {}
 
         -- clean local data
-
-        ArenaGameplay.SetReady(lobby, data, false, true)
+        if(not steamutils.IsSpectator(lobby))then
+            ArenaGameplay.SetReady(lobby, data, false, true)
+        end
 
         data.client.alive = true
         data.client.previous_wand = nil
@@ -1090,39 +1094,42 @@ ArenaGameplay = {
         -- set state
         data.state = "lobby"
 
-        player.Immortal(true)
+        if(not steamutils.IsSpectator(lobby))then
+            player.Immortal(true)
 
-        RunWhenPlayerExists(function()
-            -- clean and unlock player entity
-            player.Clean(first_entry)
-            player.Unlock(data)
+            RunWhenPlayerExists(function()
+                -- clean and unlock player entity
+                player.Clean(first_entry)
+                player.Unlock(data)
 
-            GameRemoveFlagRun("player_is_unlocked")
+                GameRemoveFlagRun("player_is_unlocked")
 
-            -- move player to correct position
-            player.Move(0, 0)
-        end)
+                -- move player to correct position
+                player.Move(0, 0)
+            end)
 
+
+
+            if (data.client.player_loaded_from_data) then
+                if(GameHasFlagRun("picked_perk"))then
+                    GameAddFlagRun("skip_perks")
+                end
+                if(GameHasFlagRun("picked_health"))then
+                    GameAddFlagRun("skip_health")
+                end
+                ArenaGameplay.RemoveRound()
+            else
+                if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
+                    data.upgrade_system = upgrade_system.create(3, function(upgrade)
+                        data.upgrade_system = nil
+                    end)
+                end
+                GameRemoveFlagRun("picked_health")
+                GameRemoveFlagRun("picked_perk")
+            end
+        end
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds()
-
-        if (data.client.player_loaded_from_data) then
-            if(GameHasFlagRun("picked_perk"))then
-                GameAddFlagRun("skip_perks")
-            end
-            if(GameHasFlagRun("picked_health"))then
-                GameAddFlagRun("skip_health")
-            end
-            ArenaGameplay.RemoveRound()
-        else
-            if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
-                data.upgrade_system = upgrade_system.create(3, function(upgrade)
-                    data.upgrade_system = nil
-                end)
-            end
-            GameRemoveFlagRun("picked_health")
-            GameRemoveFlagRun("picked_perk")
-        end
 
         -- Give gold
         local rounds_limited = ArenaGameplay.GetRoundTier() --math.max(0, math.min(math.ceil(rounds / 2), 7))
@@ -1135,27 +1142,40 @@ ArenaGameplay = {
 
         --print("First spawn gold = "..tostring(data.client.first_spawn_gold))
 
-        arena_log:print("First entry = " .. tostring(first_entry))
+        if(not steamutils.IsSpectator(lobby))then
+            arena_log:print("First entry = " .. tostring(first_entry))
 
-        if (first_entry and data.client.first_spawn_gold > 0) then
-            extra_gold = data.client.first_spawn_gold
+            if (first_entry and data.client.first_spawn_gold > 0) then
+                extra_gold = data.client.first_spawn_gold
+            end
         end
 
         --GamePrint("You were granted " ..tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
 
-        arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
+        if(not steamutils.IsSpectator(lobby))then
+            arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
 
-        RunWhenPlayerExists(function()
-            if (not data.client.player_loaded_from_data) then
-                arena_log:print("Giving gold: " .. tostring(extra_gold))
-                player.GiveGold(extra_gold)
-            end
-        end)
+            RunWhenPlayerExists(function()
+                if (not data.client.player_loaded_from_data) then
+                    arena_log:print("Giving gold: " .. tostring(extra_gold))
+                    player.GiveGold(extra_gold)
+                end
+            end)
 
 
-        RunWhenPlayerExists(function()
-            -- if we are the owner of the lobby
+            RunWhenPlayerExists(function()
+                -- if we are the owner of the lobby
+                if (steamutils.IsOwner(lobby)) then
+                    -- get the gold count from the lobby
+                    local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
+                    -- add the new gold
+                    gold = gold + extra_gold
+                    -- set the new gold count
+                    steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+                end
+            end)
+        else
             if (steamutils.IsOwner(lobby)) then
                 -- get the gold count from the lobby
                 local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
@@ -1164,79 +1184,90 @@ ArenaGameplay = {
                 -- set the new gold count
                 steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
             end
-        end)
+        end
 
         -- increment holy mountain count
 
         ArenaGameplay.AddRound()
 
+        if(not steamutils.IsSpectator(lobby))then
+            RunWhenPlayerExists(function()
+                if(not first_entry)then
+                    local was_winner = GameHasFlagRun("arena_winner")
+                    local was_loser = GameHasFlagRun("arena_loser")
+                    local was_first_death = GameHasFlagRun("arena_first_death")
 
-        RunWhenPlayerExists(function()
-            if(not first_entry)then
-                local was_winner = GameHasFlagRun("arena_winner")
-                local was_loser = GameHasFlagRun("arena_loser")
-                local was_first_death = GameHasFlagRun("arena_first_death")
+                    local wand_removal = GlobalsGetValue("wand_removal", "disabled")
+                    local who_remove = GlobalsGetValue("wand_removal_who", "everyone")
 
-                local wand_removal = GlobalsGetValue("wand_removal", "disabled")
-                local who_remove = GlobalsGetValue("wand_removal_who", "everyone")
+                    local wand_removal_types = {
+                        random = function()
+                            local wands = EZWand.GetAllWands()
+                            if (wands == nil or #wands == 0) then
+                                return nil
+                            end
 
-                local wand_removal_types = {
-                    random = function()
-                        local wands = EZWand.GetAllWands()
-                        if (wands == nil or #wands == 0) then
-                            return nil
+                            local player_entity = player.Get()
+
+                            local wand = data.random.range(1, #wands)
+                            GameKillInventoryItem(player_entity, wands[wand].entity_id)
+                        end,
+                        all = function()
+                            local wands = EZWand.GetAllWands()
+                            if (wands == nil or #wands == 0) then
+                                return nil
+                            end
+                            local player_entity = player.Get()
+
+                            for _, wand in ipairs(wands) do
+                                GameKillInventoryItem(player_entity, wand.entity_id)
+                            end
+                        end,
+                    }
+
+                    if(wand_removal ~= "disabled")then
+                        if(who_remove == "everyone" or 
+                        (who_remove == "winner" and was_winner) or 
+                        (who_remove == "losers" and was_loser) or
+                        (who_remove == "first_death" and was_first_death))then
+                            wand_removal_types[wand_removal]()
                         end
-
-                        local player_entity = player.Get()
-
-                        local wand = data.random.range(1, #wands)
-                        GameKillInventoryItem(player_entity, wands[wand].entity_id)
-                    end,
-                    all = function()
-                        local wands = EZWand.GetAllWands()
-                        if (wands == nil or #wands == 0) then
-                            return nil
-                        end
-                        local player_entity = player.Get()
-
-                        for _, wand in ipairs(wands) do
-                            GameKillInventoryItem(player_entity, wand.entity_id)
-                        end
-                    end,
-                }
-
-                if(wand_removal ~= "disabled")then
-                    if(who_remove == "everyone" or 
-                    (who_remove == "winner" and was_winner) or 
-                    (who_remove == "losers" and was_loser) or
-                    (who_remove == "first_death" and was_first_death))then
-                        wand_removal_types[wand_removal]()
                     end
                 end
-            end
-            
-            -- give starting gear if first entry
-            if (first_entry) then
-                player.GiveStartingGear()
-                if (((rounds - 1) > 0)) then
-                    player.GiveMaxHealth(0.4 * (rounds - 1))
+                
+                -- give starting gear if first entry
+                if (first_entry) then
+                    player.GiveStartingGear()
+                    if (((rounds - 1) > 0)) then
+                        player.GiveMaxHealth(0.4 * (rounds - 1))
+                    end
                 end
-            end
 
-            GameAddFlagRun("can_save_player")
+                GameAddFlagRun("can_save_player")
 
-            networking.send.request_perk_update(lobby)
-        end)
+                networking.send.request_perk_update(lobby)
+            end)
 
+        else
+            data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
+            np.RegisterPlayerEntityId(data.spectator_entity)
+        end
         --message_handler.send.Unready(lobby, true)
+        if(not steamutils.IsSpectator(lobby))then
+            -- load map
+            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
 
-        -- load map
-        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+            -- show message
+            
+            if (show_message) then
+                GamePrintImportant("$arena_holymountain_enter", "$arena_holymountain_enter_sub")
+            end
+        else
+            -- load map
+            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
             "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
-
-        -- show message
-        if (show_message) then
-            GamePrintImportant("$arena_holymountain_enter", "$arena_holymountain_enter_sub")
+            GameSetCameraFree(true)
         end
 
 
@@ -1251,9 +1282,11 @@ ArenaGameplay = {
         --print(json.stringify(data))
     end,
     LoadArena = function(lobby, data, show_message)
-        ArenaGameplay.SavePlayerData(lobby, data, true)
+        if(not steamutils.IsSpectator(lobby))then
+            ArenaGameplay.SavePlayerData(lobby, data, true)
 
-        GameRemoveFlagRun("can_save_player")
+            GameRemoveFlagRun("can_save_player")
+        end
 
         show_message = show_message or false
 
@@ -1298,7 +1331,9 @@ ArenaGameplay = {
         end
 
         --message_handler.send.SendPerks(lobby)
-        networking.send.perk_update(lobby, data)
+        if(not steamutils.IsSpectator(lobby))then
+            networking.send.perk_update(lobby, data)
+        end
 
         ArenaGameplay.PreventFiring()
 
@@ -1309,18 +1344,20 @@ ArenaGameplay = {
 
         BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
 
-        RunWhenPlayerExists(function()
-            player.Lock()
+        if(not steamutils.IsSpectator(lobby))then
+            RunWhenPlayerExists(function()
+                player.Lock()
 
-            -- move player to correct position
-            data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
+                -- move player to correct position
+                data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
 
-            ArenaGameplay.LoadClientPlayers(lobby, data)
+                ArenaGameplay.LoadClientPlayers(lobby, data)
 
-            --GamePrint("Loading arena")
+                --GamePrint("Loading arena")
 
-            GameAddFlagRun("can_save_player")
-        end)
+                GameAddFlagRun("can_save_player")
+            end)
+        end
     end,
     ReadyCheck = function(lobby, data)
         --print("Players ready: "..tostring(ArenaGameplay.ReadyAmount(data, lobby)))
@@ -1382,9 +1419,11 @@ ArenaGameplay = {
     end,
     RunReadyCheck = function(lobby, data)
         if (steamutils.IsOwner(lobby)) then
+            --print("we are owner!")
             -- check if all players are ready
             if (ArenaGameplay.ReadyCheck(lobby, data)) then
                 if(ArenaLoadCountdown == nil)then
+                    print("all players ready!")
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
                     ArenaLoadCountdown = GameGetFrameNum() + 62
@@ -1403,11 +1442,11 @@ ArenaGameplay = {
 
                 -- still ready? start game.
                 if (ArenaGameplay.ReadyCheck(lobby, data)) then
-                    if(steamutils.IsSpectator(lobby))then
+                    --[[if(steamutils.IsSpectator(lobby))then
                         spectator_handler.LoadArena(lobby, data, true)
-                    else
+                    else]]
                         ArenaGameplay.LoadArena(lobby, data, true)
-                    end
+                    --end
 
                     --message_handler.send.EnterArena(lobby)
                     networking.send.enter_arena(lobby)

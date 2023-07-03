@@ -182,13 +182,13 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.542,
+    version = 0.545,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
-    disable_spectator_system = true,
+    disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
     default_presets = {
         ["Wand Locked"] = {
@@ -459,6 +459,13 @@ ArenaMode = {
             options = {{ "everyone", "$arena_settings_reward_enum_everyone" }, { "winner", "$arena_settings_reward_enum_winner" }, { "losers", "$arena_settings_reward_enum_losers" }, { "first_death", "$arena_settings_reward_enum_first_death" }},
             default = "everyone"
         },
+        {
+            id = "smash_mode",
+            name = "$arena_settings_smash_mode_name",
+            description = "$arena_settings_smash_mode_description",
+            type = "bool",
+            default = false
+        }, 
     },
     lobby_menus = {
 
@@ -895,6 +902,16 @@ ArenaMode = {
         end
         GlobalsSetValue("wand_removal_who", tostring(wand_removal_who))
 
+        local smash_mode = steam.matchmaking.getLobbyData(lobby, "setting_smash_mode")
+        if (smash_mode == nil) then
+            smash_mode = "false"
+        end
+        if(smash_mode == "true")then
+            GameAddFlagRun("smash_mode")
+        else
+            GameRemoveFlagRun("smash_mode")
+        end
+
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
@@ -1098,7 +1115,7 @@ ArenaMode = {
         end
 
         gameplay_handler.GetGameData(lobby, data)
-        spectator_handler.LoadLobby(lobby, data, true, true)
+        gameplay_handler.LoadLobby(lobby, data, true, true)
 
         if (playermenu ~= nil) then
             playermenu:Destroy()

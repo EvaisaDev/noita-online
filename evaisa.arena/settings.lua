@@ -25,6 +25,13 @@ mod_settings =
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
+            {
+                id = "spectator_unstable",
+                ui_name = "Enable Spectator System",
+                ui_description = "Enable unfinished spectator system.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
         },
     },
 }

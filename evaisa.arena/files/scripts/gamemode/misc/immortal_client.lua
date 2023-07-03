@@ -3,6 +3,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     
     -- check if would kill
 
+
     if(entity_thats_responsible == nil or entity_thats_responsible == 0 )then
         local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
         if damageModelComponent ~= nil then
@@ -17,3 +18,4 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     return damage, 0
 end
+

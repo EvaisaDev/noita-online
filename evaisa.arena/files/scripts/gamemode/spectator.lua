@@ -486,7 +486,7 @@ SpectatorMode = {
             GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
-                SpectatorMode.LoadLobby(lobby, data, false)
+                gameplay_handler.LoadLobby(lobby, data, false)
             end, function(frames)
                 if (frames % 60 == 0) then
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
@@ -499,7 +499,7 @@ SpectatorMode = {
             GameAddFlagRun("round_finished")
 
             delay.new(5 * 60, function()
-                SpectatorMode.LoadLobby(lobby, data, false)
+                gameplay_handler.LoadLobby(lobby, data, false)
             end, function(frames)
                 if (frames % 60 == 0) then
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))

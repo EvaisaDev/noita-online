@@ -938,7 +938,7 @@ local windows = {
 								RemovePreset(preset.name)
 								RefreshPresets()
 							end
-							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "")) .. preset.name)then
+							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
 								print(json.stringify(preset))
 								local preset_info = preset
 								if(preset.data.version == nil or preset.data.version == 1)then
@@ -1018,7 +1018,7 @@ local windows = {
 				local true_max = 32
 	
 				local default_max_players = 8
-	
+
 				edit_lobby_max_players = steam.user.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
 
 				edit_lobby_name = owner == steam.user.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
@@ -1028,10 +1028,14 @@ local windows = {
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 	
+
+					local settings_changed = false
+
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type]))then
 						edit_lobby_type = edit_lobby_type + 1
 						if(edit_lobby_type > #lobby_types and owner == steam.user.getSteamID())then
 							edit_lobby_type = 1
+							settings_changed = true
 						end
 					end
 	
@@ -1052,6 +1056,7 @@ local windows = {
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
+					name_change_frame = name_change_frame or nil
 					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 					if(hover)then
@@ -1059,19 +1064,39 @@ local windows = {
 					end
 					if(lobby_name_value ~= edit_lobby_name and owner == steam.user.getSteamID())then
 						edit_lobby_name = lobby_name_value
+						name_change_frame = GameGetFrameNum()
 					end
+
+					if(name_change_frame and GameGetFrameNum() - name_change_frame > 30)then
+						settings_changed = true
+						name_change_frame = nil
+					end
+
 					GuiLayoutEnd(menu_gui)
 					
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot("$mp_max_players")..": ")
+
+					max_player_change_frame = max_player_change_frame or nil
+
 					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
 					if(slider_value ~= edit_lobby_max_players and owner == steam.user.getSteamID())then
 						edit_lobby_max_players = slider_value
+						max_player_change_frame = GameGetFrameNum()
 					end
+
+					if(max_player_change_frame and GameGetFrameNum() - max_player_change_frame > 30)then
+						settings_changed = true
+						max_player_change_frame = nil
+					end
+
 					GuiLayoutEnd(menu_gui)
 
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 4, GameTextGetTranslatedOrNot("$mp_world_seed")..": ")
+					
+					seed_change_frame = seed_change_frame or nil
+					
 					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 120, 10, "1234567890")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 					if(hover)then
@@ -1079,7 +1104,14 @@ local windows = {
 					end
 					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam.user.getSteamID())then
 						edit_lobby_seed = edit_lobby_seed_value
+						seed_change_frame = GameGetFrameNum()
 					end
+
+					if(seed_change_frame and GameGetFrameNum() - seed_change_frame > 30)then
+						settings_changed = true
+						seed_change_frame = nil
+					end
+
 					GuiLayoutEnd(menu_gui)
 
 					local previous_type = "text_input"
@@ -1092,6 +1124,7 @@ local windows = {
 
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
+							--settings_changed = true
 							--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
 						else
 							if(setting.type == "bool" and type(gamemode_settings[setting.id]) == "string")then
@@ -1140,6 +1173,7 @@ local windows = {
 										selected_index = 1
 									end
 									gamemode_settings[setting.id] = setting.options[selected_index][1]
+									settings_changed = true
 									--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
@@ -1156,9 +1190,8 @@ local windows = {
 
 								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 									gamemode_settings[setting.id] = not gamemode_settings[setting.id]
-
+									settings_changed = true
 									--print(tostring(gamemode_settings[setting.id]))
-
 									--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
 								end
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
@@ -1192,15 +1225,30 @@ local windows = {
 								GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 1, 1)
 								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, offset, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", container_size)
 								slider_value = setting.modifier(slider_value)
-								--local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(menu_gui)
+								local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
 								-- take setting.formatting_string, replace $0 with slider_value, take display multiplier into account
 								GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
 								local value_text = string.gsub(setting.formatting_string, "$0", tostring(setting.display_fractions and (slider_value * setting.display_multiplier) or math.floor(slider_value * setting.display_multiplier)))
 								GuiText(menu_gui, 0, 0, value_text)
 								GuiLayoutEnd(menu_gui)
-								if(slider_value ~= gamemode_settings[setting.id])then
+
+								was_slider_changed = was_slider_changed or {}
+
+								if(tostring(slider_value) ~= tostring(gamemode_settings[setting.id]))then
+		
 									gamemode_settings[setting.id] = slider_value
+									was_slider_changed[setting.id] = GameGetFrameNum()
 								end
+
+								if(was_slider_changed[setting.id] and (GameGetFrameNum() - was_slider_changed[setting.id]) > 30)then
+								
+									settings_changed = true
+									was_slider_changed[setting.id] = nil
+	
+									--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+								end
+			
+
 								GuiLayoutEnd(menu_gui)
 
 								previous_type = "slider"
@@ -1208,9 +1256,9 @@ local windows = {
 						end
 					end
 
-					GuiText(menu_gui, 2, 6, "--------------------")
+					--GuiText(menu_gui, 2, 6, "--------------------")
 
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings")) and owner == steam.user.getSteamID())then
+					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam.user.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
 						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
 						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
@@ -1223,6 +1271,7 @@ local windows = {
 						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
 						mp_log:print("Updated name: "..tostring(edit_lobby_name))
 						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
+						--print("lobby settings changed!")
 					end
 
 					GuiText(menu_gui, 2, 0, " ")

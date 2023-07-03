@@ -4,22 +4,26 @@ local json = dofile("mods/evaisa.arena/lib/json.lua")
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
 
-    --local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
-    --if damageModelComponent ~= nil then
-        --local health = ComponentGetValue2( damageModelComponent, "hp" )
-        if(GameHasFlagRun("Immortal"))then
-            return 0, 0
-        --else
-        --    GameAddFlagRun("took_damage")
+    if(GameHasFlagRun("Immortal"))then
+        return 0, 0
+    end
+
+    if(GameHasFlagRun("smash_mode"))then
+        --[[local damage_details = GetDamageDetails()
+
+        local impulse_x = damage_details.impulse[1]
+        local impulse_y = damage_details.impulse[2]
+        ]]
+
+        --if(not(impulse_x == 0 and impulse_y == 0))then
+        local knockback = tonumber(GlobalsGetValue("smash_knockback", "1"))
+        GlobalsSetValue("smash_knockback", tostring(knockback * 1.5))
+        if(entity_thats_responsible ~= GameGetWorldStateEntity())then
+            return 0.0001, 0
         end
-        --[[if health - damage <= 1 then
-            GameAddFlagRun("player_died")
-            if(entity_thats_responsible ~= nil)then
-                ModSettingSet("killer", EntityGetName(entity_thats_responsible))
-            end
-            return 0, 0
-        end]]
-    --end
+        --end
+    end
+
 
     local damage_cap_percentage = tonumber(GlobalsGetValue("damage_cap", "0.25") or 0.25)
 
@@ -48,6 +52,26 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             world_pos = {216.21, 12.583},
         }
     ]]
+
+    print(tostring(entity_thats_responsible))
+
+    if(GameHasFlagRun("smash_mode") and entity_thats_responsible ~= GameGetWorldStateEntity())then
+        local impulse_x = damage_details.impulse[1]
+        local impulse_y = damage_details.impulse[2]
+        if(not(impulse_x == 0 and impulse_y == 0))then
+            local character_data_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "CharacterDataComponent")
+
+            local smash_knockback = tonumber(GlobalsGetValue("smash_knockback", "1"))
+
+            print("SMASH KNOCKBACK: " .. tostring(smash_knockback))
+            print("IMPULSE: " .. tostring(impulse_x) .. ", " .. tostring(impulse_y))
+
+            ComponentSetValue2(character_data_comp, "mVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
+
+        end
+    end
+
+
     --print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
