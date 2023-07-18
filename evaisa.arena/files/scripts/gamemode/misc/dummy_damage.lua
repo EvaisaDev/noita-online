@@ -4,7 +4,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     if(GameHasFlagRun("smash_mode"))then
         local knockback = tonumber(GlobalsGetValue("smash_knockback_dummy", "1"))
-        GlobalsSetValue("smash_knockback_dummy", tostring(knockback * 1.5))
+        GlobalsSetValue("smash_knockback_dummy", tostring(math.min(knockback + 10, 100000)))
         if(entity_thats_responsible ~= GameGetWorldStateEntity())then
             return 0.0001, 0
         end

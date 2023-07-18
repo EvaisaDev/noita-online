@@ -642,6 +642,10 @@ networking = {
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
 
+                            if(damage_details.smash_explosion)then  
+                                EntityLoad("mods/evaisa.arena/files/entities/misc/smash_explosion.xml", damage_details.explosion_x, damage_details.explosion_y)
+                            end
+
                             -- split the damage into as many parts as there are damage types
                             local damage_per_type = damage / #damage_types
 

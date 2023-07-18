@@ -17,7 +17,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
         --if(not(impulse_x == 0 and impulse_y == 0))then
         local knockback = tonumber(GlobalsGetValue("smash_knockback", "1"))
-        GlobalsSetValue("smash_knockback", tostring(knockback * 1.5))
+        GlobalsSetValue("smash_knockback", tostring(math.min(knockback * 1.25, 100000)))
         if(entity_thats_responsible ~= GameGetWorldStateEntity())then
             return 0.0001, 0
         end
@@ -41,7 +41,7 @@ end
 
 function damage_received( damage, message, entity_thats_responsible, is_fatal, projectile_thats_responsible )
     local entity_id = GetUpdatedEntityID()
-    
+    local x, y = EntityGetTransform(entity_id)
     local damage_details = GetDamageDetails()
     --[[
         {
@@ -53,18 +53,62 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
         }
     ]]
 
-    print(tostring(entity_thats_responsible))
+    --print(tostring(entity_thats_responsible))
 
-    if(GameHasFlagRun("smash_mode") and entity_thats_responsible ~= GameGetWorldStateEntity())then
+    if(GameHasFlagRun("smash_mode") and entity_thats_responsible ~= GameGetWorldStateEntity() and entity_thats_responsible ~= nil)then
+
         local impulse_x = damage_details.impulse[1]
         local impulse_y = damage_details.impulse[2]
+
+        if(projectile_thats_responsible)then
+            -- calculate projectile velocity
+            local velocity_comp = EntityGetFirstComponentIncludingDisabled(projectile_thats_responsible, "VelocityComponent")
+            if(velocity_comp ~= nil)then
+                local vel_x, vel_y = ComponentGetValue2(velocity_comp, "mVelocity")
+                -- normalize
+                local len = math.sqrt(vel_x * vel_x + vel_y * vel_y)
+                impulse_x = vel_x / len
+                impulse_y = vel_y / len
+            end
+        else
+            -- get aim angle of responsible entity
+            local controls_comp = EntityGetFirstComponentIncludingDisabled(entity_thats_responsible, "ControlsComponent")
+
+            if(controls_comp)then
+                local aim_x, aim_y = ComponentGetValue2(controls_comp, "mAimingVector")
+                -- normalize
+                local len = math.sqrt(aim_x * aim_x + aim_y * aim_y)
+                impulse_x = aim_x / len
+                impulse_y = aim_y / len
+            else
+                local ex, ey = EntityGetTransform(entity_thats_responsible)
+                local dx = x - ex
+                local dy = y - ey
+                local len = math.sqrt(dx * dx + dy * dy)
+                impulse_x = dx / len
+                impulse_y = dy / len
+            end
+        
+        end
+
+
         if(not(impulse_x == 0 and impulse_y == 0))then
             local character_data_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "CharacterDataComponent")
 
             local smash_knockback = tonumber(GlobalsGetValue("smash_knockback", "1"))
+            
 
-            print("SMASH KNOCKBACK: " .. tostring(smash_knockback))
-            print("IMPULSE: " .. tostring(impulse_x) .. ", " .. tostring(impulse_y))
+            if(smash_knockback > 10000)then
+                EntityLoad("mods/evaisa.arena/files/entities/misc/smash_explosion.xml", x, y)
+                damage_details.smash_explosion = true
+                damage_details.explosion_x = x
+                damage_details.explosion_y = y
+            end
+
+            LoadGameEffectEntityTo( entity_id, "mods/evaisa.arena/files/entities/misc/smash_knockback.xml")
+
+            --print("SMASH KNOCKBACK: " .. tostring(smash_knockback))
+            --print("IMPULSE: " .. tostring(impulse_x) .. ", " .. tostring(impulse_y))
 
             ComponentSetValue2(character_data_comp, "mVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
 

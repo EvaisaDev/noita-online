@@ -77,7 +77,7 @@ ArenaGameplay = {
             ["first_to"] = function(value)
                 local members = steamutils.getLobbyMembers(lobby)
                 for k, member in pairs(members) do
-                    local wins = ArenaGameplay.GetWins(lobby, member.id)
+                    local wins = ArenaGameplay.GetWins(lobby, member.id, data)
                     if(wins >= value)then
                         return member.id
                     end
@@ -90,7 +90,7 @@ ArenaGameplay = {
                     local best_player = nil
                     local best_wins = 0
                     for k, member in pairs(members) do
-                        local wins = ArenaGameplay.GetWins(lobby, member.id)
+                        local wins = ArenaGameplay.GetWins(lobby, member.id, data)
                         if(wins > best_wins)then
                             best_player = member.id
                             best_wins = wins
@@ -102,7 +102,7 @@ ArenaGameplay = {
             ["winstreak"] = function(value)
                 local members = steamutils.getLobbyMembers(lobby)
                 for k, member in pairs(members) do
-                    local winstreak = ArenaGameplay.GetWinstreak(lobby, member.id)
+                    local winstreak = ArenaGameplay.GetWinstreak(lobby, member.id, data)
                     print("Checking winstreak: " .. winstreak .. " - " .. value)
                     if(winstreak >= value)then
                         return member.id
@@ -195,9 +195,21 @@ ArenaGameplay = {
         local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
         local ready_players = (ready_players_string ~= nil and ready_players_string ~= "null") and
             bitser.loads(ready_players_string) or nil
+
         local members = steamutils.getLobbyMembers(lobby)
 
+        for k, member in pairs(members) do
+            if (member.id ~= steam.user.getSteamID()) then
+                local user = member.id
+                local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
+                local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+                data.players[tostring(user)].wins = wins
+                data.players[tostring(user)].winstreak = winstreak
+            end
+        end
         --print(tostring(ready_players_string))
+
+
         if (ready_players ~= nil) then
             for k, member in pairs(members) do
                 if (member.id ~= steam.user.getSteamID()) then
@@ -728,11 +740,27 @@ ArenaGameplay = {
             end
         end
     end,
-    GetWins = function(lobby, user)
-        return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
+    GetWins = function(lobby, user, data)
+        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].wins ~= nil)then
+            return data.players[tostring(user)].wins or 0
+        end
+        local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
+        if(data.players[tostring(user)] ~= nil)then 
+            data.players[tostring(user)].wins = wins
+            print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
+        end
+        return wins
     end,
-    GetWinstreak = function(lobby, user)
-        return tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+    GetWinstreak = function(lobby, user, data)
+        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].winstreak ~= nil)then
+            return data.players[tostring(user)].winstreak or 0
+        end
+        local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+        if(data.players[tostring(user)] ~= nil)then 
+            data.players[tostring(user)].winstreak = winstreak
+            print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
+        end
+        return winstreak
     end,
     WinnerCheck = function(lobby, data)
         
@@ -774,7 +802,7 @@ ArenaGameplay = {
 
 
                 for k, v in pairs(winner_keys) do
-                    if (v ~= winner_key) then
+                    if (tostring(v) ~= tostring(winner_key)) then
                         print(v .. "treak")
                         steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
                     end
@@ -789,7 +817,7 @@ ArenaGameplay = {
 
                 for k, v in pairs(data.players) do
                     local id = v.id
-                    if (id ~= winner) then
+                    if (tostring(id) ~= tostring(winner)) then
                         steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
                     end
                 end
@@ -846,8 +874,8 @@ ArenaGameplay = {
 
                     return updated_was_wins and lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"] or lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
                 end, function() 
-                    print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner)))
-                    print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner)))
+                    print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner, data)))
+                    print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner, data)))
                     GameAddFlagRun("round_finished")
                     local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
 
@@ -1044,6 +1072,17 @@ ArenaGameplay = {
         np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
         np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
         np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
+
+        local members = steamutils.getLobbyMembers(lobby)
+        for k, member in pairs(members) do
+            if (member.id ~= steam.user.getSteamID()) then
+                local user = member.id
+                local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
+                local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+                data.players[tostring(user)].wins = wins
+                data.players[tostring(user)].winstreak = winstreak
+            end
+        end
 
         if(not steamutils.IsSpectator(lobby))then
             if (not first_entry) then

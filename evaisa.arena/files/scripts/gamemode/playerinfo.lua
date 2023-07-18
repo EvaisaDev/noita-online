@@ -21,6 +21,8 @@ function playerinfo:New(user)
         last_inventory_string = nil,
         ping = 0,
         delay_frames = 0,
+        wins = nil,
+        winstreak = nil,
         id = user,
         perks = {},
         controls = {
@@ -96,6 +98,8 @@ function playerinfo:New(user)
         self.last_position_y = nil]]
         self.previous_positions = {}
         self.last_inventory_string = nil
+        self.wins = nil
+        self.winstreak = nil
         
         --[[if(steamutils.IsOwner(lobby))then
             steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_loaded", "false")

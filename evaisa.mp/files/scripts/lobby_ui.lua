@@ -120,31 +120,32 @@ local windows = {
 							local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 							local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
 
-							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-							if(not IsCorrectVersion(v))then
-								if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
-									steam.matchmaking.leaveLobby(v)
-									steam.matchmaking.joinLobby(v, function(e)
-									end)
-								end
-							else
-								if(active_mode ~= nil)then
-									if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+							if(lobby_name ~= nil and active_mode ~= nil and lobby_mode_id ~= nil and lobby_members ~= nil and lobby_max_players ~= nil)then
+								GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+								if(not IsCorrectVersion(v))then
+									if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
 										steam.matchmaking.leaveLobby(v)
 										steam.matchmaking.joinLobby(v, function(e)
 										end)
 									end
 								else
-									if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..""..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-										steam.matchmaking.leaveLobby(v)
-										steam.matchmaking.joinLobby(v, function(e)
-										end)
+									if(active_mode ~= nil)then
+										if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+											steam.matchmaking.leaveLobby(v)
+											steam.matchmaking.joinLobby(v, function(e)
+											end)
+										end
+									else
+										if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..""..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+											steam.matchmaking.leaveLobby(v)
+											steam.matchmaking.joinLobby(v, function(e)
+											end)
+										end
 									end
 								end
-							end
 
-							GuiLayoutEnd(menu_gui)
-		
+								GuiLayoutEnd(menu_gui)
+							end
 						end
 					end
 				else
@@ -161,29 +162,31 @@ local windows = {
 						local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 						local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
 
-
-						GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-						if(not IsCorrectVersion(v))then
-							if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
-								steam.matchmaking.leaveLobby(v)
-								steam.matchmaking.joinLobby(v, function(e)
-								end)
-							end
-						else
-							if(active_mode ~= nil)then
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+						if(lobby_name ~= nil and active_mode ~= nil and lobby_mode_id ~= nil and lobby_members ~= nil and lobby_max_players ~= nil)then
+							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+							if(not IsCorrectVersion(v))then
+								if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
 									steam.matchmaking.leaveLobby(v)
 									steam.matchmaking.joinLobby(v, function(e)
 									end)
 								end
 							else
-								if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+								if(active_mode ~= nil)then
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+										steam.matchmaking.leaveLobby(v)
+										steam.matchmaking.joinLobby(v, function(e)
+										end)
+									end
+								else
+									if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 
+									end
 								end
 							end
-						end
+							
 
-						GuiLayoutEnd(menu_gui)
+							GuiLayoutEnd(menu_gui)
+						end
 					end
 				else
 					GuiText(menu_gui, 2, 0, GameTextGetTranslatedOrNot("$mp_no_lobbies_found"))
