@@ -121,7 +121,6 @@ ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 
-dofile("mods/evaisa.mp/lib/timeofday.lua")
 dofile("data/scripts/lib/coroutines.lua")
 
 local utf8 = require 'lua-utf8'
@@ -134,7 +133,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.454	
+MP_VERSION = 1.455	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -165,14 +164,14 @@ end
 local noita_version_hash = GetNoitaVersionHash()
 
 last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
-laa_check_done = false
+laa_check_done = true
 if(noita_version_hash ~= nil)then
 	mp_log:print("Noita version hash: " .. noita_version_hash)
 	if(last_noita_version ~= noita_version_hash)then
 		ModSettingSet("evaisa.mp.last_noita_version_hash", noita_version_hash)
-		laa_check_done = false
+		--laa_check_done = false
 	else
-		laa_check_done = true
+		--laa_check_done = true
 	end
 end
 base64 = require("base64")
@@ -423,7 +422,7 @@ function OnWorldPreUpdate()
 	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
 
 
-		if(not laa_check_done)then
+		--[[if(not laa_check_done)then
 			laa_enabled = checkLAA("noita.exe")
 			print("LAA: " .. tostring(laa_enabled))
 
@@ -453,7 +452,7 @@ function OnWorldPreUpdate()
 				}, -6000)
 			end
 			laa_check_done = true
-		end
+		end]]
 		
 		if(not laa_check_busy)then
 			if(not steam.utils.loggedOn())then

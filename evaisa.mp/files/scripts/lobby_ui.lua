@@ -304,7 +304,7 @@ local windows = {
 				--current_button_offset = current_button_offset + text_height
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-				if(active_mode ~= nil)then
+				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
 					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
 						if(lobby_menu.button_location == nil or lobby_menu.button_location == "main_window")then
 							local button_text = active_custom_menu == lobby_menu.id and GameTextGetTranslatedOrNot(lobby_menu.button_text).." >" or GameTextGetTranslatedOrNot(lobby_menu.button_text).." <"
@@ -805,9 +805,11 @@ local windows = {
 					end
 
 					local function AddGamemodePresets()
-						for name, data in pairs(active_mode.default_presets)do
-							reserved_preset_names[name] = true
-							table.insert(presets, 1, {name=name, data=data})
+						if(active_mode.default_presets ~= nil)then
+							for name, data in pairs(active_mode.default_presets)do
+								reserved_preset_names[name] = true
+								table.insert(presets, 1, {name=name, data=data})
+							end
 						end
 					end
 
@@ -978,7 +980,7 @@ local windows = {
 
 			if(active_custom_menu ~= nil)then
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-				if(active_mode ~= nil)then
+				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
 					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
 						if(lobby_menu.id == active_custom_menu)then
 							DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function()
@@ -1204,7 +1206,9 @@ local windows = {
 								local offset = 1
 
 								if(previous_type == "text_input")then
-									offset = 5
+									offset = 7
+								elseif(previous_type == "slider")then
+									offset = 6
 								end               
 					
 								GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
@@ -1222,11 +1226,15 @@ local windows = {
 
 								setting.display_multiplier = setting.display_multiplier or 1
 								setting.formatting_string = setting.formatting_string or " $0"
-								setting.modifier = setting.modifier or function(value) return value end
+								setting.modifier = setting.modifier
+
+								if(setting.modifier == nil)then
+									setting.modifier = function(value) return value end
+								end
 								setting.display_fractions = setting.display_fractions or false
 
 								GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 1, 1)
-								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, offset, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", container_size)
+								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 0, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", container_size)
 								slider_value = setting.modifier(slider_value)
 								local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
 								-- take setting.formatting_string, replace $0 with slider_value, take display multiplier into account
