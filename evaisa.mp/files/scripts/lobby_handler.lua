@@ -82,9 +82,11 @@ end
 function handleInProgressCheck(user)
 	local is_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") or "false"
 	local allow_in_progress_joining = steam.matchmaking.getLobbyData(lobby_code, "allow_in_progress_joining") or "true"
+	print(is_in_progress)
+	print(allow_in_progress_joining)
 	if(is_in_progress == "true" and allow_in_progress_joining == "false")then
 		mp_log:print("Disconnected member: " .. tostring(user))
-		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_in_progress_warning").."\n"..GameTextGetTranslatedOrNot("$mp_in_progress_warning_description"))
+		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_in_progress_warning"))
 	end
 end
 
