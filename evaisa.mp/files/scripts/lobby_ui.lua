@@ -1435,7 +1435,7 @@ local windows = {
 							steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 							steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
 							steam.matchmaking.setLobbyData(code, "in_progress", "false")
-							steam.matchmaking.setLobbyData(code, "allow_in_progress_joining", gamemode[gamemode_index].allow_in_progress_joining or "true")
+							steam.matchmaking.setLobbyData(code, "allow_in_progress_joining", gamemodes[gamemode_index].allow_in_progress_joining or "true")
 
 							if(dev_mode)then
 								steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
