@@ -133,7 +133,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.455	
+MP_VERSION = 1.456	
 VERSION_FLAVOR_TEXT = "$mp_alpha"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -767,6 +767,7 @@ end
 function steam.matchmaking.onLobbyChatUpdate(data)
 	--pretty.table(data)
 	handleBanCheck(data.userChanged)
+	handleInProgressCheck(data.userChanged)
 end
 
 function steam.matchmaking.onGameLobbyJoinRequested(data)

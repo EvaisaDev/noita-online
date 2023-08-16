@@ -140,7 +140,7 @@ function playerinfo_menu:New()
 
         GuiBeginScrollContainer(self.gui, new_id(), current_x, self.offset_y, self.width + scrollbar_offset, self.height)
         
-        if(not self.open)then
+        if(self.open)then
             GuiLayoutBeginVertical(self.gui, 0, 0, true)
 
             local DrawTextElement = function(formatting_string, value)

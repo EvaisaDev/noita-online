@@ -79,6 +79,15 @@ function handleBanCheck(user)
 	end
 end
 
+function handleInProgressCheck(user)
+	local is_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") or "false"
+	local allow_in_progress_joining = steam.matchmaking.getLobbyData(lobby_code, "allow_in_progress_joining") or "true"
+	if(is_in_progress == "true" and allow_in_progress_joining == "false")then
+		mp_log:print("Disconnected member: " .. tostring(user))
+		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_in_progress_warning").."\n"..GameTextGetTranslatedOrNot("$mp_in_progress_warning_description"))
+	end
+end
+
 function handleVersionCheck()
 	local version = steam.matchmaking.getLobbyData(lobby_code, "version")
 	if (version > tostring(MP_VERSION)) then
@@ -477,8 +486,7 @@ function refreshLobbies()
 					local lobby_type = steam.matchmaking.getLobbyData(lobby, "LobbyType")
 
 					if (steam.matchmaking.getLobbyData(lobby, "System") ~= nil and steam.matchmaking.getLobbyData(lobby, "System") == activeSystem) then
-						local banned = steam.matchmaking.getLobbyData(lobby, "banned_" ..
-							tostring(steam.user.getSteamID()))
+						local banned = steam.matchmaking.getLobbyData(lobby, "banned_" ..tostring(steam.user.getSteamID()))
 						if ((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true") then
 							table.insert(lobbies.friend, lobby)
 							indexed_lobby[lobby] = true

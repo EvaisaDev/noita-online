@@ -1121,6 +1121,15 @@ local windows = {
 
 					local previous_type = "text_input"
 					
+					local global_offset = 1
+
+					local extra_offset = 5
+					if(active_mode.settings and #active_mode.settings > 0 and active_mode.settings[1].type == "slider")then
+						extra_offset = 7
+					end
+
+					GuiLayoutBeginVertical(menu_gui, 0, extra_offset, true, 0, 0)
+
 					for k, setting in ipairs(active_mode.settings or {})do
 
 						if(owner ~= steam.user.getSteamID())then
@@ -1154,6 +1163,7 @@ local windows = {
 
 
 						if(setting.require == nil or setting.require(setting))then
+							--print(setting.id.."; "..tostring(setting.require).."; "..(setting.require and tostring(setting.require(setting)) or "nil"))
 							if(setting.type == "enum")then
 								local selected_name = ""
 								local selected_index = nil
@@ -1166,11 +1176,17 @@ local windows = {
 									end
 								end
 
-								local offset = 1
+								local offset = global_offset
 
-								if(previous_type == "text_input")then
+								--[[if(previous_type == "text_input")then
 									offset = 5
-								end
+								end]]
+
+								--[[if(previous_type == "slider")then
+									offset = offset + 1
+								elseif(previous_type == "enum" or previous_type == "bool")then
+									offset = offset - 4
+								end   ]]      
 
 								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
 									selected_index = selected_index + 1
@@ -1187,11 +1203,16 @@ local windows = {
 								
 							elseif(setting.type == "bool")then
 
-								local offset = 1
+								local offset = global_offset
 
-								if(previous_type == "text_input")then
+								--[[if(previous_type == "text_input")then
 									offset = 5
-								end
+								end]]
+								--[[if(previous_type == "slider")then
+									offset = offset + 1
+								elseif(previous_type == "enum" or previous_type == "bool")then
+									offset = offset - 4
+								end   ]]      
 
 								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
 									gamemode_settings[setting.id] = not gamemode_settings[setting.id]
@@ -1203,19 +1224,13 @@ local windows = {
 
 								previous_type = "bool"
 							elseif(setting.type == "slider")then
-								local offset = 1
-
-								if(previous_type == "text_input")then
-									offset = 7
-								elseif(previous_type == "slider")then
-									offset = 6
-								end               
+								local offset = global_offset
 					
-								GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
+								GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 0, 0)
 
 								local text_width, text_height = GuiGetTextDimensions(menu_gui, GameTextGetTranslatedOrNot(setting.name)..": ")
 
-								GuiText(menu_gui, 2, offset - 1, GameTextGetTranslatedOrNot(setting.name)..": ")
+								GuiText(menu_gui, 2, -1, GameTextGetTranslatedOrNot(setting.name)..": ")
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
 
 								local container_size = setting.width or 100
@@ -1233,7 +1248,7 @@ local windows = {
 								end
 								setting.display_fractions = setting.display_fractions or false
 
-								GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 1, 1)
+								--GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 1, 1)
 								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 0, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", container_size)
 								slider_value = setting.modifier(slider_value)
 								local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
@@ -1241,7 +1256,7 @@ local windows = {
 								GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
 								local value_text = string.gsub(setting.formatting_string, "$0", tostring(setting.display_fractions and (slider_value * setting.display_multiplier) or math.floor(slider_value * setting.display_multiplier)))
 								GuiText(menu_gui, 0, 0, value_text)
-								GuiLayoutEnd(menu_gui)
+								--GuiLayoutEnd(menu_gui)
 
 								was_slider_changed = was_slider_changed or {}
 
@@ -1267,6 +1282,7 @@ local windows = {
 						end
 					end
 
+					GuiLayoutEnd(menu_gui)
 					--GuiText(menu_gui, 2, 6, "--------------------")
 
 					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam.user.getSteamID())then
@@ -1419,6 +1435,7 @@ local windows = {
 							steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 							steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
 							steam.matchmaking.setLobbyData(code, "in_progress", "false")
+							steam.matchmaking.setLobbyData(code, "allow_in_progress_joining", gamemode[gamemode_index].allow_in_progress_joining or "true")
 
 							if(dev_mode)then
 								steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")

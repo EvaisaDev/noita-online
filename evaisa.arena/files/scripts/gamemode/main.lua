@@ -182,7 +182,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.547,
+    version = 0.548,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1030,6 +1030,9 @@ ArenaMode = {
         local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
 
         SetWorldSeed(seed)
+
+        print(tostring(seed))
+
         GlobalsSetValue("world_seed", tostring(seed))
 
         local player_entity = player.Get()
