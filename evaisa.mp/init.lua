@@ -218,6 +218,7 @@ json = dofile_once("mods/evaisa.mp/lib/json.lua")
 
 pretty = require("pretty_print")
 
+local is_invalid_version = (PhysicsBodyIDGetBodyAABB == nil)
 
 --local pollnet = require("pollnet")
 
@@ -385,6 +386,7 @@ local init_cleanup = false
 local connection_popup_open = false
 local connection_popup_was_open_timer = 0
 local laa_check_busy = false
+local invalid_version_popup_open = false
 
 function OnWorldPreUpdate()
 
@@ -453,6 +455,24 @@ function OnWorldPreUpdate()
 			end
 			laa_check_done = true
 		end]]
+
+		if(is_invalid_version)then
+			
+			if(not invalid_version_popup_open)then
+				invalid_version_popup_open = true
+				popup.create("invalid_version_message", GameTextGetTranslatedOrNot("$mp_invalid_version"),
+				GameTextGetTranslatedOrNot("$mp_invalid_version_description"), {
+					{
+						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+						callback = function()
+							invalid_version_popup_open = false
+						end
+					}
+				}, -6000)
+
+			end
+			return
+		end
 		
 		if(not laa_check_busy)then
 			if(not steam.utils.loggedOn())then

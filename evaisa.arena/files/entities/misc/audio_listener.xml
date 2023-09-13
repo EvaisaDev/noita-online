@@ -1,5 +1,0 @@
-<Entity>
-    <AudioListenerComponent
-        z="-60"
-    ></AudioListenerComponent>
-</Entity>

@@ -1,9 +1,0 @@
-<Entity name="chunk_loader" tags="chunk_loader">
-<StreamingKeepAliveComponent/>
-<HitboxComponent
-    aabb_min_x="-500"
-    aabb_min_y="-500"
-    aabb_max_x="500"
-    aabb_max_y="500"
-></HitboxComponent>
-</Entity>

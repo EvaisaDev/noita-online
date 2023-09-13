@@ -1,2 +1,0 @@
-Todo:
-    Clear projectiles when switching players in spectator mode
