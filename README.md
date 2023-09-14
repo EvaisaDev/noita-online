@@ -9,3 +9,9 @@ Essentially it makes it easy for mod developers to create online multiplayer gam
 
 
 You can support my work @[https://ko-fi.com/evaisa](https://ko-fi.com/evaisa)
+
+Credits:
+- [Dextercd](https://github.com/dextercd) - for helping me implement lots of Noita Online stuff.
+- [Noita Community](https://discord.gg/noita) - for being fucking awesome
+
+*If I missed anyone in the credits please hit me up.*
