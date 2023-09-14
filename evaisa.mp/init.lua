@@ -133,8 +133,8 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.457	
-VERSION_FLAVOR_TEXT = "$mp_alpha"
+MP_VERSION = 1.5	
+VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
 
@@ -148,7 +148,7 @@ Starting = nil
 
 disable_print = false
 
-dev_mode = true
+dev_mode = false
 
 function GetNoitaVersionHash()
 	local file = "_version_hash.txt"
