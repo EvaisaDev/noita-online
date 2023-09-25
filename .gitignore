@@ -1,3 +1,5 @@
 ### VisualStudioCode ###
 /evaisa.mp/.vscode
 /evaisa.mp/.vs
+*.zip
+*.rar
