@@ -929,6 +929,9 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	if (response ~= nil) then
 		Checksum_passed = response.body == Version_string
 		mp_log:print("Checksum passed: " .. tostring(response.body))
+	else
+		Checksum_passed = true
+		mp_log:print("Checksum server down, skipping check")
 	end
 
 	--[[
