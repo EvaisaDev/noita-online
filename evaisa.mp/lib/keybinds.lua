@@ -133,7 +133,8 @@ local bindings = {
         if binding ~= nil then
             local handlers = {
                 axis = function(name)
-                    return (InputGetJoystickAnalogStick(0, inputs.stick[name]))
+                    local x, y = InputGetJoystickAnalogStick(0, inputs.stick[name])
+                    return x, y
                 end,
                 axis_button = function(name)
                     return InputGetJoystickAnalogButton(0, inputs.trigger[name])
@@ -142,7 +143,8 @@ local bindings = {
 
             local type = binding.type
             if type ~= nil and handlers[type] ~= nil then
-                return handlers[type](binding.value)
+                local a, b = handlers[type](binding.value)
+                return a, b
             end
         end 
 
