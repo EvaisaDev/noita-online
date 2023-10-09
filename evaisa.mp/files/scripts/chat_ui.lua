@@ -193,12 +193,28 @@ if (lobby_code ~= nil) then
 					-- get command name, get arguments as table, remove ! or / from command name
 					local command_name, args = input_text:match("([%w_]+)%s*(.*)")
 
-					mp_log:print("command received: " .. command_name)
+					if(command_name == nil)then
+						local username = steamutils.getTranslatedPersonaName()
+						local message = username .. ": " .. input_text
+	
+						local message_final = "chat;" .. message
+						steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+					else
 
-					if(lobby_code ~= nil)then
-						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-						if(active_mode ~= nil and active_mode.commands and active_mode.commands[command_name])then
-							active_mode.commands[command_name](command_name, args)
+						mp_log:print("command received: " .. command_name)
+
+						if(lobby_code ~= nil)then
+							local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+							if(active_mode ~= nil and active_mode.commands and active_mode.commands[command_name])then
+								active_mode.commands[command_name](command_name, args)
+							elseif(active_mode ~= nil )then
+								local username = steamutils.getTranslatedPersonaName()
+								local message = username .. ": " .. input_text
+			
+								local message_final = "chat;" .. message
+								steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
+
+							end
 						end
 					end
 				else
