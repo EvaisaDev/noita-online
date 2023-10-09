@@ -85,18 +85,24 @@ if (lobby_code ~= nil) then
 	--local pressed, shift_held = hack_update_keys()
 
 	local hit_enter = false
+	
+	local toggled_chat = false
 	--for _, key in ipairs(pressed) do
-	if input:WasKeyPressed("enter") or input:WasKeyPressed("return") then
+	if bindings:IsJustDown("chat_submit") or bindings:IsJustDown("chat_submit2")  then
 		hit_enter = true
+		toggled_chat = true
 	end
 
-	if (input:WasKeyPressed("t") and not GameHasFlagRun("chat_bind_disabled")) then
+
+	if (bindings:IsJustDown("chat_open") and not GameHasFlagRun("chat_bind_disabled")) then
 		if (chat_open == false) then
 			chat_open = true
 			chat_opened_with_bind = true
+			toggled_chat = true
 		elseif (chat_input ~= nil and not chat_input.focus) then
 			chat_open = false
 			chat_opened_with_bind = false
+			toggled_chat = true
 		end
 	end
 
@@ -133,7 +139,9 @@ if (lobby_code ~= nil) then
 		
 		chat_input.text = input_text
 		chat_input:transform(2, screen_height - 16, window_width + 2)
-		chat_input:update()
+		if(not toggled_chat)then
+			chat_input:update()
+		end
 		chat_input:draw()
 		if(chat_opened_with_bind)then
 			chat_opened_with_bind = false

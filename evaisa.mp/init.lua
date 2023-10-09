@@ -133,15 +133,14 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.5	
+MP_VERSION = 1.6	
 VERSION_FLAVOR_TEXT = "$mp_beta"
-noita_online_download = "https://discord.com/invite/zJyUSHGcme"
+noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
 rand = nil
 
-Checksum_passed = false
 in_game = false
 Spawned = false
 Starting = nil
@@ -315,6 +314,7 @@ dofile("mods/evaisa.mp/files/scripts/lobby_handler.lua")
 dofile_once("mods/evaisa.mp/files/scripts/utils.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 input = nil 
+bindings = nil
 
 bytes_sent = 0
 last_bytes_sent = 0
@@ -392,7 +392,6 @@ function OnWorldPreUpdate()
 
 	--input:Update()
 
-
 	wake_up_waiting_threads(1)
 	--math.randomseed( os.time() )
 
@@ -400,28 +399,8 @@ function OnWorldPreUpdate()
 		popup.update()
 	end
 
-	if (steam and not Checksum_passed and Spawned) then
-		if (not spawned_popup) then
-			GamePrint("Checksum failed, please ensure you are running the latest version of Noita Online")
-			spawned_popup = true
-			popup.create("update_message", GameTextGetTranslatedOrNot("$mp_outdated_warning_title"),
-				GameTextGetTranslatedOrNot("$mp_outdated_warning_description"), {
-					{
-						text = GameTextGetTranslatedOrNot("$mp_get_updated_version"),
-						callback = function()
-							os.execute("start explorer \"" .. noita_online_download .. "\"")
-						end
-					},
-					{
-						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-						callback = function()
-						end
-					}
-				}, -6000)
-		end
-	end
 
-	if steam and Checksum_passed and GameGetFrameNum() >= 60 then
+	if steam and GameGetFrameNum() >= 60 then
 
 
 		--[[if(not laa_check_done)then
@@ -506,6 +485,20 @@ function OnWorldPreUpdate()
 
 			if(input == nil)then
 				input = dofile_once("mods/evaisa.mp/lib/input.lua")
+			end
+
+			if(bindings == nil)then
+				bindings = dofile_once("mods/evaisa.mp/lib/keybinds.lua")
+				bindings:RegisterBinding("chat_submit", "Noita Online", "Chat Send", "Key_RETURN", "key", false, true, false, false)
+				bindings:RegisterBinding("chat_submit2", "Noita Online", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
+				bindings:RegisterBinding("chat_open", "Noita Online", "Open Chat", "Key_t", "key", false, true, false, false)
+			
+				-- loop through gamemodes
+				for k, v in ipairs(gamemodes) do
+					if(v.binding_register ~= nil)then
+						v.binding_register(bindings)
+					end
+				end
 			end
 
 			if(init_cleanup == false)then
@@ -665,7 +658,7 @@ end
 
 function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
 						   unknown1, multicast_index, unknown3)
-	if steam and Checksum_passed then
+	if steam then
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -684,7 +677,7 @@ end
 
 function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
 							   unknown1, multicast_index, unknown3)
-	if steam and Checksum_passed then
+	if steam then
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -702,7 +695,7 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 end
 
 function OnWorldPostUpdate()
-	if steam and Checksum_passed then
+	if steam then
 		--pretty.table(steam.networking)
 		lobby_code = lobby_code or nil
 
@@ -727,6 +720,9 @@ function OnWorldPostUpdate()
 	end
 	GameRemoveFlagRun("chat_bind_disabled")
 	lobby_data_updated_this_frame = {}
+	if(bindings ~= nil and not IsPaused())then
+		bindings:Update()
+	end
 end
 
 function steam.matchmaking.onLobbyEnter(data)
@@ -923,16 +919,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
 
 	mod_data = ModData()
-
-	local response = request.send("http://evaisa.dev/noita-online-checksum.txt")
-
-	if (response ~= nil) then
-		Checksum_passed = response.body == Version_string
-		mp_log:print("Checksum passed: " .. tostring(response.body))
-	else
-		Checksum_passed = true
-		mp_log:print("Checksum server down, skipping check")
-	end
 
 	--[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
