@@ -962,7 +962,7 @@ local windows = {
 
 
 								gamemode_settings = preset_info.data.settings
-								print("loaded: "..json.stringify(gamemode_settings))
+								--print("loaded: "..json.stringify(gamemode_settings))
 								preset_name = preset_info.name
 								--settings_changed = true
 
@@ -1142,7 +1142,7 @@ local windows = {
 					GuiLayoutBeginVertical(menu_gui, 0, extra_offset, true, 0, 0)
 
 
-					print("displaying: "..json.stringify(gamemode_settings))
+					--print("displaying: "..json.stringify(gamemode_settings))
 					for k, setting in ipairs(active_mode.settings or {})do
 
 						if(owner ~= steam.user.getSteamID())then
