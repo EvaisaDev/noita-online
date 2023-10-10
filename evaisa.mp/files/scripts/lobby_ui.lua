@@ -32,6 +32,7 @@ mod_list_open = mod_list_open or false
 lobby_settings_open = lobby_settings_open or false
 lobby_presets_open = lobby_presets_open or false
 was_lobby_presets_open = was_lobby_presets_open or false
+settings_changed = settings_changed or false
 
 local is_in_lobby = lobby_code ~= nil and true or false
 
@@ -944,7 +945,7 @@ local windows = {
 								RefreshPresets()
 							end
 							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
-								print(json.stringify(preset))
+								
 								local preset_info = preset
 								if(preset.data.version == nil or preset.data.version == 1)then
 									preset_info = {
@@ -959,11 +960,14 @@ local windows = {
 
 								
 
+
+								gamemode_settings = preset_info.data.settings
+								print("loaded: "..json.stringify(gamemode_settings))
+								preset_name = preset_info.name
+								settings_changed = true
 								if(active_mode.load_preset)then
 									active_mode.load_preset(lobby_code, preset_info.data)
 								end
-								gamemode_settings = preset_info.data.settings
-								preset_name = preset_info.name
 							end
 							GuiLayoutEnd(menu_gui)
 						end
@@ -1034,7 +1038,6 @@ local windows = {
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 	
 
-					local settings_changed = false
 
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type]))then
 						edit_lobby_type = edit_lobby_type + 1
@@ -1130,6 +1133,8 @@ local windows = {
 
 					GuiLayoutBeginVertical(menu_gui, 0, extra_offset, true, 0, 0)
 
+
+					print("displaying: "..json.stringify(gamemode_settings))
 					for k, setting in ipairs(active_mode.settings or {})do
 
 						if(owner ~= steam.user.getSteamID())then
@@ -1298,6 +1303,7 @@ local windows = {
 						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
 						mp_log:print("Updated name: "..tostring(edit_lobby_name))
 						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
+						settings_changed = false
 						--print("lobby settings changed!")
 					end
 

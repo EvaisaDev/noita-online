@@ -760,6 +760,17 @@ function steam.matchmaking.onLobbyEnter(data)
 				if (lobby_gamemode) then
 					defineLobbyUserData(lobby_code)
 					
+					delay.new(30, function()
+						for k, setting in ipairs(lobby_gamemode.settings or {}) do
+							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
+								setting.id)
+						end
+	
+						if (lobby_gamemode.refresh) then
+							lobby_gamemode.refresh(lobby_code)
+						end
+					end, function(frames) end)
+
 					--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 					if(game_in_progress)then
 						gui_closed = true
