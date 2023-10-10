@@ -964,7 +964,15 @@ local windows = {
 								gamemode_settings = preset_info.data.settings
 								print("loaded: "..json.stringify(gamemode_settings))
 								preset_name = preset_info.name
-								settings_changed = true
+								--settings_changed = true
+
+								for k, setting in ipairs(active_mode.settings or {})do
+									steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+									mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
+								end
+
+								steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
+
 								if(active_mode.load_preset)then
 									active_mode.load_preset(lobby_code, preset_info.data)
 								end
