@@ -348,8 +348,11 @@ function FindGamemode(id)
 	return nil
 end
 
-local function ReceiveMessages(gamemode)
+local function ReceiveMessages(gamemode, ignore)
 	local messages = steam.networking.pollMessages() or {}
+	if(ignore)then
+		return
+	end
 	for k, v in ipairs(messages) do
 		local data = steamutils.parseData(v.data)
 
@@ -662,8 +665,9 @@ function OnWorldPreUpdate()
 
 					lobby_gamemode.update(lobby_code)
 
-					ReceiveMessages(lobby_gamemode)
+					
 				end
+				ReceiveMessages(lobby_gamemode, not game_in_progress)
 			end
 		end
 	end
