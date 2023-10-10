@@ -1,7 +1,7 @@
 -- logger.lua
 local default_folder_path = "logger"
 
-local function create_logger(output_path, filename, overwrite)
+local function create_logger(output_path, filename, overwrite, no_prefix)
     -- ensure/create the directory for the logger files
     if not os.rename(output_path, output_path) then
         os.execute("mkdir \"" .. output_path .. "\" 2>nul")
@@ -37,11 +37,18 @@ local function create_logger(output_path, filename, overwrite)
             end
         end
 
-        -- Get the current timestamp
-        local timestamp = os.date("%Y-%m-%d %H:%M:%S")
 
         -- Include timestamp in the log message
-        local log_message = string.format("%s [%s:%d]: %s\n", timestamp, debug_info.source, debug_info.currentline, message)
+        local log_message = ""
+
+        if(no_prefix)then
+            log_message = string.format("%s\n", message)
+        else
+            -- Get the current timestamp
+            local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+            
+            log_message = string.format("%s [%s:%d]: %s\n", timestamp, debug_info.source, debug_info.currentline, message)
+        end
 
         new_logger.log_file:write(log_message)
         new_logger.log_file:flush()
@@ -58,8 +65,8 @@ local function create_logger(output_path, filename, overwrite)
 end
 
 local logger = {
-    init = function(filename, overwrite)
-        return create_logger(default_folder_path, filename, overwrite)
+    init = function(filename, overwrite, no_prefix)
+        return create_logger(default_folder_path, filename, overwrite, no_prefix)
     end
 }
 

@@ -38,6 +38,7 @@ logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
 debug_log = logger.init("debugging.log")
+debug_info = logger.init("debug_info.log", nil, true)
 
 ------ TRANSLATIONS -------
 
@@ -133,10 +134,12 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.61	
+MP_VERSION = 1.62	
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
+
+debug_info:print("Version: " .. tostring(MP_VERSION))
 
 rng = dofile("mods/evaisa.mp/lib/rng.lua")
 rand = nil
@@ -148,6 +151,8 @@ Starting = nil
 disable_print = false
 
 dev_mode = false
+
+debug_info:print("Dev mode: " .. tostring(dev_mode))
 
 function GetNoitaVersionHash()
 	local file = "_version_hash.txt"
@@ -161,6 +166,11 @@ function GetNoitaVersionHash()
 end
 
 local noita_version_hash = GetNoitaVersionHash()
+
+-- strip newlines and such from hash
+noita_version_hash = noita_version_hash:gsub("%s+", "")
+
+debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
 last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
 laa_check_done = true
@@ -178,6 +188,9 @@ base64 = require("base64")
 msg = require("msg")
 pretty = require("pretty_print")
 local ffi = require "ffi"
+
+debug_info:print("Beta build: " .. tostring(GameIsBetaBuild()))
+debug_info:print("Using controller: " .. tostring(GameGetIsGamepadConnected()))
 
 function RepairDataFolder()
 	local data_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
@@ -919,6 +932,15 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
 
 	mod_data = ModData()
+
+	debug_info:print("Gamemodes: [")
+
+	-- get installed modes
+	for k, v in ipairs(gamemodes)do
+		debug_info:print("  "..tostring(v.id).."@"..tostring(v.version))
+	end
+
+	debug_info:print("]")
 
 	--[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
