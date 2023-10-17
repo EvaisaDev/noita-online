@@ -1254,6 +1254,7 @@ local windows = {
 
 								setting.display_multiplier = setting.display_multiplier or 1
 								setting.formatting_string = setting.formatting_string or " $0"
+								setting.formatting_func = setting.formatting_func or function(value) return value end
 								setting.modifier = setting.modifier
 
 								if(setting.modifier == nil)then
@@ -1268,6 +1269,7 @@ local windows = {
 								-- take setting.formatting_string, replace $0 with slider_value, take display multiplier into account
 								GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
 								local value_text = string.gsub(setting.formatting_string, "$0", tostring(setting.display_fractions and (slider_value * setting.display_multiplier) or math.floor(slider_value * setting.display_multiplier)))
+								value_text = setting.formatting_func(value_text)
 								GuiText(menu_gui, 0, 0, value_text)
 								--GuiLayoutEnd(menu_gui)
 
