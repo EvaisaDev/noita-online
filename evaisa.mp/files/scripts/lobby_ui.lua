@@ -1182,12 +1182,32 @@ local windows = {
 								local selected_index = nil
 
 								local selected_value = gamemode_settings[setting.id]
+								--print("Selected value: "..tostring(selected_value))
+								if(selected_value == nil)then
+									selected_value = setting.default
+									gamemode_settings[setting.id] = setting.default
+									settings_changed = true
+								end
+								
 								for k, v in ipairs(setting.options)do
 									if(v[1] == selected_value)then
 										selected_name = v[2]
 										selected_index = k
 									end
 								end
+
+								-- if selected index is nil, reset to default
+								if(selected_index == nil)then
+									for k, v in ipairs(setting.options)do
+										if(v[1] == setting.default)then
+											selected_name = v[2]
+											selected_index = k
+											settings_changed = true
+											gamemode_settings[setting.id] = setting.default
+										end
+									end
+								end
+
 
 								local offset = global_offset
 

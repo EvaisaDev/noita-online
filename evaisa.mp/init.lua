@@ -134,7 +134,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.65	
+MP_VERSION = 1.651	
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -210,7 +210,7 @@ end
 local application_id = 943584660334739457LL
 
 np.InstallShootProjectileFiredCallbacks()
---np.EnableGameSimulatePausing(false)
+np.EnableGameSimulatePausing(false)
 np.InstallDamageDetailsPatch()
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 --[[np.EnableExtendedLogging(true)
@@ -956,6 +956,16 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	end
 
 	debug_info:print("]")
+
+	debug_info:print("Installed mods: [")
+	-- get installed mods
+
+	for k, v in ipairs(ModGetActiveModIDs())do
+		debug_info:print("  "..tostring(v))
+	end
+
+	debug_info:print("]")
+	
 
 	--[[
 	http_get("http://evaisa.dev/noita-online-checksum.txt", function (data)
