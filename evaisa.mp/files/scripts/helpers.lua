@@ -31,9 +31,11 @@ local helpers = {
         DAMAGE_POISON = 0x10000,
         DAMAGE_MATERIAL_WITH_FLASH = 0x20000,
         DAMAGE_OVEREATING = 0x40000,
-        DAMAGE_CURSE = 0x80000
+        DAMAGE_CURSE = 0x80000,
+        DAMAGE_HOLY = 0x100000
     }
 }
+
 
 helpers.GetDamageTypes = function(bit_flag)
     local damage_types = {}
