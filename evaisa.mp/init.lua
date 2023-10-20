@@ -333,6 +333,10 @@ bytes_sent = 0
 last_bytes_sent = 0
 bytes_received = 0
 last_bytes_received = 0
+
+bytes_sent_per_type = {}
+bytes_received_per_type = {}
+
 active_members = {}
 member_message_frames = {}
 gamemode_index = 1
@@ -357,11 +361,16 @@ local function ReceiveMessages(gamemode, ignore)
 		local data = steamutils.parseData(v.data)
 
 		bytes_received = bytes_received + v.msg_size
+
 		if (gamemode.message) then
 			gamemode.message(lobby_code, data, v.user)
 		end
 		if (gamemode.received) then
 			if (data[1] and type(data[1]) == "string" and data[2]) then
+				if(bytes_received_per_type[data[1]] == nil)then
+					bytes_received_per_type[data[1]] = 0
+				end
+				bytes_received_per_type[data[1]] = bytes_received_per_type[data[1]] + v.msg_size
 				local event = data[1]
 				local message = data[2]
 				local frame = data[3]
@@ -609,6 +618,20 @@ function OnWorldPreUpdate()
 					last_bytes_received = bytes_received
 					bytes_sent = 0
 					bytes_received = 0
+					bytes_sent_per_type = {}
+					bytes_received_per_type = {}
+
+					local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
+
+					local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
+
+					local network_string = "Networking update: \n".."Data throughput: ".."in: " .. input_string .. " | out: " .. output_string
+
+					for k, v in pairs(bytes_sent_per_type) do
+						network_string = network_string + "\n["..k.."]: " .. tostring(v) .. " bytes sent"
+					end
+
+					networking_log:print(network_string)
 				end
 				--[[
 				local players = get_players()
