@@ -256,11 +256,12 @@ message_handlers = {
 				GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				pretty.table(steam.networking.getConnectionInfo(member.id))
 			else
-				if(data[1] ~= nil and type(data[1]) == "string")then
-					if(bytes_sent_per_type[data[1]] == nil)then
-						bytes_sent_per_type[data[1]] = 0
+				local id = bitser.loads(data)[1]
+				if(id ~= nil and type(id) == "string")then
+					if(bytes_sent_per_type[id] == nil)then
+						bytes_sent_per_type[id] = 0
 					end
-					bytes_sent_per_type[data[1]] = bytes_sent_per_type[data[1]] + size
+					bytes_sent_per_type[id] = bytes_sent_per_type[id] + size
 				end
 				bytes_sent = bytes_sent + size
 			end
@@ -286,11 +287,12 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					if(data[1] ~= nil and type(data[1]) == "string")then
-						if(bytes_sent_per_type[data[1]] == nil)then
-							bytes_sent_per_type[data[1]] = 0
+					local id = bitser.loads(data)[1]
+					if(id ~= nil and type(id) == "string")then
+						if(bytes_sent_per_type[id] == nil)then
+							bytes_sent_per_type[id] = 0
 						end
-						bytes_sent_per_type[data[1]] = bytes_sent_per_type[data[1]] + size
+						bytes_sent_per_type[id] = bytes_sent_per_type[id] + size
 					end
 					bytes_sent = bytes_sent + size
 				end
@@ -316,11 +318,12 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					if(data[1] ~= nil and type(data[1]) == "string")then
-						if(bytes_sent_per_type[data[1]] == nil)then
-							bytes_sent_per_type[data[1]] = 0
+					local id = bitser.loads(data)[1]
+					if(id ~= nil and type(id) == "string")then
+						if(bytes_sent_per_type[id] == nil)then
+							bytes_sent_per_type[id] = 0
 						end
-						bytes_sent_per_type[data[1]] = bytes_sent_per_type[data[1]] + size
+						bytes_sent_per_type[id] = bytes_sent_per_type[id] + size
 					end
 					bytes_sent = bytes_sent + size
 				end
@@ -342,11 +345,12 @@ message_handlers = {
 		if (success ~= 1) then
 			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
 		else
-			if(data[1] ~= nil and type(data[1]) == "string")then
-				if(bytes_sent_per_type[data[1]] == nil)then
-					bytes_sent_per_type[data[1]] = 0
+			local id = bitser.loads(data)[1]
+			if(id ~= nil and type(id) == "string")then
+				if(bytes_sent_per_type[id] == nil)then
+					bytes_sent_per_type[id] = 0
 				end
-				bytes_sent_per_type[data[1]] = bytes_sent_per_type[data[1]] + size
+				bytes_sent_per_type[id] = bytes_sent_per_type[id] + size
 			end
 			bytes_sent = bytes_sent + size
 		end
@@ -370,11 +374,12 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					if(data[1] ~= nil and type(data[1]) == "string")then
-						if(bytes_sent_per_type[data[1]] == nil)then
-							bytes_sent_per_type[data[1]] = 0
+					local id = bitser.loads(data)[1]
+					if(id ~= nil and type(id) == "string")then
+						if(bytes_sent_per_type[id] == nil)then
+							bytes_sent_per_type[id] = 0
 						end
-						bytes_sent_per_type[data[1]] = bytes_sent_per_type[data[1]] + size
+						bytes_sent_per_type[id] = bytes_sent_per_type[id] + size
 					end
 					bytes_sent = bytes_sent + size
 				end

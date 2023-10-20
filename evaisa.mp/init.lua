@@ -618,20 +618,30 @@ function OnWorldPreUpdate()
 					last_bytes_received = bytes_received
 					bytes_sent = 0
 					bytes_received = 0
-					bytes_sent_per_type = {}
-					bytes_received_per_type = {}
+
+					local function format_bytes(bytes)
+						return bytes < 1024 and tostring(bytes) .. " B/s" or tostring(math.floor(bytes / 1024)) .. " KB/s"
+					end
 
 					local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
 
 					local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
 
-					local network_string = "Networking update: \n".."Data throughput: ".."in: " .. input_string .. " | out: " .. output_string
+					local network_string = "Data throughput: ".."in: " .. input_string .. " | out: " .. output_string
 
 					for k, v in pairs(bytes_sent_per_type) do
-						network_string = network_string + "\n["..k.."]: " .. tostring(v) .. " bytes sent"
+						if(bytes_received_per_type[k] == nil)then
+							bytes_received_per_type[k] = 0
+						end
+						local sent = v
+						local received = bytes_received_per_type[k]
+						network_string = network_string .. "\n["..k.."]: out: "..format_bytes(sent).." | in: "..format_bytes(received)
 					end
 
-					networking_log:print(network_string)
+					bytes_sent_per_type = {}
+					bytes_received_per_type = {}
+
+					networking_log:print(network_string.."\n")
 				end
 				--[[
 				local players = get_players()
