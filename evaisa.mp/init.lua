@@ -134,7 +134,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.651	
+MP_VERSION = 1.66	
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
