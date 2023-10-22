@@ -237,7 +237,7 @@ steam_utils.messageTypes = {
 }
 
 message_handlers = {
-	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators)
+	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
@@ -256,7 +256,7 @@ message_handlers = {
 				GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				pretty.table(steam.networking.getConnectionInfo(member.id))
 			else
-				local id = bitser.loads(data)[1]
+				local id = event
 				if(id ~= nil and type(id) == "string")then
 					if(bytes_sent_per_type[id] == nil)then
 						bytes_sent_per_type[id] = 0
@@ -267,7 +267,7 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators)
+	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID()) then
@@ -287,7 +287,7 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					local id = bitser.loads(data)[1]
+					local id = event
 					if(id ~= nil and type(id) == "string")then
 						if(bytes_sent_per_type[id] == nil)then
 							bytes_sent_per_type[id] = 0
@@ -299,7 +299,7 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators)
+	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
@@ -318,7 +318,7 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					local id = bitser.loads(data)[1]
+					local id = event
 					if(id ~= nil and type(id) == "string")then
 						if(bytes_sent_per_type[id] == nil)then
 							bytes_sent_per_type[id] = 0
@@ -330,7 +330,7 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Host] = function(data, lobby, reliable)
+	[steam_utils.messageTypes.Host] = function(data, lobby, reliable, include_spectators, event)
 		--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to Host")
 		local success, size = 0, 0
 
@@ -345,7 +345,7 @@ message_handlers = {
 		if (success ~= 1) then
 			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
 		else
-			local id = bitser.loads(data)[1]
+			local id = event
 			if(id ~= nil and type(id) == "string")then
 				if(bytes_sent_per_type[id] == nil)then
 					bytes_sent_per_type[id] = 0
@@ -355,7 +355,7 @@ message_handlers = {
 			bytes_sent = bytes_sent + size
 		end
 	end,
-	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable)
+	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, true)
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
@@ -374,7 +374,7 @@ message_handlers = {
 				if (success ~= 1) then
 					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
-					local id = bitser.loads(data)[1]
+					local id = event
 					if(id ~= nil and type(id) == "string")then
 						if(bytes_sent_per_type[id] == nil)then
 							bytes_sent_per_type[id] = 0
@@ -438,14 +438,17 @@ steam_utils.send = function(event, message, messageType, lobby, reliable, includ
 		table.insert(data, GameGetFrameNum())
 	end
 
-	local encodedData = bitser.dumps(data)
+	local encodedData, err = zstd:compress(bitser.dumps(data))
 
-	if (encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
+	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
-		message_handlers[messageType](encodedData, lobby, reliable, include_spectators)
+		message_handlers[messageType](encodedData, lobby, reliable, include_spectators, event)
 	else
+		if(err)then
+			print("Error compressing data: " .. tostring(err))
+		end
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
@@ -457,9 +460,9 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 		table.insert(data, GameGetFrameNum())
 	end
 
-	local encodedData = bitser.dumps(data)
+	local encodedData, err = zstd:compress(bitser.dumps(data))
 
-	if (encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
+	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
@@ -478,13 +481,16 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 			bytes_sent = bytes_sent + size
 		end
 	else
+		if(err)then
+			print("Error compressing data: " .. tostring(err))
+		end
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
 
 
 steam_utils.parseData = function(data)
-	local decodedData = bitser.loads(data) --json.parse(data)
+	local decodedData = bitser.loads(zstd:decompress(data)) --json.parse(data)
 
 	return decodedData
 end
