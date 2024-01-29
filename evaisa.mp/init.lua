@@ -133,7 +133,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 1.52
+MP_VERSION = 301
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://discord.com/invite/zJyUSHGcme"
 Version_string = "63479623967237"
@@ -198,7 +198,7 @@ end
 local application_id = 943584660334739457LL
 
 np.InstallShootProjectileFiredCallbacks()
---np.EnableGameSimulatePausing(false)
+np.EnableGameSimulatePausing(false)
 np.InstallDamageDetailsPatch()
 np.SilenceLogs("Warning - streaming didn\'t find any chunks it could stream away...\n")
 --[[np.EnableExtendedLogging(true)
