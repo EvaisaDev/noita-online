@@ -228,6 +228,19 @@ local windows = {
 				return num
 			end
 
+			if(not lobby_code)then
+				-- force return to main menu
+				print("Disconnected from lobby?? (no lobby code)")
+				gui_closed = false
+				gamemode_settings = {}
+				initial_refreshes = 10
+				invite_menu_open = false
+				menu_status = status.main_menu
+				show_lobby_code = false
+				lobby_code = nil
+				banned_members = {}
+				return;
+			end
 
 			DrawWindow(menu_gui, -5000, screen_width / 2, screen_height / 2, window_width, window_height, function() 
 
@@ -427,6 +440,12 @@ local windows = {
 						mp_log:print("Attempting to load into gamemode: "..(active_mode and active_mode.name or "UNKNOWN"))
 
 						if(active_mode)then
+
+							in_game = true
+							game_in_progress = true
+							
+							gui_closed = true
+
 							mp_log:print("Attempting to start gamemode")
 							if(spectating)then
 								mp_log:print("Checking if gamemode has spectate function")
@@ -445,10 +464,6 @@ local windows = {
 								end
 							end
 
-							in_game = true
-							game_in_progress = true
-							
-							gui_closed = true
 
 						end
 					end

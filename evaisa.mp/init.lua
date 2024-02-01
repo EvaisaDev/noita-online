@@ -136,7 +136,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 322	
+MP_VERSION = 323	
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -367,29 +367,36 @@ local function ReceiveMessages(gamemode, ignore)
 		if (gamemode.message) then
 			gamemode.message(lobby_code, data, v.user)
 		end
-		if (gamemode.received) then
-			if (data[1] and type(data[1]) == "string" and data[2]) then
-				if(bytes_received_per_type[data[1]] == nil)then
-					bytes_received_per_type[data[1]] = 0
-				end
-				bytes_received_per_type[data[1]] = bytes_received_per_type[data[1]] + v.msg_size
-				local event = data[1]
-				local message = data[2]
-				local frame = data[3]
-				if (data[3]) then
-					-- check if frame is newer than member message frame
-					if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
-						member_message_frames[tostring(v.user)] = frame
+		
+		if (data[1] and type(data[1]) == "string" and data[2]) then
+			if(bytes_received_per_type[data[1]] == nil)then
+				bytes_received_per_type[data[1]] = 0
+			end
+			bytes_received_per_type[data[1]] = bytes_received_per_type[data[1]] + v.msg_size
+			local event = data[1]
+			local message = data[2]
+			local frame = data[3]
+			if (data[3]) then
+				-- check if frame is newer than member message frame
+				if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
+					member_message_frames[tostring(v.user)] = frame
 
-						--GamePrint("Received event: "..event)
-
+					--GamePrint("Received event: "..event)
+					if (gamemode.received) then
 						gamemode.received(lobby_code, event, message, v.user)
 					end
+				end
+			else
+				if(event == "mp_player_joined" and gamemode.player_join)then
+					gamemode.player_join(lobby_code, v.user)
 				else
-					gamemode.received(lobby_code, event, message, v.user)
+					if (gamemode.received) then
+						gamemode.received(lobby_code, event, message, v.user)
+					end
 				end
 			end
 		end
+
 	end
 end
 
@@ -814,6 +821,8 @@ function steam.matchmaking.onLobbyEnter(data)
 					if(game_in_progress)then
 						gui_closed = true
 					end]]
+
+					steamutils.send("mp_player_joined", {}, steamutils.messageTypes.OtherPlayers, lobby_code, true, true)
 					lobby_gamemode.enter(lobby_code)
 				end
 			end
