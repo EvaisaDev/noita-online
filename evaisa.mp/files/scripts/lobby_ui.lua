@@ -564,9 +564,24 @@ local windows = {
 				friendfilters_busy = friendfilters_busy or false
 				friendfilters_away = friendfilters_away or false
 
+				friends_cache = friends_cache or {
+					friends = nil,
+					state = {},
+					game_info = {},
+				}
+
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (150 / 2) - 18, screen_height / 2, 150, window_height, "Friends", true, function()
+					local do_update = GameGetFrameNum() % 60 == 0
+					
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
-					local friends = steamutils.getSteamFriends();
+
+					if(do_update or friends_cache.friends == nil)then
+						friends_cache.friends = steamutils.getSteamFriends();
+						friends_cache.state = {}
+						friends_cache.game_info = {}
+					end
+
+					local friends = friends_cache.friends
 
 					local only_ingame = GameTextGetTranslatedOrNot("$mp_invite_only_ingame")
 					if(GuiButton(menu_gui, NewID("Invite"), 0, 0, friendfilters_ingame and "[X] "..only_ingame or "[ ] "..only_ingame))then
@@ -596,9 +611,13 @@ local windows = {
 					GuiText(menu_gui, 2, 0, "--------------------")
 
 					for k, v in pairs(friends)do
+						local state = friends_cache.state[v.id] or steam.friends.getFriendPersonaState(v.id)
+						local game_info = friends_cache.game_info[v.id] or steam.friends.getFriendGamePlayed(v.id)
 
+						--[[
 						local state = steam.friends.getFriendPersonaState(v.id)
 						local game_info = steam.friends.getFriendGamePlayed(v.id)
+						]]
 
 						local online_filter_pass = state == 1 or (state == 0 and friendfilters_offline) or (state == 2 and friendfilters_busy) or (state == 3 and friendfilters_away) or (state == 4 and friendfilters_away)
 
@@ -956,8 +975,30 @@ local windows = {
 						for i, preset in ipairs(presets) do
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0)
 							if(GuiButton(menu_gui, NewID("remove_preset_"..tostring(preset.name)), 0, 0, GameTextGetTranslatedOrNot("$mp_remove_preset")))then
+								popup.create("delete_preset_prompt", string.format(GameTextGetTranslatedOrNot("$mp_delete_preset_confirm"), preset.name),{
+									{
+										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_description"),
+										color = {214 / 255, 60 / 255, 60 / 255, 1}
+									},
+								}, {
+									{
+										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_delete"),
+										callback = function()
+											RemovePreset(preset.name)
+											RefreshPresets()
+										end
+									},
+									{
+										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_cancel"),
+										callback = function()
+										end
+									}
+								}, -6000)
+								
+								--[[
 								RemovePreset(preset.name)
 								RefreshPresets()
+								]]
 							end
 							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
 								
@@ -1670,6 +1711,7 @@ if(not gui_closed)then
 		end
 	end
 	local text_width, text_height = GuiGetTextDimensions(menu_gui, version_string)
+	GuiZSetForNextWidget(menu_gui, 100)
 	GuiText(menu_gui, screen_width / 2 - text_width / 2, screen_height - text_height, version_string)
 	--print(version_string)
 	windows[menu_status].func()

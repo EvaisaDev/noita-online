@@ -333,4 +333,23 @@ input.GetChars = function(self)
     return self.chars
 end
 
+input.GetClipboardText = function(self)
+    local char_ptr = SDL.SDL_GetClipboardText()
+    if(char_ptr == nil)then
+        return nil
+    end
+
+    local text = ffi.string(char_ptr)
+    return text
+end
+
+input.SetClipboardText = function(self, text)
+    -- convert to char*
+    local char_ptr = ffi.new("char[?]", #text + 1)
+    ffi.copy(char_ptr, text, #text)
+    char_ptr[#text] = 0
+
+    SDL.SDL_SetClipboardText(char_ptr)
+end
+
 return input

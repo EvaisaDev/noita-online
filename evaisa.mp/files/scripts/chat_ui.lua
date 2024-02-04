@@ -22,7 +22,7 @@ chat_open = chat_open or false
 initial_chat_log = {}
 local reverse_chat_direction = ModSettingGet("evaisa.mp.flip_chat_direction")
 
-for i = 1, 9 do
+for i = 1, 20 do
 	table.insert(initial_chat_log, " ")
 end
 
@@ -43,6 +43,184 @@ if (#chat_log > 50) then
 	end
 end
 
+
+local reverse_chat_direction = ModSettingGet("evaisa.mp.flip_chat_direction")
+
+
+local function split_message(msg)
+	local words = {}
+	local index = 1
+	for word in string.gmatch(msg, "%S+") do
+
+		-- split word into chunks of 200 pixels or less
+
+		local width, height = GuiGetTextDimensions(chat_gui, word)
+
+		if (width > 200) then
+			local chunks = {}
+			local chunk = ""
+			for i = 1, #word do
+				local char = word:sub(i, i)
+				local char_width, char_height = GuiGetTextDimensions(chat_gui, chunk .. char)
+				if (char_width <= 200) then
+					chunk = chunk .. char
+				else
+					table.insert(chunks, chunk)
+					chunk = char
+				end
+			end
+			table.insert(chunks, chunk)
+
+			for i, chunk in ipairs(chunks) do
+				table.insert(words, chunk)
+			end
+		else
+			table.insert(words, word)
+		end
+
+
+		index = index + 1
+	end
+
+	local chunks = {}
+	local chunk = ""
+	for i, word in ipairs(words) do
+		local width, height = GuiGetTextDimensions(chat_gui, chunk .. " " .. word)
+
+		print("width: " .. tostring(width))
+
+		if width <= 200 then
+			if chunk == "" then
+				chunk = word
+			else
+				chunk = chunk .. " " .. word
+			end
+		else
+			table.insert(chunks, chunk)
+			chunk = word
+		end
+	end
+	table.insert(chunks, chunk)
+
+	return chunks
+end
+
+function handleChatMessage(data)
+	--[[
+		example data:
+
+		{
+			lobbyID = 9223372036854775807,
+			userID = 76361198523269435,
+			type = 1,
+			chatID = 1,
+			fromOwner = true,
+			message = "chat;evaisa: hello there how are you today?; I am great!; Yeah!"
+		}
+	]]
+
+	local message = data.message
+	local split_data = {}
+	for token in string.gmatch(message, "[^;]+") do
+		table.insert(split_data, token)
+	end
+
+	if (#split_data > 1 and split_data[1] == "chat") then
+		local buffer = {}
+		for i = 1, #split_data do
+			if (i ~= 1) then
+
+				local msg = split_data[i]
+
+				local chunks = split_message(msg)
+
+				for h = 1, #chunks do
+					if (not reverse_chat_direction) then
+						local was_found = false
+						for j = 1, #chat_log do
+							if (chat_log[j] == " ") then
+								chat_log[j] = chunks[h]
+								new_chat_message = true
+								was_found = true
+								break
+							end
+						end
+						if (not was_found) then
+							table.insert(chat_log, chunks[h])
+							new_chat_message = true
+						end
+					else
+						local empty_index = nil
+						for j = 1, #chat_log do
+							if (chat_log[j] == " ") then
+								empty_index = j
+								break
+							end
+						end
+						if (empty_index ~= nil) then
+							table.remove(chat_log, empty_index)
+						end
+
+						table.insert(buffer, chunks[h])
+						new_chat_message = true
+					end
+				end
+
+			end
+		end
+		if(reverse_chat_direction)then
+			for i = #buffer, 1, -1 do
+				print("inserting "..buffer[i].." at 1")
+				table.insert(chat_log, 1, buffer[i])
+			end
+		end
+	end
+end
+
+function ChatPrint(text)
+
+	local buffer = {}
+	local chunks = split_message(text)
+
+	for h = 1, #chunks do
+		if (not reverse_chat_direction) then
+			local was_found = false
+			for j = 1, #chat_log do
+				if (chat_log[j] == " ") then
+					chat_log[j] = chunks[h]
+					new_chat_message = true
+					was_found = true
+					break
+				end
+			end
+			if (not was_found) then
+				table.insert(chat_log, chunks[h])
+				new_chat_message = true
+			end
+		else
+			local empty_index = nil
+			for j = 1, #chat_log do
+				if (chat_log[j] == " ") then
+					empty_index = j
+					break
+				end
+			end
+			if (empty_index ~= nil) then
+				table.remove(chat_log, empty_index)
+			end
+
+			table.insert(buffer, chunks[h])
+			new_chat_message = true
+		end
+	end
+
+	if(reverse_chat_direction)then
+		for i = #buffer, 1, -1 do
+			print("inserting "..buffer[i].." at 1")
+			table.insert(chat_log, 1, buffer[i])
+		end
+	end
+end
 
 local GetPlayer = function()
 	local player = EntityGetWithTag("player_unit")
@@ -218,6 +396,7 @@ if (lobby_code ~= nil) then
 						end
 					end
 				else
+
 					local username = steamutils.getTranslatedPersonaName()
 					local message = username .. ": " .. input_text
 

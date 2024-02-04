@@ -2,25 +2,46 @@ steam_utils = {}
 
 unidecode = require('unicorndecode')
 
+username_cache = {}
+
+last_language = nil
+
 steam_utils.getTranslatedPersonaName = function(steam_id)
+	local language = GameTextGetTranslatedOrNot("$current_language")
+
+	if (last_language ~= language) then
+		username_cache = {}
+		last_language = language
+	end
+
+	if(username_cache[steam_id] ~= nil)then
+		return username_cache[steam_id]
+	end
+
 	local name = "Unknown"
+	
 	if(steam_id == nil)then
 		name = steam.friends.getPersonaName()
+		steam_id = 0
 	else
 		name = steam.friends.getFriendPersonaName(steam_id)
 	end
-	
+
+	local supported = check_string(name)
+
+	if(not supported)then
+		name = unidecode.decode(name)
+	end
+
+
 	if (name == nil or name == "") then
-		return "[Name Invalid]"
+		name = "[Name Invalid]"
 	end
 	
-	local decoded = unidecode.decode(name)
+	-- cache name
+	username_cache[steam_id] = name
 
-	if(decoded == name)then
-		return name
-	end
-
-	return decoded .. "(" .. tostring(name) .. ")"
+	return name
 end
 
 steam_utils.getSteamFriends = function()

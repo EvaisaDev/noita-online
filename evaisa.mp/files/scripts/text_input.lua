@@ -92,8 +92,14 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
         end
         ]]
 
-
-        if(input:GetInput("space"))then
+        -- handle ctrl + v for pasting
+        if((input:IsKeyDown("left ctrl") or input:IsKeyDown("right ctrl")) and input:GetInput("v"))then
+            local clipboard = input:GetClipboardText()
+            if(clipboard ~= nil)then
+                self.text = utf8.sub(self.text, 1, self.cursor_pos) .. clipboard .. utf8.sub(self.text, self.cursor_pos + 1)
+                self.cursor_pos = self.cursor_pos + utf8.len(clipboard)
+            end
+        elseif(input:GetInput("space"))then
 
             -- make sure we are not over the character limit
             if(self.character_limit > 0 and utf8.len(self.text) >= self.character_limit)then
@@ -152,7 +158,8 @@ text_input.create = function(gui, x, y, width, default_text, character_limit, al
                         return
                     end
                     self.text = utf8.sub(self.text, 1, self.cursor_pos) .. v .. utf8.sub(self.text, self.cursor_pos + 1)
-                    self.cursor_pos = self.cursor_pos + 1
+
+                    self.cursor_pos = self.cursor_pos + utf8.len(v)
                 end
             end
         end

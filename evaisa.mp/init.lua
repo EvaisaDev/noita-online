@@ -123,7 +123,7 @@ ModRegisterAudioEventMappings("mods/evaisa.mp/GUIDs.txt")
 dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 
 dofile("data/scripts/lib/coroutines.lua")
-
+nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
 local utf8 = require 'lua-utf8'
 
 np = require("noitapatcher")
@@ -136,7 +136,7 @@ delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 323	
+MP_VERSION = 327	
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -239,6 +239,8 @@ local is_invalid_version = (PhysicsBodyIDGetBodyAABB == nil)
 --GamePrint("Making api call")
 
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
+
+dofile("mods/evaisa.mp/lib/character_support.lua")
 
 local request = require("luajit-request")
 local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and
@@ -972,6 +974,7 @@ end
 
 function OnMagicNumbersAndWorldSeedInitialized()
 
+	print(json.stringify(char_ranges))
 	-- write to file
 	-- ModTextFileGetContent("data/translations/common.csv")
 	-- using io library to write to "noita_online_logs/translations.csv"
@@ -1030,7 +1033,7 @@ end
 
 local fix_falsely_enabled_gamemodes = function()
 	print("Fixing falsely enabled gamemodes")
-	local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
+
 	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
 
