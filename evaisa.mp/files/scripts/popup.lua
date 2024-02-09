@@ -1,19 +1,7 @@
 dofile_once("data/scripts/lib/utilities.lua")
 
 pretty = require("pretty_print")
---[[
-popup_gui = popup_gui or GuiCreate()
 
-GuiStartFrame(popup_gui)
-
-if(GameGetIsGamepadConnected())then
-    GuiOptionsAdd(popup_gui, GUI_OPTION.NonInteractive)
-end
-
-GuiOptionsAdd( chat_gui, GUI_OPTION.NoPositionTween )
-
-local screen_width, screen_height = GuiGetScreenDimensions( chat_gui );
-]]
 active_popups = active_popups or {}
 
 local popups = {}
