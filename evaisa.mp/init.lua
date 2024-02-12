@@ -131,12 +131,19 @@ bitser = require("bitser")
 binser = require("binser")
 zstandard = require("zstd")
 zstd = zstandard:new()
-profiler = dofile("mods/evaisa.mp/lib/profiler.lua")
 delay = dofile("mods/evaisa.mp/lib/delay.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
-MP_VERSION = 328
+profile = dofile("mods/evaisa.mp/lib/profile.lua")
+
+local profile_next = false
+local profiler_result_csv = io.open("profiler_online.csv", "w+")
+profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
+
+
+MP_VERSION = 330
+
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -149,6 +156,8 @@ rand = nil
 in_game = false
 Spawned = false
 Starting = nil
+
+lobby_gamemode = nil
 
 disable_print = false
 
@@ -203,7 +212,7 @@ function RepairDataFolder()
 	GamePrint("Repairing data folder")
 end
 
-local serialization_version = "2"
+local serialization_version = "3"
 if ((ModSettingGet("last_serialization_version") or "1") ~= serialization_version) then
 	RepairDataFolder()
 	ModSettingSet("last_serialization_version", serialization_version)
@@ -362,6 +371,7 @@ local function ReceiveMessages(gamemode, ignore)
 		return
 	end
 	for k, v in ipairs(messages) do
+		
 		local data = steamutils.parseData(v.data)
 
 		bytes_received = bytes_received + v.msg_size
@@ -378,6 +388,7 @@ local function ReceiveMessages(gamemode, ignore)
 			local event = data[1]
 			local message = data[2]
 			local frame = data[3]
+
 			if (data[3]) then
 				-- check if frame is newer than member message frame
 				if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
@@ -388,14 +399,8 @@ local function ReceiveMessages(gamemode, ignore)
 						gamemode.received(lobby_code, event, message, v.user)
 					end
 				end
-			else
-				if(event == "mp_player_joined" and gamemode.player_join)then
-					gamemode.player_join(lobby_code, v.user)
-				else
-					if (gamemode.received) then
-						gamemode.received(lobby_code, event, message, v.user)
-					end
-				end
+			elseif (gamemode.received) then
+				gamemode.received(lobby_code, event, message, v.user)
 			end
 		end
 
@@ -425,6 +430,16 @@ local laa_check_busy = false
 local invalid_version_popup_open = false
 
 function OnWorldPreUpdate()
+	if(profile_next --[[and GameGetFrameNum() % 60 == 0]])then
+		profile.start()
+	end
+
+	if (input ~= nil and input:WasKeyPressed("f8")) then
+		profile_next = not profile_next
+		if(not profile_next)then
+			profile.clear()
+		end
+	end
 
 	--input:Update()
 
@@ -571,7 +586,6 @@ function OnWorldPreUpdate()
 			end
 
 			if (lobby_code ~= nil) then
-				local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 				if (lobby_gamemode == nil) then
 					return
@@ -595,32 +609,6 @@ function OnWorldPreUpdate()
 
 				--print("a")
 
-				if (GameGetFrameNum() % 10 == 0) then
-					-- get lobby members
-					local current_members = {}
-					for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_code) do
-						local h = steam.matchmaking.getLobbyMemberByIndex(lobby_code, i - 1)
-						if (not active_members[tostring(h)]) then
-							active_members[tostring(h)] = h
-						end
-						if (not member_message_frames[tostring(h)]) then
-							member_message_frames[tostring(h)] = 0
-						end
-						current_members[tostring(h)] = true
-					end
-					for k, v in pairs(active_members) do
-						if (not current_members[k]) then
-							active_members[k] = nil
-							member_message_frames[k] = nil
-							steam.networking.closeSession(v)
-							mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
-							-- run gamemode on_leave
-							if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
-								lobby_gamemode.disconnected(lobby_code, v)
-							end
-						end
-					end
-				end
 
 				--print("b")
 
@@ -724,9 +712,8 @@ function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_
 		lobby_code = lobby_code or nil
 
 		if (lobby_code ~= nil) then
-			local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-			if (game_in_progress) then
+			if (lobby_gamemode ~= nil and game_in_progress) then
 				if (lobby_gamemode.on_projectile_fired) then
 					lobby_gamemode.on_projectile_fired(lobby_code, shooter_id, projectile_id, rng, position_x, position_y,
 						target_x, target_y, send_message, unknown1, multicast_index, unknown3)
@@ -743,9 +730,8 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 		lobby_code = lobby_code or nil
 
 		if (lobby_code ~= nil) then
-			local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-			if (game_in_progress) then
+			if (lobby_gamemode ~= nil and game_in_progress) then
 				if (lobby_gamemode.on_projectile_fired_post) then
 					lobby_gamemode.on_projectile_fired_post(lobby_code, shooter_id, projectile_id, rng, position_x,
 						position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
@@ -761,9 +747,8 @@ function OnWorldPostUpdate()
 		lobby_code = lobby_code or nil
 
 		if (lobby_code ~= nil) then
-			local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-			if (game_in_progress) then
+			if (lobby_gamemode ~= nil and game_in_progress) then
 				lobby_gamemode.late_update(lobby_code)
 
 				--[[
@@ -784,12 +769,21 @@ function OnWorldPostUpdate()
 	if(bindings ~= nil and not IsPaused())then
 		bindings:Update()
 	end
+
+	if(profile_next--[[ and GameGetFrameNum() % 60 == 0]])then
+		profile.stop()
+
+		profiler_result_csv:write(profile.csv(500))
+		profile.reset()
+		
+	end
 end
 
 function steam.matchmaking.onLobbyEnter(data)
 	for k, v in pairs(active_members) do
 		active_members[k] = nil
 		member_message_frames[k] = nil
+		lobby_members = {}
 		steam.networking.closeSession(v)
 		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 	end
@@ -801,7 +795,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		lobby_code = data.lobbyID
 		mp_log:print("Code set to: " .. tostring(lobby_code) .. "[" .. type(lobby_code) .. "]")
 		ModSettingSet("last_lobby_code", tostring(lobby_code))
-		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 		if handleVersionCheck() and handleModCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
@@ -824,7 +818,6 @@ function steam.matchmaking.onLobbyEnter(data)
 						gui_closed = true
 					end]]
 
-					steamutils.send("mp_player_joined", {}, steamutils.messageTypes.OtherPlayers, lobby_code, true, true)
 					lobby_gamemode.enter(lobby_code)
 				end
 			end
@@ -854,10 +847,57 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 	end
 end
 
+local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
+
+ChatMemberStateChangeEnum = {
+	k_EChatMemberStateChangeEntered = 1,
+	k_EChatMemberStateChangeLeft = 2,
+	k_EChatMemberStateChangeDisconnected = 4,
+	k_EChatMemberStateChangeKicked = 8,
+	k_EChatMemberStateChangeBanned = 10,
+}
+
 function steam.matchmaking.onLobbyChatUpdate(data)
-	--pretty.table(data)
-	handleBanCheck(data.userChanged)
-	handleInProgressCheck(data.userChanged)
+	if handleBanCheck(data.userChanged) then
+		return
+	end
+	if handleInProgressCheck(data.userChanged) then
+		return
+	end
+	
+	if(lobby_code ~= nil)then
+		steam_utils.getLobbyMembers(lobby_code, true, true)
+		if(data.chatMemberStateChange == ChatMemberStateChangeEnum.k_EChatMemberStateChangeEntered)then
+
+			if (lobby_gamemode == nil) then
+				return
+			end
+
+			print("A player joined!!11!!!1!!1")
+			
+			local h = data.user
+
+			if (not active_members[tostring(h)]) then
+				active_members[tostring(h)] = h
+			end
+			if (not member_message_frames[tostring(h)]) then
+				member_message_frames[tostring(h)] = 0
+			end
+
+			if(lobby_gamemode.player_join)then
+				lobby_gamemode.player_join(lobby_code, v.user)
+			end
+		else
+			active_members[tostring(v.user)] = nil
+			member_message_frames[tostring(v.user)] = nil
+			steam.networking.closeSession(v.user)
+			mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v.user))
+			-- run gamemode on_leave
+			if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
+				lobby_gamemode.disconnected(lobby_code, v.user)
+			end
+		end
+	end
 end
 
 function steam.matchmaking.onGameLobbyJoinRequested(data)
@@ -910,7 +950,6 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			Starting = 30
 		end
 	elseif (data.fromOwner and data.message == "refresh") then
-		local lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
 		if handleVersionCheck() and handleModCheck() then
 			if handleGamemodeVersionCheck(lobby_code) then
@@ -974,7 +1013,7 @@ end
 
 function OnMagicNumbersAndWorldSeedInitialized()
 
-	print(json.stringify(char_ranges))
+	--print(json.stringify(char_ranges))
 	-- write to file
 	-- ModTextFileGetContent("data/translations/common.csv")
 	-- using io library to write to "noita_online_logs/translations.csv"

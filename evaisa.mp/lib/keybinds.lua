@@ -1,6 +1,6 @@
 local inputs = dofile_once("mods/evaisa.mp/lib/list_inputs.lua")
 
-local json = dofile_once("mods/evaisa.mp/lib/json.lua")
+local smallfolk = dofile_once("mods/evaisa.mp/lib/smallfolk.lua")
 
 local bindings = {
     _bindings = {},
@@ -34,18 +34,18 @@ local bindings = {
             table.insert(self._binding_order, id)
         end
 
-        GlobalsSetValue("evaisa.mp.keybinds", json.stringify(self._bindings))
-        GlobalsSetValue("evaisa.mp.keybinds_order", json.stringify(self._binding_order))
+        GlobalsSetValue("evaisa.mp.keybinds", smallfolk.dumps(self._bindings))
+        GlobalsSetValue("evaisa.mp.keybinds_order", smallfolk.dumps(self._binding_order))
     end,
     Load = function(self)
         local data = GlobalsGetValue("evaisa.mp.keybinds", "{}")
         print(data)
-        local data = json.parse(data)
+        local data = smallfolk.loads(data)
 
         self._bindings = data
 
         local order_s = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
-        local order = json.parse(order_s)
+        local order = smallfolk.loads(order_s)
         self._binding_order = order
     end,
     IsJustDown = function(self, id)
@@ -257,8 +257,7 @@ local bindings = {
                     end
 
                     if(set)then
-                        GlobalsSetValue("evaisa.mp.keybinds", json.stringify(self._bindings))
-                        print("force reload!!")
+                        GlobalsSetValue("evaisa.mp.keybinds", smallfolk.dumps(self._bindings))
                         GameAddFlagRun("evaisa.mp.reload_bindings")
                     end
                 end

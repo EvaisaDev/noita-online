@@ -166,7 +166,7 @@ game_funcs = {
 		end
 	end,
 	RenderAboveHeadMarkers = function(players, offset_x, offset_y)
-		local marker_gui2 = GuiCreate()
+		marker_gui2 = marker_gui2 or GuiCreate()
 		GuiStartFrame(marker_gui2)
 		GuiOptionsAdd(marker_gui2, GUI_OPTION.NonInteractive)
 

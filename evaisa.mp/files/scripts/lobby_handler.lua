@@ -76,7 +76,9 @@ function handleBanCheck(user)
 	if (banned_members[tostring(user)] ~= nil) then
 		mp_log:print("Disconnected member: " .. tostring(user))
 		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_banned_warning"))
+		return true
 	end
+	return false
 end
 
 function handleInProgressCheck(user)
@@ -87,7 +89,9 @@ function handleInProgressCheck(user)
 	if(is_in_progress == "true" and allow_in_progress_joining == "false")then
 		mp_log:print("Disconnected member: " .. tostring(user))
 		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_in_progress_warning"))
+		return true
 	end
+	return false
 end
 
 function handleVersionCheck()
@@ -229,7 +233,7 @@ function ModData()
 
 		file:close()
 
-		mp_log:print("Mod data: "..json.stringify(data))
+		--mp_log:print("Mod data: "..json.stringify(data))
 
 		return data
 	end
@@ -240,8 +244,8 @@ function defineLobbyUserData(lobby)
 	--mp_log:print("Defining lobby user data")
 	local mod_data = ModData()
 	if (mod_data ~= nil) then
-		mp_log:print("Setting mod data: "..json.stringify(mod_data))
-		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", json.stringify(mod_data))
+		--mp_log:print("Setting mod data: "..json.stringify(mod_data))
+		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", bitser.dumps(mod_data))
 	end
 end
 
@@ -295,7 +299,7 @@ function getLobbyUserData(lobby, userid)
 		local player_name = steam.friends.getFriendPersonaName(userid)
 		--mp_log:print(player_name.." mods: "..player_mod_data)
 		--print("Getting mod data: "..player_mod_data)
-		local data_received = json.parse(player_mod_data)
+		local data_received = bitser.loads(player_mod_data)
 		--mp_log:print(player_mod_data)
 		return data_received
 	end

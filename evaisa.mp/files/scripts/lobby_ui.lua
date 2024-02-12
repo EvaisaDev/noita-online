@@ -899,7 +899,7 @@ local windows = {
 							end
 
 							local serialized_data = bitser.dumps(settings_data)
-							print(json.stringify(settings_data))
+							--print(json.stringify(settings_data))
 							local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. ".mp_preset", "w")
 							if(file ~= nil)then
 								file:write(serialized_data)

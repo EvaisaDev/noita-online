@@ -53,19 +53,39 @@ steam_utils.getSteamFriends = function()
 	return list
 end
 
-steam_utils.getLobbyMembers = function(lobby_id, include_spectators)
+lobby_members = lobby_members or {}
+
+steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cache)
+	-- implement cache
 	local list = {}
+	if(not update_cache and lobby_members[tostring(lobby_id)])then
+		goto return_list
+	end
+
+	lobby_members[tostring(lobby_id)] = {}
+
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
 
-		if (include_spectators or steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") ~= "true") then
-			--[[if(include_spectators)then
-				print("Adding " .. tostring(steam_utils.getTranslatedPersonaName(h)) .. " to list")
-			end]]
-			table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
-		end	
+		table.insert(lobby_members[tostring(lobby_id)], {
+			id = h, 
+			name = steam_utils.getTranslatedPersonaName(h),
+			is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") == "true"
+		})
 	end
-	return list
+
+	::return_list::
+
+	local out = {}
+
+	for i = 1, #lobby_members[tostring(lobby_id)] do
+		local member = lobby_members[tostring(lobby_id)][i]
+		if(not member.is_spectator or include_spectators)then
+			table.insert(out, member)
+		end
+	end
+
+	return out
 end
 
 steam_utils.getPlayerCount = function(lobby, include_spectators)
@@ -147,7 +167,11 @@ steam_utils.SetLocalLobbyData = function(lobby, key, value)
 
 	-- Get the saved list of "all_keys" from data_store
 	local key_string = data_store.Get("all_keys")
-	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string) or {}
+	local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
+	
+	if(type(keys) ~= "table")then
+		keys = {}
+	end
 
 	-- Check if there's not an entry for the lobby in keys table
 	if (keys[tostring(lobby)] == nil) then
@@ -162,7 +186,7 @@ steam_utils.SetLocalLobbyData = function(lobby, key, value)
 		keys[tostring(lobby)]["time_updated"] = os.time()
 	end
 
-	local key_string = json.stringify(keys)
+	local key_string = bitser.dumps(keys)
 
 	data_store.Set("all_keys", key_string)
 end
@@ -185,7 +209,7 @@ end
 steam_utils.CheckLocalLobbyData = function()
 	-- Get saved list of "all_keys" from data_store
 	local key_string = data_store.Get("all_keys")
-	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string)
+	local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string)
 
 	-- if keys is nil, remove all data from data_store
 	if (keys == nil) then
@@ -224,7 +248,7 @@ steam_utils.CheckLocalLobbyData = function()
 	end
 
 	-- Update the "all_keys" entry in data_store with the current keys table
-	local updated_key_string = json.stringify(keys)
+	local updated_key_string = bitser.dumps(keys)
 	data_store.Set("all_keys", updated_key_string)
 end
 
@@ -232,7 +256,7 @@ steam_utils.RemoveLocalLobbyData = function(lobby, key)
 	-- Compress the lobby ID
 	lobby = steam.utils.compressSteamID(lobby)
 	local key_string = data_store.Get("all_keys")
-	local keys = (key_string ~= nil and key_string ~= "") and json.parse(key_string) or {}
+	local keys = (key_string ~= nil and key_string ~= "") and bitser.loads(key_string) or {}
 
 	data_store.Remove(tostring(lobby) .. "_" .. key)
 
@@ -241,7 +265,7 @@ steam_utils.RemoveLocalLobbyData = function(lobby, key)
 			for k, _ in pairs(lobby_keys) do
 				if (k == key) then
 					keys[lob][key] = nil
-					data_store.Set("all_keys", json.stringify(keys))
+					data_store.Set("all_keys", bitser.dumps(keys))
 					return
 				end
 			end
@@ -458,8 +482,14 @@ steam_utils.send = function(event, message, messageType, lobby, reliable, includ
 	if (not reliable) then
 		table.insert(data, GameGetFrameNum())
 	end
+	local encodedData, err = nil, nil
 
-	local encodedData, err = zstd:compress(bitser.dumps(data))
+	if(type(message) == "string")then
+		table.insert(data, 1, "raw")
+		encodedData, err = zstd:compress(table.concat(data, "&;"))
+	else
+		encodedData, err = zstd:compress(bitser.dumps(data))
+	end
 
 	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
@@ -481,7 +511,15 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 		table.insert(data, GameGetFrameNum())
 	end
 
-	local encodedData, err = zstd:compress(bitser.dumps(data))
+	local encodedData, err = nil, nil
+
+	if(type(message) == "string")then
+		table.insert(data, 1, "raw")
+		encodedData, err = zstd:compress(table.concat(data, "&;"))
+	else
+		encodedData, err = zstd:compress(bitser.dumps(data))
+	end
+
 
 	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
@@ -509,9 +547,33 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 	end
 end
 
+local function split(str, delimiter)
+    local result = {}
+    local from = 1
+    local delim_from, delim_to = string.find(str, delimiter, from)
+    while delim_from do
+        table.insert(result, string.sub(str, from, delim_from - 1))
+        from = delim_to + 1
+        delim_from, delim_to = string.find(str, delimiter, from)
+    end
+    table.insert(result, string.sub(str, from))
+    return result
+end
+
 
 steam_utils.parseData = function(data)
-	local decodedData = bitser.loads(zstd:decompress(data)) --json.parse(data)
+	local decodedData = nil
+	
+	local str = zstd:decompress(data)
+	-- if string starts with raw, split string by "&;"
+	local prefix = "raw"
+	local delimiter = "&;"
+
+	if string.sub(str, 1, #prefix) == prefix then
+		decodedData = split(str, delimiter)
+	else
+		decodedData = bitser.loads(str)
+	end
 
 	return decodedData
 end

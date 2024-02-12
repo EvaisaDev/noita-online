@@ -78,19 +78,19 @@ function WorldToScreenPos(gui_input, x, y)
     return sx, sy
 end
 
+temp_gui = temp_gui or GuiCreate()
 
-function GetGuiMousePosition(gui)
+function GetGuiMousePosition()
 	local players = get_players()
 	if(players ~= nil)then
 		player = players[1]
 		if(player ~= nil)then
 			local controls_component = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
-			local gui = GuiCreate()
-			GuiStartFrame(gui)
-			local screen_width, screen_height = GuiGetScreenDimensions(gui)
+			
+			GuiStartFrame(temp_gui)
+			local screen_width, screen_height = GuiGetScreenDimensions(temp_gui)
 			local input_x, input_y = 100, 100;
 			local mx, my = mouse_raw_x * screen_width / 1280, mouse_raw_y * screen_height / 720
-			GuiDestroy(gui)
 			--local mx, my = ComponentGetValue2(controls_component, "mMousePositionRaw")
 			return mx, my
 		end
