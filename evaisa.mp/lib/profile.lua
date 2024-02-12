@@ -40,7 +40,7 @@ function profile.hooker(event, line, info)
   end
   -- find the line definition
   if not _defined[f] then
-    _defined[f] = info.short_src..":"..info.linedefined
+    _defined[f] = info.source..":"..info.linedefined
     _ncalls[f] = 0
     _telapsed[f] = 0
     _taverage[f] = 0

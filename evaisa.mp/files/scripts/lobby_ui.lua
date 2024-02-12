@@ -927,7 +927,28 @@ local windows = {
 						preset_name = preset_name or ("Preset_"..tostring(Random(1, 1000000)))
 						GuiLayoutBeginHorizontal(menu_gui, 0, 0)
 						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_preset_name"))
-						preset_name = GuiTextInput(menu_gui, NewID("save_preset_name"), 0, 0, preset_name, 90, 15, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ ")
+						preset_name = GuiTextInput(menu_gui, NewID("save_preset_name"), 0, 0, preset_name, 90, 15)
+
+						local illegal_chars = {
+							"/",
+							"\\",
+							":",
+							"*",
+							"?",
+							"\"",
+							"<",
+							">",
+							"|",
+						}
+
+						for i, char in ipairs(illegal_chars)do
+							preset_name = preset_name:gsub(char, "")
+						end
+
+						-- remove control characters
+						preset_name = preset_name:gsub("%c", "")
+
+
 						local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 
 						if(hover)then

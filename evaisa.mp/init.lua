@@ -138,11 +138,12 @@ popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 profile = dofile("mods/evaisa.mp/lib/profile.lua")
 
 local profile_next = false
+local profiler_rate = 113
 local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
 
-MP_VERSION = 330
+MP_VERSION = 331
 
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
@@ -430,7 +431,7 @@ local laa_check_busy = false
 local invalid_version_popup_open = false
 
 function OnWorldPreUpdate()
-	if(profile_next --[[and GameGetFrameNum() % 60 == 0]])then
+	if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
 		profile.start()
 	end
 
@@ -770,7 +771,7 @@ function OnWorldPostUpdate()
 		bindings:Update()
 	end
 
-	if(profile_next--[[ and GameGetFrameNum() % 60 == 0]])then
+	if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
 		profile.stop()
 
 		profiler_result_csv:write(profile.csv(500))

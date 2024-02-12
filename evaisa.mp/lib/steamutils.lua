@@ -482,24 +482,14 @@ steam_utils.send = function(event, message, messageType, lobby, reliable, includ
 	if (not reliable) then
 		table.insert(data, GameGetFrameNum())
 	end
-	local encodedData, err = nil, nil
+	local encodedData = bitser.dumps(data)
 
-	if(type(message) == "string")then
-		table.insert(data, 1, "raw")
-		encodedData, err = zstd:compress(table.concat(data, "&;"))
-	else
-		encodedData, err = zstd:compress(bitser.dumps(data))
-	end
-
-	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
+	if (encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
 		message_handlers[messageType](encodedData, lobby, reliable, include_spectators, event)
 	else
-		if(err)then
-			print("Error compressing data: " .. tostring(err))
-		end
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
@@ -511,17 +501,9 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 		table.insert(data, GameGetFrameNum())
 	end
 
-	local encodedData, err = nil, nil
+	local encodedData = bitser.dumps(data)
 
-	if(type(message) == "string")then
-		table.insert(data, 1, "raw")
-		encodedData, err = zstd:compress(table.concat(data, "&;"))
-	else
-		encodedData, err = zstd:compress(bitser.dumps(data))
-	end
-
-
-	if (not err and encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
+	if (encodedData ~= nil and (type(encodedData) == "string" or type(encodedData) == "number")) then
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
@@ -540,9 +522,6 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 			bytes_sent = bytes_sent + size
 		end
 	else
-		if(err)then
-			print("Error compressing data: " .. tostring(err))
-		end
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
@@ -564,16 +543,9 @@ end
 steam_utils.parseData = function(data)
 	local decodedData = nil
 	
-	local str = zstd:decompress(data)
-	-- if string starts with raw, split string by "&;"
-	local prefix = "raw"
-	local delimiter = "&;"
+	local str = data--zstd:decompress(data)
 
-	if string.sub(str, 1, #prefix) == prefix then
-		decodedData = split(str, delimiter)
-	else
-		decodedData = bitser.loads(str)
-	end
+	decodedData = bitser.loads(str)
 
 	return decodedData
 end
