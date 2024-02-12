@@ -138,7 +138,7 @@ popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 profile = dofile("mods/evaisa.mp/lib/profile.lua")
 
 local profile_next = false
-local profiler_rate = 113
+local profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
 local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
@@ -272,6 +272,10 @@ end
 function OnPausedChanged(paused, is_wand_pickup)
 	local players = EntityGetWithTag("player_unit") or {}
 
+	if(not is_wand_pickup)then
+		profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
+	end
+	
 	if (players[1]) then
 		np.RegisterPlayerEntityId(players[1])
 		local inventory_gui = EntityGetFirstComponentIncludingDisabled(players[1], "InventoryGuiComponent")

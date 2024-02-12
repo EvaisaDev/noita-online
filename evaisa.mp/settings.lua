@@ -39,6 +39,17 @@ mod_settings =
 		
 				}
 			},
+			{
+				id = "profiler_rate",
+				ui_name = "Profiler Rate",
+				ui_description = "The rate at which the debugging profiler runs, in frames.",
+				value_default = 1,
+				value_min = 1,
+				value_max = 300,
+				value_display_multiplier = 1,
+				value_display_formatting = " $0",
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
 		},
 	},
 }
