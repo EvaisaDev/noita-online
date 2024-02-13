@@ -143,7 +143,7 @@ local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
 
-MP_VERSION = 331
+MP_VERSION = 332
 
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
@@ -275,7 +275,7 @@ function OnPausedChanged(paused, is_wand_pickup)
 	if(not is_wand_pickup)then
 		profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
 	end
-	
+
 	if (players[1]) then
 		np.RegisterPlayerEntityId(players[1])
 		local inventory_gui = EntityGetFirstComponentIncludingDisabled(players[1], "InventoryGuiComponent")
@@ -443,6 +443,8 @@ function OnWorldPreUpdate()
 		profile_next = not profile_next
 		if(not profile_next)then
 			profile.clear()
+			profiler_result_csv = io.open("profiler_online.csv", "w+")
+			profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 		end
 	end
 
