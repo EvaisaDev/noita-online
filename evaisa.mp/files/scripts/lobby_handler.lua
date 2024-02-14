@@ -42,7 +42,7 @@ function handleDisconnect(data)
 		if (split_data[1] == "disconnect") then
 			if (split_data[2] == tostring(steam.user.getSteamID())) then
 				msg.log("You were disconnected from the lobby.")
-				steam.matchmaking.leaveLobby(data.lobbyID)
+				steam_utils.Leave(data.lobbyID)
 				invite_menu_open = false
 				menu_status = status.disconnected
 				disconnect_message = SplitMessage(split_data[3], 30)
@@ -56,25 +56,15 @@ end
 
 function disconnect(data)
 	msg.log("You were disconnected from the lobby.")
-	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-	if (active_mode) then
-		active_mode.leave(data.lobbyID)
-	end
-	delay.reset()
-	gui_closed = false
-	gamemode_settings = {}
-	steam.matchmaking.leaveLobby(data.lobbyID)
-	invite_menu_open = false
+	steam_utils.Leave(data.lobbyID)
 	menu_status = status.disconnected
 	disconnect_message = SplitMessage(data.message, 30)
-	show_lobby_code = false
-	lobby_code = nil
-	banned_members = {}
 end
 
 function handleBanCheck(user)
-	if (banned_members[tostring(user)] ~= nil) then
+	if (banned_members[tostring(user)] ~= nil or steam_utils.IsPlayerBlacklisted(user)) then
 		mp_log:print("Disconnected member: " .. tostring(user))
+		banned_members[tostring(user)] = true
 		steam.matchmaking.kickUserFromLobby(lobby_code, user, GameTextGetTranslatedOrNot("$mp_banned_warning"))
 		return true
 	end

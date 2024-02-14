@@ -147,8 +147,56 @@ steam_utils.GetLobbyData = function(key)
 	return value
 end
 
+steam_utils.Leave = function(lobby_id)
 
-local data_store = dofile("mods/evaisa.mp/lib/data_store.lua")
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_id, "gamemode"))
+	if (active_mode) then
+		active_mode.leave(lobby_id)
+	end
+	initial_refreshes = 10
+	delay.reset()
+	gui_closed = false
+	gamemode_settings = {}
+	steam.matchmaking.leaveLobby(lobby_id)
+	invite_menu_open = false
+	show_lobby_code = false
+	lobby_code = nil
+	banned_members = {}
+end
+
+
+local datastore = dofile("mods/evaisa.mp/lib/data_store.lua")
+local data_store = datastore.new(os.getenv('APPDATA'):gsub("\\Roaming", "").."\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_data")
+local persistent_bans = datastore.new(os.getenv('APPDATA'):gsub("\\Roaming", "").."\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_bans")
+
+steam_utils.IsPlayerBlacklisted = function(steam_id)
+	local value = persistent_bans.Get(tostring(steam_id))
+	if (value == nil) then
+		return false
+	end
+	return true
+end
+
+steam_utils.BlacklistPlayer = function(steam_id)
+	persistent_bans.Set(tostring(steam_id), steam.utils.compressSteamID(steam_id))
+end
+
+steam_utils.UnblacklistPlayer = function(steam_id)
+	persistent_bans.Remove(tostring(steam_id))
+end
+
+steam_utils.GetBlacklistedPlayers = function()
+	local keys = persistent_bans.Keys()
+	local out = {}
+	for k, v in pairs(keys) do
+		local value = persistent_bans.Get(v)
+		if (value ~= nil) then
+			table.insert(out, steam.utils.decompressSteamID(value))
+		end
+	end
+	return out
+end
+
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
 	if (key == "time_updated") then

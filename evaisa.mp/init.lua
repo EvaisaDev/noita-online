@@ -143,7 +143,7 @@ local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
 
-MP_VERSION = 332
+MP_VERSION = 333
 
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
@@ -435,6 +435,10 @@ local laa_check_busy = false
 local invalid_version_popup_open = false
 
 function OnWorldPreUpdate()
+	if(GameHasFlagRun("mp_blocked_load"))then
+		return
+	end
+
 	if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
 		profile.start()
 	end
@@ -568,7 +572,8 @@ function OnWorldPreUpdate()
 						if (tostring(lobCode) ~= "0") then
 							if (steam.extra.isSteamIDValid(lobCode)) then
 								gamemode_settings = {}
-								steam.matchmaking.leaveLobby(lobCode)
+								
+								steam_utils.Leave(lobCode)
 							end
 						end
 						ModSettingRemove("last_lobby_code")
@@ -786,6 +791,8 @@ function OnWorldPostUpdate()
 	end
 end
 
+
+
 function steam.matchmaking.onLobbyEnter(data)
 	for k, v in pairs(active_members) do
 		active_members[k] = nil
@@ -911,10 +918,10 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 	---pretty.table(data)
 	if (steam.extra.isSteamIDValid(data.lobbyID)) then
 		gamemode_settings = {}
-		steam.matchmaking.leaveLobby(data.lobbyID)
+		steam_utils.Leave(data.lobbyID)
 		steam.matchmaking.joinLobby(data.lobbyID, function(e)
 			if (e.response == 2) then
-				steam.matchmaking.leaveLobby(e.lobbyID)
+				steam_utils.Leave(e.lobbyID)
 				invite_menu_open = false
 				menu_status = status.main_menu
 				initial_refreshes = 10

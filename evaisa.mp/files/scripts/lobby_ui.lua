@@ -6,6 +6,7 @@ menu_gui = menu_gui or GuiCreate()
 
 GuiStartFrame(menu_gui)
 
+local text_input = dofile("mods/evaisa.mp/files/scripts/text_input.lua")
 
 status = {
 	main_menu = 1,
@@ -125,20 +126,20 @@ local windows = {
 								GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 								if(not IsCorrectVersion(v))then
 									if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
-										steam.matchmaking.leaveLobby(v)
+										steam_utils.Leave(v)
 										steam.matchmaking.joinLobby(v, function(e)
 										end)
 									end
 								else
 									if(active_mode ~= nil)then
 										if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-											steam.matchmaking.leaveLobby(v)
+											steam_utils.Leave(v)
 											steam.matchmaking.joinLobby(v, function(e)
 											end)
 										end
 									else
 										if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..""..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-											steam.matchmaking.leaveLobby(v)
+											steam_utils.Leave(v)
 											steam.matchmaking.joinLobby(v, function(e)
 											end)
 										end
@@ -167,14 +168,14 @@ local windows = {
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 							if(not IsCorrectVersion(v))then
 								if(GuiButton(menu_gui, NewID(), 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch").." "..lobby_name))then
-									steam.matchmaking.leaveLobby(v)
+									steam_utils.Leave(v)
 									steam.matchmaking.joinLobby(v, function(e)
 									end)
 								end
 							else
 								if(active_mode ~= nil)then
 									if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
-										steam.matchmaking.leaveLobby(v)
+										steam_utils.Leave(v)
 										steam.matchmaking.joinLobby(v, function(e)
 										end)
 									end
@@ -308,8 +309,8 @@ local windows = {
 				local text_width, text_height = GuiGetTextDimensions(menu_gui, lobby_presets_button_text)
 				current_button_height = current_button_height + text_height
 				local button_x_position = window_width - text_width
-				GuiLayoutBeginVertical(menu_gui, button_x_position, 0, true, 0, 0)
-				if(GuiButton(menu_gui, NewID("lobby_presets_button"), 0, 0, lobby_presets_button_text))then
+				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
+				if(GuiButton(menu_gui, NewID("lobby_presets_button"), button_x_position, 0, lobby_presets_button_text))then
 					lobby_presets_open = not lobby_presets_open
 					active_custom_menu = nil
 					invite_menu_open = false
@@ -323,9 +324,9 @@ local windows = {
 						if(lobby_menu.button_location == nil or lobby_menu.button_location == "main_window")then
 							local button_text = active_custom_menu == lobby_menu.id and GameTextGetTranslatedOrNot(lobby_menu.button_text).." >" or GameTextGetTranslatedOrNot(lobby_menu.button_text).." <"
 							local text_width, text_height = GuiGetTextDimensions(menu_gui, button_text)
-							local button_x_position = window_width - text_width
+							button_x_position = window_width - text_width
 							current_button_height = current_button_height + text_height
-							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), 0, 0, button_text))then
+							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), button_x_position, 0, button_text))then
 								if(active_custom_menu == lobby_menu.id)then
 									active_custom_menu = nil
 								else
@@ -346,20 +347,7 @@ local windows = {
 
 
 				if(GuiButton(menu_gui, NewID("lobby_leave_button"), 0, 0, GameTextGetTranslatedOrNot("$mp_leave_lobby")))then
-					local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-					if(active_mode)then
-						active_mode.leave(lobby_code)
-						delay.reset()
-					end
-					gui_closed = false
-					gamemode_settings = {}
-					steam.matchmaking.leaveLobby(lobby_code)
-					initial_refreshes = 10
-					invite_menu_open = false
-					menu_status = status.main_menu
-					show_lobby_code = false
-					lobby_code = nil
-					banned_members = {}
+					steam_utils.Leave(lobby_code)
 					return
 				end
 
@@ -481,9 +469,46 @@ local windows = {
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_kick_notification"))
 						end
 						if(GuiButton(menu_gui, NewID("lobby_player"), 0, 0, GameTextGetTranslatedOrNot("$mp_ban")))then
+
+							popup.create("ban_player_blacklist", GameTextGetTranslatedOrNot("$mp_blacklist_player"),
+							{
+								GameTextGetTranslatedOrNot("$mp_blacklist_player_description"),
+								{
+									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_description_2"),
+									color = {214 / 255, 60 / 255, 60 / 255, 1}
+								},
+							}, {
+								{
+									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_option_1"),
+									callback = function()
+										steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
+										steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
+										banned_members[tostring(v.id)] = true
+									end
+								},
+								{
+									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_option_2"),
+									callback = function()
+										steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
+										steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
+										banned_members[tostring(v.id)] = true
+										steam_utils.BlacklistPlayer(v.id)
+									end
+								},
+								{
+									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_option_3"),
+									callback = function()
+										-- nothing!!
+									end
+								}
+							}, -6000)
+
+							--[[
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
 							steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 							banned_members[tostring(v.id)] = true
+							]]
+
 						end
 						if(GuiButton(menu_gui, NewID("lobby_player"), 0, 0, GameTextGetTranslatedOrNot("$mp_owner")))then
 							steam.matchmaking.setLobbyOwner(lobby_code, v.id)
@@ -1072,7 +1097,7 @@ local windows = {
 				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
 					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
 						if(lobby_menu.id == active_custom_menu)then
-							DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function()
+							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
 								get_widget_info = function()
 									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
 									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
@@ -1083,7 +1108,17 @@ local windows = {
 									GuiText(menu_gui, 0, window_y + window_height, "------------------")
 									GuiLayoutEndLayer(menu_gui)]]
 
-									return (y > window_y and y < window_y + window_height), clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height
+									local mouse_x, mouse_y = input:GetUIMousePos(menu_gui)
+
+							
+
+									if(mouse_x < win_x or mouse_x > win_x + win_w or mouse_y < win_y or mouse_y > win_y + win_h + 5)then
+										hovered = false
+										right_clicked = false
+										clicked = false
+									end
+
+									return (y + height > window_y and y < window_y + window_height), clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height
 								end
 								if(lobby_menu.draw)then
 									lobby_menu.draw(lobby_code, menu_gui, function(id, force) return NewID(id or lobby_menu.id, force) end)
@@ -1466,7 +1501,7 @@ local windows = {
 
 				if(GuiButton(menu_gui, NewID("CreateLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
-						steam.matchmaking.leaveLobby(lobby_code)
+						steam_utils.Leave(lobby_code)
 						lobby_code = nil
 					end
 					invite_menu_open = false
@@ -1558,6 +1593,12 @@ local windows = {
 							steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
 
 							lobby_code = code
+
+							local blacklisted_players = steam_utils.GetBlacklistedPlayers()
+							for i, player in ipairs(blacklisted_players)do
+								steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(player), "true")
+								banned_members[tostring(player)] = true
+							end
 						end)
 					end
 				else
@@ -1598,7 +1639,7 @@ local windows = {
 
 				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
-						steam.matchmaking.leaveLobby(lobby_code)
+						steam_utils.Leave(lobby_code)
 						lobby_code = nil
 					end
 					invite_menu_open = false
@@ -1614,6 +1655,10 @@ local windows = {
 				if(GuiButton(menu_gui, NewID("JoinLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_paste_code")))then
 					-- Check if code only contains capital letters and is 25 characters or less
 					local code = steam.utils.getClipboard()
+
+					-- toupper
+					code = code:upper()
+
 					if(code ~= nil and code:match("^[%u]+$") and #code <= 25)then
 						lobby_code_input = code
 					end
@@ -1622,10 +1667,63 @@ local windows = {
 
 				GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 				GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_code")..": ")
-				local lobby_code_value = GuiTextInput(menu_gui, NewID("JoinLobby"), 2, 1, lobby_code_input, 120, 25, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-				if(lobby_code_input ~= lobby_code_value)then
-					lobby_code_input = lobby_code_value
+
+				local real_code = lobby_code_input
+
+				local censored_code = ""
+
+				if(ModSettingGet("evaisa.mp.hide_lobby_code"))then
+		
+					
+
+					for i = 1, #real_code do
+						censored_code = censored_code.."*"
+					end
+				else
+					censored_code = real_code
 				end
+
+				lobby_code_input = GuiTextInput(menu_gui, NewID("JoinLobby"), 2, 1, censored_code, 120, 25, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+
+				if(ModSettingGet("evaisa.mp.hide_lobby_code"))then
+					-- uncensor new input by merging it with the real code
+					if(#lobby_code_input < #real_code)then
+						lobby_code_input = real_code:sub(1, #lobby_code_input)
+					elseif(#lobby_code_input > #real_code)then
+						-- take new characters from lobby_code_input and merge them with real_code
+						local extra = lobby_code_input:sub(#real_code + 1)
+						lobby_code_input = real_code..extra
+					else
+						lobby_code_input = real_code
+					end
+				end
+
+				-- touppercase the input
+				lobby_code_input = lobby_code_input:upper()
+				
+
+
+				--[[if(lobby_code_input ~= lobby_code_value)then
+					lobby_code_input = lobby_code_value
+				end]]
+
+				--[[
+				lobby_code_box = lobby_code_box or text_input.create(chat_gui, 2, screen_height - 16, window_width + 2, "", 100, nil, ";", 0)
+
+				lobby_code_input = lobby_code_input or ""
+				
+				lobby_code_box.text = lobby_code_input
+				lobby_code_box:transform(2, screen_height - 16, window_width + 2)
+
+				lobby_code_box:update()
+
+				lobby_code_box:draw()
+		
+		
+				lobby_code_input = lobby_code_box.text
+				]]
+
+
 				GuiLayoutEnd(menu_gui)
 				
 
@@ -1636,7 +1734,7 @@ local windows = {
 						lobby_code_decompressed = steam.utils.decompressSteamID(lobby_code_input)
 						steam.matchmaking.joinLobby(lobby_code_decompressed, function(data)
 							if(data.response == 2)then
-								steam.matchmaking.leaveLobby(data.lobbyID)
+								steam_utils.Leave(data.lobbyID)
 								invite_menu_open = false
 								selected_player = nil
 								menu_status = status.joining_lobby
@@ -1679,7 +1777,7 @@ local windows = {
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 				if(GuiButton(menu_gui, NewID("JoinLobby"), 0, 0, GameTextGetTranslatedOrNot("$mp_return_menu")))then
 					if(lobby_code ~= nil)then
-						steam.matchmaking.leaveLobby(lobby_code)
+						steam_utils.Leave(lobby_code)
 						lobby_code = nil
 					end
 					invite_menu_open = false

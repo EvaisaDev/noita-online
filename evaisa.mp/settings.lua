@@ -23,6 +23,13 @@ mod_settings =
 				scope = MOD_SETTING_SCOPE_RUNTIME,
 			},]]
 			{
+				id = "hide_lobby_code",
+				ui_name = "Hide Lobby Code",
+				ui_description = "Censor lobby code in join lobby menu.",
+				value_default = false,
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
+			{
 				id = "flip_chat_direction",
 				ui_name = "Flip chat direction",
 				ui_description = "Make new messages appear on the top of the chat box.",
