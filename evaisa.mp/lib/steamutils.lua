@@ -7,6 +7,10 @@ username_cache = {}
 last_language = nil
 
 steam_utils.getTranslatedPersonaName = function(steam_id)
+	if(tonumber(tostring(steam_id)) == nil)then
+		return "Unknown"
+	end
+
 	local language = GameTextGetTranslatedOrNot("$current_language")
 
 	if (last_language ~= language) then
@@ -17,8 +21,6 @@ steam_utils.getTranslatedPersonaName = function(steam_id)
 	if(username_cache[steam_id] ~= nil)then
 		return username_cache[steam_id]
 	end
-
-	print("type: "..type(steam_id))
 
 	local name = "Unknown"
 	
