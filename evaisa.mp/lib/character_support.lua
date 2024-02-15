@@ -1,5 +1,5 @@
 char_ranges = {
-    notosans_zhcn_48 = {
+    ["data/fonts/generated/notosans_zhcn_48.bin"] = {
         {32, 254},
         {8220, 8221},
         {8734, 8734},
@@ -14,7 +14,7 @@ char_ranges = {
         {65311, 65311},
         {177984, 178206},
     },
-    notosans_jp_48 = {
+    ["data/fonts/generated/notosans_jp_48.bin"] = {
         {32, 254},
         {8230, 8230},
         {8734, 8734},
@@ -29,7 +29,7 @@ char_ranges = {
         {65306, 65306},
         {65311, 65311},
     },
-    notosans_ko_48 = {
+    ["data/fonts/generated/notosans_ko_48.bin"] = {
         {32, 254},
         {4352, 4606},
         {8734, 8734},
@@ -38,15 +38,15 @@ char_ranges = {
         {44032, 55202},
         {55216, 55294},
     },
-    font_pixel = {
+    ["data/fonts/font_pixel.xml"] = {
         
     }
 }
 
 language_fonts = {
-    ["简体中文"] = "notosans_zhcn_48",
-    ["日本語"] = "notosans_jp_48",
-    ["한국어"] = "notosans_ko_48",
+    ["简体中文"] = "data/fonts/generated/notosans_zhcn_48.bin",
+    ["日本語"] = "data/fonts/generated/notosans_jp_48.bin",
+    ["한국어"] = "data/fonts/generated/notosans_ko_48.bin",
 }
 
 get_font_characters = function(font)
@@ -69,10 +69,10 @@ get_font_characters = function(font)
 end
 
 -- only supports xml fonts
-register_font = function(font, font_name)
+register_font = function(font)
     local chars = get_font_characters(font)
 
-    char_ranges[font_name] = {}
+    char_ranges[font] = {}
 
     local range_start = chars[1]
     local range_end = chars[1]
@@ -82,19 +82,24 @@ register_font = function(font, font_name)
         if(char == range_end + 1)then
             range_end = char
         else
-            table.insert(char_ranges[font_name], {range_start, range_end})
+            table.insert(char_ranges[font], {range_start, range_end})
             range_start = char
             range_end = char
         end
     end
 
-    table.insert(char_ranges[font_name], {range_start, range_end})
+    table.insert(char_ranges[font], {range_start, range_end})
 end
 
-register_font("data/fonts/font_pixel.xml", "font_pixel")
+register_font("data/fonts/font_pixel.xml")
+register_font("data/fonts/font_pixel_big.xml")
 
-get_current_font = function()
-    local current_font = "font_pixel"
+get_current_font = function(huge)
+    local current_font = "data/fonts/font_pixel.xml"
+
+    if(huge)then
+        current_font = "data/fonts/font_pixel_huge.xml"
+    end
 
     local lang = GameTextGetTranslatedOrNot("$current_language")
 

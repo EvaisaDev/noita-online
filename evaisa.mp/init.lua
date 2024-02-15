@@ -1,4 +1,21 @@
+--------- STATIC VARIABLES ---------
+
 game_id = 881100
+MP_VERSION = 334
+VERSION_FLAVOR_TEXT = "$mp_beta"
+noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
+Version_string = "63479623967237"
+
+-----------------------------------
+
+
+------ TRANSLATIONS -------
+
+dofile("mods/evaisa.mp/lib/translations.lua")
+
+register_localizations("mods/evaisa.mp/translations.csv", 2)
+
+---------------------------
 
 package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.path = package.path .. ";./mods/evaisa.mp/lib/?/init.lua"
@@ -32,6 +49,9 @@ set_content = ModTextFileSetContent
 
 dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
 
+
+
+
 table.insert(package.loaders, 2, load)
 
 logger = require("logger")("noita_online_logs")
@@ -39,14 +59,7 @@ mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
 debug_log = logger.init("debugging.log")
 debug_info = logger.init("debug_info.log", nil, true)
-
------- TRANSLATIONS -------
-
-dofile("mods/evaisa.mp/lib/translations.lua")
-
-register_localizations("mods/evaisa.mp/translations.csv", 2)
-
----------------------------
+fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
 
 
 
@@ -142,12 +155,6 @@ local profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
 local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
-
-MP_VERSION = 334
-
-VERSION_FLAVOR_TEXT = "$mp_beta"
-noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
-Version_string = "63479623967237"
 
 debug_info:print("Build: " .. tostring(MP_VERSION))
 
@@ -1026,6 +1033,8 @@ function steam.networking.onSessionFailed(steamID, endReason, endDebug, connecti
 end
 
 function OnMagicNumbersAndWorldSeedInitialized()
+
+	fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_jp_regular_20.lua", "text_font.xml")
 
 	--print(json.stringify(char_ranges))
 	-- write to file

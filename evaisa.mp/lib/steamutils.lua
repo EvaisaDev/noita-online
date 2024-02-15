@@ -18,6 +18,8 @@ steam_utils.getTranslatedPersonaName = function(steam_id)
 		return username_cache[steam_id]
 	end
 
+	print("type: "..type(steam_id))
+
 	local name = "Unknown"
 	
 	if(steam_id == nil)then
@@ -48,7 +50,13 @@ steam_utils.getSteamFriends = function()
 	local list = {}
 	for i = 1, steam.friends.getFriendCount(0x04) do
 		local h = steam.friends.getFriendByIndex(i - 1, 0x04)
+
+		if(tonumber(tostring(h)) == nil)then
+			goto continue
+		end
+
 		table.insert(list, { id = h, name = steam_utils.getTranslatedPersonaName(h) })
+		::continue::
 	end
 	return list
 end
