@@ -143,7 +143,7 @@ local profiler_result_csv = io.open("profiler_online.csv", "w+")
 profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 
 
-MP_VERSION = 333
+MP_VERSION = 334
 
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
