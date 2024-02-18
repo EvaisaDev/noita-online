@@ -249,12 +249,13 @@ local windows = {
 				GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_lobby").." - ("..((not show_lobby_code) and censorString(steam.utils.compressSteamID(lobby_code)) or steam.utils.compressSteamID(lobby_code))..")")
 
 				GuiColorSetForNextWidget( menu_gui, (74 / 2) / 255, (62 / 2) / 255, (46 / 2) / 255, 0.5 )
-				GuiImage(menu_gui, NewID("Lobby"), 1, 1.5, (show_lobby_code) and "mods/evaisa.mp/files/gfx/ui/hide.png" or "mods/evaisa.mp/files/gfx/ui/show.png", 0.5, 1)
+				--GuiImage(menu_gui, NewID("Lobby"), 1, 1.5, (show_lobby_code) and "mods/evaisa.mp/files/gfx/ui/hide.png" or "mods/evaisa.mp/files/gfx/ui/show.png", 0.5, 1)
 				
 
-				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.5 )
-				if(GuiButton(menu_gui, NewID("Lobby"), 0, 0, show_lobby_code and " "..GameTextGetTranslatedOrNot("$mp_hide") or " "..GameTextGetTranslatedOrNot("$mp_show")))then
+				GuiColorSetForNextWidget( menu_gui, 74 / 255, 62 / 255, 46 / 255, 0.5 )
+				if(GuiImageButton(menu_gui, NewID("Lobby"), 1, 1.5, "", (show_lobby_code) and "mods/evaisa.mp/files/gfx/ui/hide.png" or "mods/evaisa.mp/files/gfx/ui/show.png"))then
 					show_lobby_code = not show_lobby_code
+					GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 				end
 				
 				if(show_lobby_code)then
@@ -275,12 +276,18 @@ local windows = {
 					end, -5100, -68, -20)
 				end
 
-				GuiColorSetForNextWidget( menu_gui, (74 / 2) / 255, (62 / 2) / 255, (46 / 2) / 255, 0.5 )
-				GuiImage(menu_gui, NewID("Lobby"), 6, 1.5, "mods/evaisa.mp/files/gfx/ui/copy.png", 0.5, 1)
+				
+				--GuiImage(menu_gui, NewID("Lobby"), 6, 1.5, "mods/evaisa.mp/files/gfx/ui/copy.png", 0.5, 1)
 
-				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.5 )
+				--[[GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.5 )
 				if(GuiButton(menu_gui, NewID("Lobby"), -1, 0, " "..GameTextGetTranslatedOrNot("$mp_copy")))then
 					steam.utils.setClipboard(steam.utils.compressSteamID(lobby_code))
+				end]]
+
+				GuiColorSetForNextWidget( menu_gui, 74 / 255, 62 / 255, 46 / 255, 0.5 )
+				if(GuiImageButton(menu_gui, NewID("Lobby"), 6, 1.5, "", "mods/evaisa.mp/files/gfx/ui/copy.png"))then
+					steam.utils.setClipboard(steam.utils.compressSteamID(lobby_code))
+					GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 				end
 
 				CustomTooltip(menu_gui, function() 

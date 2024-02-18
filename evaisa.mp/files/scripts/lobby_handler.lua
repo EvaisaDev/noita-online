@@ -154,6 +154,61 @@ function IsCorrectVersion(lobby)
 	return true
 end
 
+local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
+
+function string_split(str, sep)
+    local ret = {}
+
+    local value_start = 1
+
+    while true do
+        local skip_start, skip_end = utf8.find(str, sep, value_start, true)
+        skip_start = skip_start or #str + 1
+        skip_end = skip_end or #str + 1
+
+        if value_start <= skip_start then
+            local value = utf8.sub(str, value_start, skip_start - 1)
+            value_start = skip_end + 1
+            ret[#ret + 1] = value
+        else
+            return ret
+        end
+    end
+end
+
+
+function SerializeModData(data)
+	local serialized = ""
+	--print(inspect(data))
+	for i, v in ipairs(data) do
+		local name = (v.name or ""):gsub("\x01", "")
+		local description = (v.description or ""):gsub("\x01", "")
+		local download_link = (v.download_link or ""):gsub("\x01", "")
+		serialized = serialized .. (v.workshop_item_id or "0") .. "\x01" .. (v.id or "") .. "\x01" .. name .. "\x01" .. description .. "\x01" .. download_link
+		if (i < #data) then
+			serialized = serialized .. "\x01"
+		end
+	end
+	--print(serialized)
+	return serialized
+end
+
+function DeserializeModData(data)
+	local split_data = string_split(data, "\x01")
+	local mod_data = {}
+	for i = 1, #split_data, 5 do
+		table.insert(mod_data, {
+			workshop_item_id = split_data[i],
+			id = split_data[i + 1],
+			name = split_data[i + 2],
+			description = split_data[i + 3],
+			download_link = split_data[i + 4]
+		})
+	end
+	--print(inspect(mod_data))
+	return mod_data
+end
+
 function ModData()
 	local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
 	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
@@ -181,7 +236,6 @@ function ModData()
 					workshop_item_id = "0",
 					name = GameTextGetTranslatedOrNot("$mp_mod_twitch_integration_name"),
 					description = GameTextGetTranslatedOrNot("$mp_mod_twitch_integration_description"),
-					enabled = true
 				})
 		end
 
@@ -212,8 +266,6 @@ function ModData()
 									name = parsedModInfo.attr.name,
 									description = parsedModInfo.attr.description,
 									download_link = download_link,
-									settings_fold_open = (elem.attr.settings_fold_open == "1" and true or false),
-									enabled = (elem.attr.enabled == "1" and true or false)
 								})
 						end
 					end
@@ -231,11 +283,9 @@ function ModData()
 end
 
 function defineLobbyUserData(lobby)
-	--mp_log:print("Defining lobby user data")
 	local mod_data = ModData()
 	if (mod_data ~= nil) then
-		--mp_log:print("Setting mod data: "..json.stringify(mod_data))
-		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", bitser.dumps(mod_data))
+		steam.matchmaking.setLobbyMemberData(lobby, "mod_data", SerializeModData(mod_data))
 	end
 end
 
@@ -277,7 +327,12 @@ function handleModCheck()
 	return true
 end
 
-function getLobbyUserData(lobby, userid)
+cached_lobby_data = cached_lobby_data or {}
+
+function getLobbyUserData(lobby, userid, force)
+	if(cached_lobby_data[userid] ~= nil and force ~= true)then
+		return cached_lobby_data[userid]
+	end
 	if(lobby == nil) then
 		return nil
 	end
@@ -286,11 +341,8 @@ function getLobbyUserData(lobby, userid)
 	end 
 	local player_mod_data = steam.matchmaking.getLobbyMemberData(lobby, userid, "mod_data")
 	if (player_mod_data ~= nil and player_mod_data ~= "") then
-		local player_name = steam.friends.getFriendPersonaName(userid)
-		--mp_log:print(player_name.." mods: "..player_mod_data)
-		--print("Getting mod data: "..player_mod_data)
-		local data_received = bitser.loads(player_mod_data)
-		--mp_log:print(player_mod_data)
+		local data_received = DeserializeModData(player_mod_data)
+		cached_lobby_data[userid] = data_received
 		return data_received
 	end
 	return nil

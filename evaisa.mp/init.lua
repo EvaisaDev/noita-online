@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 334
+MP_VERSION = 335
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -17,6 +17,7 @@ register_localizations("mods/evaisa.mp/translations.csv", 2)
 
 ---------------------------
 
+------ Path definitions -------
 package.path = package.path .. ";./mods/evaisa.mp/lib/?.lua"
 package.path = package.path .. ";./mods/evaisa.mp/lib/?/init.lua"
 package.cpath = package.cpath .. ";./mods/evaisa.mp/bin/?.dll"
@@ -36,6 +37,11 @@ local function load(modulename)
 	return errmsg
 end
 
+---------------------------
+
+local ffi = require"ffi"
+
+
 string.bytes = function(str)
 	local bytes = 0
 	for i = 1, #str do
@@ -43,6 +49,9 @@ string.bytes = function(str)
 	end
 	return bytes
 end
+
+
+
 
 get_content = ModTextFileGetContent
 set_content = ModTextFileSetContent
@@ -59,7 +68,7 @@ mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
 debug_log = logger.init("debugging.log")
 debug_info = logger.init("debug_info.log", nil, true)
-fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
+--fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
 
 
 
@@ -141,6 +150,7 @@ local utf8 = require 'lua-utf8'
 
 np = require("noitapatcher")
 bitser = require("bitser")
+smallfolk = require("smallfolk")
 binser = require("binser")
 zstandard = require("zstd")
 zstd = zstandard:new()
@@ -206,7 +216,8 @@ base64 = require("base64")
 
 msg = require("msg")
 pretty = require("pretty_print")
-local ffi = require "ffi"
+
+
 
 debug_info:print("Beta build: " .. tostring(GameIsBetaBuild()))
 debug_info:print("Using controller: " .. tostring(GameGetIsGamepadConnected()))
@@ -452,12 +463,12 @@ function OnWorldPreUpdate()
 
 	if (input ~= nil and input:WasKeyPressed("f8")) then
 		profile_next = not profile_next
-		if(not profile_next)then
+		if(profile_next)then
 			profile.clear()
 			profiler_result_csv = io.open("profiler_online.csv", "w+")
 			profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
 		end
-	end
+	end 
 
 	--input:Update()
 
@@ -894,9 +905,11 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 				return
 			end
 
-			print("A player joined!!11!!!1!!1")
+			print("A player joined!")
 			
 			local h = data.user
+
+			getLobbyUserData(lobby_code, h, true)
 
 			if (not active_members[tostring(h)]) then
 				active_members[tostring(h)] = h
@@ -928,6 +941,7 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 		steam_utils.Leave(data.lobbyID)
 		steam.matchmaking.joinLobby(data.lobbyID, function(e)
 			if (e.response == 2) then
+				cached_lobby_data = {}
 				steam_utils.Leave(e.lobbyID)
 				invite_menu_open = false
 				menu_status = status.main_menu
@@ -1034,7 +1048,9 @@ end
 
 function OnMagicNumbersAndWorldSeedInitialized()
 
-	fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_jp_regular_20.lua", "text_font.xml")
+	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_jp_regular_20.lua", "noto_sans_jp_regular_20.xml")
+	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_regular_20.lua", "noto_sans_regular_20.xml")
+	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_sc_regular_20.lua", "noto_sans_sc_regular_20.xml")
 
 	--print(json.stringify(char_ranges))
 	-- write to file

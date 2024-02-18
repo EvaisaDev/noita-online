@@ -7,7 +7,7 @@ username_cache = {}
 last_language = nil
 
 steam_utils.getTranslatedPersonaName = function(steam_id)
-	if(tonumber(tostring(steam_id)) == nil)then
+	if(steam_id ~= nil and tonumber(tostring(steam_id)) == nil)then
 		return "Unknown"
 	end
 
@@ -163,6 +163,8 @@ steam_utils.Leave = function(lobby_id)
 	if (active_mode) then
 		active_mode.leave(lobby_id)
 	end
+
+	cached_lobby_data = {}
 	initial_refreshes = 10
 	delay.reset()
 	gui_closed = false

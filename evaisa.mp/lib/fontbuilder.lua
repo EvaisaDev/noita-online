@@ -18,7 +18,7 @@ fontbuilder.generate = function(font_lua_file, output_file)
     local xml = nxml.parse("<FontData></FontData>")
     
     -- create texture node
-    local texture = nxml.parse("<Texture>"..texture.."</Texture>")
+    local texture = nxml.parse("<Texture>"..folder_path..texture.."</Texture>")
     local line_height = nxml.parse("<LineHeight>"..line_height.."</LineHeight>")
     local char_space = nxml.parse("<CharSpace>"..char_space.."</CharSpace>")
     local word_space = nxml.parse("<WordSpace>"..word_space.."</WordSpace>")
@@ -30,15 +30,23 @@ fontbuilder.generate = function(font_lua_file, output_file)
     
     for i = 1, #chars do
 
-        local char = nxml.parse("<Char id=\""..utf8.byte(chars[i].char).."\" rect_h=\""..chars[i].h.."\" rect_w=\""..chars[i].w.."\" rect_x=\""..chars[i].x.."\" rect_y=\""..chars[i].y.."\" ></Char>")
+        --[[
+            <QuadChar id="32" offset_x="0" offset_y="0" rect_h="11" rect_w="3" rect_x="0" rect_y="0" width="3" >
+            </QuadChar>
+        ]]
+
+        --[[
+            {char="〫",width=0,x=1,y=1,w=6,h=6,ox=-27,oy=29},
+        ]]
+        local char = nxml.parse("<QuadChar id=\""..utf8.codepoint(chars[i].char).."\" offset_x=\"0\" offset_y=\"0\" rect_h=\""..chars[i].h.."\" rect_w=\""..chars[i].w.."\" rect_x=\""..chars[i].x.."\" rect_y=\""..chars[i].y.."\" width=\""..chars[i].width.."\" ></QuadChar>")
     
         xml:add_child(char)
     end
 
 
     -- write to file
-    --local file = io.open(output_file, "w")
-    --file:write(tostring(xml))
+    local file = io.open(output_file, "w")
+    file:write(tostring(xml))
 end
 
 return fontbuilder
