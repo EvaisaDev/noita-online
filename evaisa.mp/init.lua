@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 335
+MP_VERSION = 336
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -421,6 +421,9 @@ local function ReceiveMessages(gamemode, ignore)
 					if (gamemode.received) then
 						gamemode.received(lobby_code, event, message, v.user)
 					end
+				--[[else
+					print("current_frame: " .. tostring(frame) .. " member_frame: " .. tostring(member_message_frames[tostring(v.user)]))
+					print("Message dropped: " .. event)]]
 				end
 			elseif (gamemode.received) then
 				gamemode.received(lobby_code, event, message, v.user)
@@ -907,28 +910,33 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 
 			print("A player joined!")
 			
-			local h = data.user
+			local h = data.userChanged
 
 			getLobbyUserData(lobby_code, h, true)
 
 			if (not active_members[tostring(h)]) then
 				active_members[tostring(h)] = h
 			end
-			if (not member_message_frames[tostring(h)]) then
-				member_message_frames[tostring(h)] = 0
-			end
+			
+			--print("Clearing frames for " .. tostring(h))
+			member_message_frames[tostring(h)] = nil
+		
 
 			if(lobby_gamemode.player_join)then
-				lobby_gamemode.player_join(lobby_code, v.user)
+				lobby_gamemode.player_join(lobby_code, h)
 			end
 		else
-			active_members[tostring(v.user)] = nil
-			member_message_frames[tostring(v.user)] = nil
-			steam.networking.closeSession(v.user)
-			mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v.user))
+			local h = data.userChanged
+
+			active_members[tostring(h)] = nil
+
+			--print("Clearing frames for " .. tostring(h))
+			member_message_frames[tostring(h)] = nil
+			steam.networking.closeSession(h)
+			mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(h))
 			-- run gamemode on_leave
 			if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
-				lobby_gamemode.disconnected(lobby_code, v.user)
+				lobby_gamemode.disconnected(lobby_code, h)
 			end
 		end
 	end

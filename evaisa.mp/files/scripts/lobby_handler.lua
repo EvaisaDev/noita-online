@@ -134,6 +134,34 @@ function handleGamemodeVersionCheck(lobbycode)
 	return true
 end
 
+function HasRequiredMods(lobby)
+	local required_mod_string = steam.matchmaking.getLobbyData(lobby, "required_mods") or ""
+
+	print(required_mod_string)
+
+	local required_mods = required_mod_string ~= "" and bitser.loads(required_mod_string) or {}
+
+	local player_mods = ModData()
+
+	--print(json.stringify(required_mods))
+
+	
+	for i = #required_mods, 1, -1 do
+		local v = required_mods[i]
+		for k2, v2 in pairs(player_mods) do
+			if (v2.id == v[1]) then
+				table.remove(required_mods, i)
+			end
+		end
+	end
+
+	if (#required_mods > 0) then
+		return false
+	end
+	
+	return true
+end
+
 function IsCorrectVersion(lobby)
 	local version = steam.matchmaking.getLobbyData(lobby, "version")
 	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
@@ -143,15 +171,101 @@ function IsCorrectVersion(lobby)
 		return false
 	end
 	if (active_mode ~= nil and gamemode_version ~= nil) then
-		if (active_mode ~= nil) then
-			if (active_mode.version ~= tonumber(gamemode_version)) then
-				return false
-			end
-		else
+
+		if (active_mode.version ~= tonumber(gamemode_version)) then
 			return false
 		end
+	else
+		return false
+
 	end
 	return true
+end
+
+function VersionInfo(lobby)
+	-- return version info
+	local info = {
+		mp_version_same = true,
+		mp_version_string = GameTextGetTranslatedOrNot("$mp_lobby_info_same_version"),
+		mp_version_string_user = "",
+		gamemode_version_same = true,
+		gamemode_missing = false,
+		gamemode_version_string = GameTextGetTranslatedOrNot("$mp_lobby_info_gm_same_version"),
+		gamemode_version_string_user = ""
+	}
+
+	local version = steam.matchmaking.getLobbyData(lobby, "version")
+	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
+
+	if(version < tostring(MP_VERSION))then
+		info.mp_version_same = false
+		info.mp_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_host_older"), version)
+		info.mp_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), MP_VERSION)
+	elseif(version > tostring(MP_VERSION))then
+		info.mp_version_same = false
+		info.mp_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_host_newer"), version)
+		info.mp_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), MP_VERSION)
+	end
+
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby, "gamemode"))
+
+	if(active_mode == nil)then
+		info.gamemode_missing = true
+		info.gamemode_version_same = false
+		info.gamemode_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_gm_missing"), steam.matchmaking.getLobbyData(lobby, "gamemode"), gamemode_version)
+	else
+		if(active_mode.version > tonumber(gamemode_version))then
+			info.gamemode_version_same = false
+			info.gamemode_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_gm_host_older"), GameTextGetTranslatedOrNot(active_mode.name), gamemode_version)
+			info.gamemode_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), active_mode.version)
+		elseif(active_mode.version < tonumber(gamemode_version))then
+			info.gamemode_version_same = false
+			info.gamemode_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_gm_host_newer"), GameTextGetTranslatedOrNot(active_mode.name), gamemode_version)
+			info.gamemode_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), active_mode.version)
+		end
+	end
+
+
+	return info
+	
+end
+
+function ModInfo(lobby)
+	local info = {
+		missing_mods = {},
+		missing_mods_string = ""
+	}
+
+	local required_mods = (steam.matchmaking.getLobbyData(lobby, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby, "required_mods")) or {}
+
+	local player_mods = ModData()
+
+	--print(json.stringify(required_mods))
+
+	
+	for i = #required_mods, 1, -1 do
+		local v = required_mods[i]
+		for k2, v2 in pairs(player_mods) do
+			if (v2.id == v[1]) then
+				table.remove(required_mods, i)
+			end
+		end
+	end
+
+	if (#required_mods > 0) then
+		for i, v in ipairs(required_mods) do
+			table.insert(info.missing_mods, v[2])
+		end
+		info.missing_mods_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_missing_mods_list"), table.concat(info.missing_mods, ", "))
+	end
+
+	-- remove trailing comma
+	if (string.sub(info.missing_mods_string, -2) == ", ") then
+		info.missing_mods_string = string.sub(info.missing_mods_string, 1, -3)
+	end
+
+	return info
+
 end
 
 local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
@@ -208,6 +322,8 @@ function DeserializeModData(data)
 	--print(inspect(mod_data))
 	return mod_data
 end
+
+
 
 function ModData()
 	local nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
@@ -326,6 +442,8 @@ function handleModCheck()
 	
 	return true
 end
+
+
 
 cached_lobby_data = cached_lobby_data or {}
 

@@ -14,9 +14,16 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         clear_file:close()
     end
 
-    local new_logger = {log_file = io.open(file_path, "a")}
+    local new_logger = {
+        log_file = io.open(file_path, "a"),
+        enabled = true
+    }
 
     function new_logger.print(_, ...)
+        if not new_logger.enabled then
+            return
+        end
+
         if not new_logger.log_file then
             error("Attempt to print to a closed log file.")
             -- reopen file
@@ -53,6 +60,11 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         new_logger.log_file:write(log_message)
         new_logger.log_file:flush()
     end
+
+    function new_logger.enabled(_, enabled)
+        new_logger.enabled = enabled
+    end
+
 
     function new_logger.close()
         if new_logger.log_file then
