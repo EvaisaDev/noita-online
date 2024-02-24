@@ -87,7 +87,7 @@ local function split_message(msg)
 	for i, word in ipairs(words) do
 		local width, height = GuiGetTextDimensions(chat_gui, chunk .. " " .. word)
 
-		print("width: " .. tostring(width))
+		--print("width: " .. tostring(width))
 
 		if width <= 200 then
 			if chunk == "" then
@@ -130,7 +130,7 @@ function handleChatMessage(data)
 		for i = 1, #split_data do
 			if (i ~= 1) then
 
-				local msg = split_data[i]
+				local msg = steam_utils.getTranslatedPersonaName(data.userID, data.userID == steam.user.getSteamID()) .. ": " .. split_data[i]
 
 				local chunks = split_message(msg)
 
@@ -386,8 +386,8 @@ if (lobby_code ~= nil) then
 							if(active_mode ~= nil and active_mode.commands and active_mode.commands[command_name])then
 								active_mode.commands[command_name](command_name, args)
 							elseif(active_mode ~= nil )then
-								local username = steamutils.getTranslatedPersonaName()
-								local message = username .. ": " .. input_text
+								--local username = steamutils.getTranslatedPersonaName()
+								local message = input_text
 			
 								local message_final = "chat;" .. message
 								steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)
@@ -397,8 +397,8 @@ if (lobby_code ~= nil) then
 					end
 				else
 
-					local username = steamutils.getTranslatedPersonaName()
-					local message = username .. ": " .. input_text
+					--local username = steamutils.getTranslatedPersonaName()
+					local message = input_text
 
 					local message_final = "chat;" .. message
 					steam.matchmaking.sendLobbyChatMsg(lobby_code, message_final)

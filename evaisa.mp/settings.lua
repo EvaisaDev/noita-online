@@ -30,6 +30,20 @@ mod_settings =
 				scope = MOD_SETTING_SCOPE_RUNTIME,
 			},
 			{
+				id = "streamer_mode",
+				ui_name = "Streamer Mode",
+				ui_description = "Disable avatars and other stuff.",
+				value_default = false,
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
+			{
+				id = "streamer_mode_detection",
+				ui_name = "Streaming App Detection",
+				ui_description = "Show popup asking if you want to enable streamer mode if a streaming app is detected, and streamer mode is disabled.",
+				value_default = true,
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
+			{
 				id = "flip_chat_direction",
 				ui_name = "Flip chat direction",
 				ui_description = "Make new messages appear on the top of the chat box.",

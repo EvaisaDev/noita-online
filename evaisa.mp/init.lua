@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 336
+MP_VERSION = 337
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -148,6 +148,7 @@ dofile("data/scripts/lib/coroutines.lua")
 nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
 local utf8 = require 'lua-utf8'
 
+pngencoder = require("pngencoder")
 np = require("noitapatcher")
 bitser = require("bitser")
 smallfolk = require("smallfolk")
@@ -155,6 +156,7 @@ binser = require("binser")
 zstandard = require("zstd")
 zstd = zstandard:new()
 delay = dofile("mods/evaisa.mp/lib/delay.lua")
+streaming = dofile("mods/evaisa.mp/lib/streaming.lua")
 
 popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 
@@ -256,6 +258,7 @@ end]]
 steam = require("luasteam")
 --require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
+clear_avatar_cache()
 json = dofile_once("mods/evaisa.mp/lib/json.lua")
 
 pretty = require("pretty_print")
@@ -537,7 +540,7 @@ function OnWorldPreUpdate()
 		end
 		
 		if(not laa_check_busy)then
-			if(not steam.utils.loggedOn())then
+			if(not steam.user.loggedOn())then
 				if(GameGetFrameNum() % (60 * 5) == 0)then
 					GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
 				end
@@ -815,10 +818,12 @@ end
 
 
 function steam.matchmaking.onLobbyEnter(data)
+	clear_avatar_cache()
 	for k, v in pairs(active_members) do
 		active_members[k] = nil
 		member_message_frames[k] = nil
 		lobby_members = {}
+		lobby_members_ids = {}
 		steam.networking.closeSession(v)
 		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
 	end
@@ -826,6 +831,12 @@ function steam.matchmaking.onLobbyEnter(data)
 	Starting = nil
 	in_game = false
 	game_in_progress = false
+
+	local user = steam.user.getSteamID()
+
+	steamutils.getUserAvatar(user)
+
+
 	if (data.response ~= 2) then
 		lobby_code = data.lobbyID
 		mp_log:print("Code set to: " .. tostring(lobby_code) .. "[" .. type(lobby_code) .. "]")
@@ -911,6 +922,8 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 			print("A player joined!")
 			
 			local h = data.userChanged
+
+			steamutils.getUserAvatar(h)
 
 			getLobbyUserData(lobby_code, h, true)
 
@@ -1178,11 +1191,38 @@ end
 
 function OnPlayerSpawned(player)
 
+	-- make popup
+	local streaming, streaming_app = streaming.IsStreaming()
+	if(ModSettingGet("evaisa.mp.streamer_mode_detection") and streaming and not ModSettingGet("evaisa.mp.streamer_mode"))then
+		popup.create("streaming_message", GameTextGetTranslatedOrNot("$mp_streamer_mode_popup"),{ 
+			{
+				text = string.format(GameTextGetTranslatedOrNot("$mp_streamer_mode_popup_detected"), streaming_app),
+				color = {217 / 255, 52 / 255, 52 / 255, 1}
+			},
+			GameTextGetTranslatedOrNot("$mp_streamer_mode_popup_desc"),
+			GameTextGetTranslatedOrNot("$mp_streamer_mode_popup_desc2")
+		}, {
+			{
+				text = GameTextGetTranslatedOrNot("$mp_streamer_mode_popup_enable"),
+				callback = function()
+					ModSettingSet("evaisa.mp.streamer_mode", true)
+				end
+			},
+			{
+				text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+				callback = function()
+				end
+			}
+		}, -6000)
+		
+	end
+
 	fix_falsely_enabled_gamemodes()
 	ModSettingRemove("lobby_data_store")
 	GameRemoveFlagRun("game_paused")
 	rand = rng.new(os.time()+GameGetFrameNum())
 	delay.reset()
+	
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

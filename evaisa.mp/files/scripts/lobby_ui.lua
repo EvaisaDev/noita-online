@@ -197,36 +197,36 @@ local windows = {
 
 										local info = VersionInfo(v)
 										
-										--GuiZSetForNextWidget(menu_gui, -5110)
+										--GuiZSetForNextWidget(menu_gui, -6110)
 										GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 										--GuiText(menu_gui, 0, 0, "Hide Code")
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch"))
 	
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, info.mp_version_string)
 										if(not info.mp_version_same)then
 											GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-											GuiZSetForNextWidget(menu_gui, -5210)
+											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, info.mp_version_string_user)
 										end
 	
 										GuiText(menu_gui, 0, 0, " ")
 										
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, info.gamemode_version_string)
 										if(not info.gamemode_missing and not info.gamemode_version_same)then
 											GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-											GuiZSetForNextWidget(menu_gui, -5210)
+											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, info.gamemode_version_string_user)
 										end
 	
 	
-									end, -5200, 0, 0)
+									end, -6200, 0, 0)
 									
-									GuiZSetForNextWidget(menu_gui, -5000)
+									GuiZSetForNextWidget(menu_gui, -6000)
 									GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 									GuiText(menu_gui, 0, 0, lobby_name)
 
@@ -234,6 +234,7 @@ local windows = {
 									if(active_mode ~= nil)then
 
 										if(HasRequiredMods(v))then
+											GuiZSetForNextWidget(menu_gui, -6000)
 											if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 												steam_utils.Leave(v)
 												steam.matchmaking.joinLobby(v, function(e)
@@ -249,20 +250,20 @@ local windows = {
 
 												GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 												--GuiText(menu_gui, 0, 0, "Hide Code")
-												GuiZSetForNextWidget(menu_gui, -5210)
+												GuiZSetForNextWidget(menu_gui, -6210)
 												GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_lobby_info_missing_mods"))
 		
 												local strings = split_message(info.missing_mods_string, 200) or {}
 
 												for k, v in ipairs(strings)do
 													GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-													GuiZSetForNextWidget(menu_gui, -5210)
+													GuiZSetForNextWidget(menu_gui, -6210)
 													GuiText(menu_gui, 0, 0, v)
 												end
 											
-											end, -5200, 0, 0)
+											end, -6200, 0, 0)
 		
-											GuiZSetForNextWidget(menu_gui, -5000)
+											GuiZSetForNextWidget(menu_gui, -6000)
 											GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 											GuiText(menu_gui, 0, 0, lobby_name)
 										end
@@ -279,16 +280,16 @@ local windows = {
 										CustomTooltip(menu_gui, function() 
 											GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 											--GuiText(menu_gui, 0, 0, "Hide Code")
-											GuiZSetForNextWidget(menu_gui, -5210)
+											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_missing"))
 	
 											GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-											GuiZSetForNextWidget(menu_gui, -5210)
+											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, string.format(GameTextGetTranslatedOrNot("mp_lobby_info_gm_missing"), lobby_mode_id, steam.matchmaking.getLobbyData(VersionInfo, "version")))
 										
-										end, -5200, 0, 0)
+										end, -6200, 0, 0)
 	
-										GuiZSetForNextWidget(menu_gui, -5000)
+										GuiZSetForNextWidget(menu_gui, -6000)
 										GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 										GuiText(menu_gui, 0, 0, lobby_name)
 									end
@@ -328,41 +329,42 @@ local windows = {
 
 									local info = VersionInfo(v)
 									
-									--GuiZSetForNextWidget(menu_gui, -5110)
+									--GuiZSetForNextWidget(menu_gui, -6110)
 									GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 									--GuiText(menu_gui, 0, 0, "Hide Code")
-									GuiZSetForNextWidget(menu_gui, -5210)
+									GuiZSetForNextWidget(menu_gui, -6210)
 									GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_version_mismatch"))
 
 									GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-									GuiZSetForNextWidget(menu_gui, -5210)
+									GuiZSetForNextWidget(menu_gui, -6210)
 									GuiText(menu_gui, 0, 0, info.mp_version_string)
 									if(not info.mp_version_same)then
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, info.mp_version_string_user)
 									end
 
 									GuiText(menu_gui, 0, 0, " ")
 									
 									GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-									GuiZSetForNextWidget(menu_gui, -5210)
+									GuiZSetForNextWidget(menu_gui, -6210)
 									GuiText(menu_gui, 0, 0, info.gamemode_version_string)
 									if(not info.gamemode_missing and not info.gamemode_version_same)then
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, info.gamemode_version_string_user)
 									end
 
 
-								end, -5200, 0, 0)
+								end, -6200, 0, 0)
 
-								GuiZSetForNextWidget(menu_gui, -5000)
+								GuiZSetForNextWidget(menu_gui, -6000)
 								GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 								GuiText(menu_gui, 0, 0, lobby_name)
 							else
 								if(active_mode ~= nil)then
 									if(HasRequiredMods(v))then
+										GuiZSetForNextWidget(menu_gui, -6000)
 										if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
 											steam_utils.Leave(v)
 											steam.matchmaking.joinLobby(v, function(e)
@@ -378,20 +380,20 @@ local windows = {
 
 											GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 											--GuiText(menu_gui, 0, 0, "Hide Code")
-											GuiZSetForNextWidget(menu_gui, -5210)
+											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_lobby_info_missing_mods"))
 	
 											local strings = split_message(info.missing_mods_string, 200) or {}
 
 											for k, v in ipairs(strings)do
 												GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-												GuiZSetForNextWidget(menu_gui, -5210)
+												GuiZSetForNextWidget(menu_gui, -6210)
 												GuiText(menu_gui, 0, 0, v)
 											end
 										
-										end, -5200, 0, 0)
+										end, -6200, 0, 0)
 	
-										GuiZSetForNextWidget(menu_gui, -5000)
+										GuiZSetForNextWidget(menu_gui, -6000)
 										GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 										GuiText(menu_gui, 0, 0, lobby_name)
 									end
@@ -406,16 +408,16 @@ local windows = {
 									CustomTooltip(menu_gui, function() 
 										GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 										--GuiText(menu_gui, 0, 0, "Hide Code")
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_missing"))
 
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
-										GuiZSetForNextWidget(menu_gui, -5210)
+										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, string.format(GameTextGetTranslatedOrNot("mp_lobby_info_gm_missing"), lobby_mode_id, steam.matchmaking.getLobbyData(VersionInfo, "version")))
 									
-									end, -5200, 0, 0)
+									end, -6200, 0, 0)
 
-									GuiZSetForNextWidget(menu_gui, -5000)
+									GuiZSetForNextWidget(menu_gui, -6000)
 									GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
 									GuiText(menu_gui, 0, 0, lobby_name)
 								end
@@ -706,6 +708,8 @@ local windows = {
 				for k, v in pairs(players) do
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 	
+					GuiImage(menu_gui, NewID("lobby_player"), 0, 0, steam_utils.getUserAvatar(v.id), 1, 10 / 32, 10 / 32, 0)
+
 					if(v.id ~= steam.user.getSteamID() and owner == steam.user.getSteamID())then
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_kick_notification"))

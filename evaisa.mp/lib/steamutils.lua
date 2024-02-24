@@ -6,44 +6,74 @@ username_cache = {}
 
 last_language = nil
 
-steam_utils.getTranslatedPersonaName = function(steam_id)
-	if(steam_id ~= nil and tonumber(tostring(steam_id)) == nil)then
-		return "Unknown"
+steam_utils.truncateNameStreaming = function(name)
+	local name = name:sub(1, 1) .. "..."
+
+	if lobby_code ~= nil then
+		local members = steam_utils.getLobbyMembersIDs(lobby_code, true)
+		for i = 1, #members do
+			if members[i] == steam.user.getSteamID() then
+				name = "(" .. tostring(i) .. ")" .. name
+				break
+			end
+		end
 	end
 
-	local language = GameTextGetTranslatedOrNot("$current_language")
+	return name
+end
 
-	if (last_language ~= language) then
-		username_cache = {}
-		last_language = language
-	end
 
-	if(username_cache[steam_id] ~= nil)then
-		return username_cache[steam_id]
+steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
+	
+	if(steam_id == nil)then
+		no_streamer_mode = true
 	end
 
 	local name = "Unknown"
+	if(not (steam_id ~= nil and tonumber(tostring(steam_id)) == nil))then
+
+		local language = GameTextGetTranslatedOrNot("$current_language")
+
+		if (last_language ~= language) then
+			username_cache = {}
+			last_language = language
+		end
+
+		if(username_cache[steam_id] ~= nil)then
+			name = username_cache[steam_id]
+			goto continue
+		end
+		
+		if(steam_id == nil)then
+			name = steam.friends.getPersonaName()
+			steam_id = 0
+		else
+			name = steam.friends.getFriendPersonaName(steam_id)
+		end
+
+		local supported = check_string(name)
+
+		if(not supported)then
+			name = unidecode.decode(name)
+		end
+
+
+		if (name == nil or name == "") then
+			name = "Unknown"
+		end
+		
+		-- cache name
+		username_cache[steam_id] = name
+
+		::continue::
+	end
 	
-	if(steam_id == nil)then
-		name = steam.friends.getPersonaName()
-		steam_id = 0
-	else
-		name = steam.friends.getFriendPersonaName(steam_id)
-	end
-
-	local supported = check_string(name)
-
-	if(not supported)then
-		name = unidecode.decode(name)
+	-- truncate name after first letter if streamer mode is enabled
+	if(ModSettingGet("evaisa.mp.streamer_mode") and not no_streamer_mode)then
+		name = steam_utils.truncateNameStreaming(name)
 	end
 
 
-	if (name == nil or name == "") then
-		name = "[Name Invalid]"
-	end
-	
-	-- cache name
-	username_cache[steam_id] = name
 
 	return name
 end
@@ -63,11 +93,115 @@ steam_utils.getSteamFriends = function()
 	return list
 end
 
+function color_split(abgr_int)
+    local r = bit.band(abgr_int, 0x000000FF)
+    local g = bit.band(abgr_int, 0x0000FF00)
+    local b = bit.band(abgr_int, 0x00FF0000)
+    local a = bit.band(abgr_int, 0xFF000000)
+
+    g = bit.rshift(g, 8)
+    b = bit.rshift(b, 16)
+    a = bit.rshift(a, 24)
+
+    return r,g,b,a
+end
+
+function color_merge(r,g,b,a)
+    local abgr_int = 0
+    abgr_int = bit.bor(abgr_int, r)
+    abgr_int = bit.bor(abgr_int, bit.lshift(g, 8))
+    abgr_int = bit.bor(abgr_int, bit.lshift(b, 16))
+    abgr_int = bit.bor(abgr_int, bit.lshift(a, 24))
+
+    return abgr_int
+end
+
+local lfs = require("lfs")
+
+-- clear avatar cache directory
+function clear_avatar_cache()
+	local cache_folder = "mods/evaisa.mp/cache/avatars/"
+	for file in lfs.dir(cache_folder) do
+		if (file ~= "." and file ~= "..") then
+			local f = cache_folder .. file
+			os.remove(f)
+		end
+	end
+end
+
+cached_avatars = cached_avatars or {}
+
+steam_utils.getUserAvatar = function(user_id)
+
+	if(user_id == nil or ModSettingGet("evaisa.mp.streamer_mode"))then
+		return "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
+	end
+
+	if(cached_avatars[user_id] ~= nil)then
+		return cached_avatars[user_id]
+	end
+
+	local handle = steam.friends.getSmallFriendAvatar(user_id)
+	if(handle == nil)then
+		cached_avatars[user_id] = "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
+	end
+
+	local cache_folder = "mods/evaisa.mp/cache/avatars/"
+
+	local image_data = steam.utils.getImageData(handle)
+	local width, height = steam.utils.getImageSize(handle)
+
+	if(image_data == nil)then
+		cached_avatars[user_id] = "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
+		return "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
+	end
+
+	--print(inspect(image_data))
+
+	local path = cache_folder .. tostring(user_id) .. ".png"
+
+	local png = pngencoder(width, height)
+
+	for y = 1, height do
+		for x = 1, width do
+			local index = (y - 1) * width + x
+			local pixel = image_data[index]
+			local r, g, b, a = color_split(pixel)
+			
+			png:write { r, g, b }
+		end
+	end
+
+
+
+	local data = table.concat(png.output)
+
+	--print("Writing avatar to " .. path)
+	--print("Image data: " .. tostring(data))
+
+	local file = io.open(path, "wb")
+	file:write(data)
+	file:close()
+
+	cached_avatars[user_id] = path
+
+	return path
+end
+
 lobby_members = lobby_members or {}
+was_streamer_mode = was_streamer_mode or false
 
 steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cache)
 	-- implement cache
-	local list = {}
+
+	if(was_streamer_mode and not ModSettingGet("evaisa.mp.streamer_mode"))then
+		update_cache = true
+		was_streamer_mode = false
+	elseif(not was_streamer_mode and ModSettingGet("evaisa.mp.streamer_mode"))then
+		update_cache = true
+		was_streamer_mode = true
+	end
+
 	if(not update_cache and lobby_members[tostring(lobby_id)])then
 		goto return_list
 	end
@@ -79,7 +213,7 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 
 		table.insert(lobby_members[tostring(lobby_id)], {
 			id = h, 
-			name = steam_utils.getTranslatedPersonaName(h),
+			name = steam_utils.getTranslatedPersonaName(h, h == steam.user.getSteamID()),
 			is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") == "true"
 		})
 	end
@@ -96,6 +230,35 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 	end
 
 	return out
+end
+
+lobby_members_ids = lobby_members_ids or {}
+
+steam_utils.getLobbyMembersIDs = function(lobby_id, include_spectators, update_cache)
+	-- implement cache
+	if(not update_cache and lobby_members_ids[tostring(lobby_id)])then
+		goto return_list
+	end
+
+	lobby_members_ids[tostring(lobby_id)] = {}
+
+	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
+		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
+
+		table.insert(lobby_members_ids[tostring(lobby_id)], h)
+	end
+
+	::return_list::
+
+	local out = {}
+
+	for i = 1, #lobby_members_ids[tostring(lobby_id)] do
+		local member = lobby_members_ids[tostring(lobby_id)][i]
+		table.insert(out, member)
+	end
+
+	return out
+
 end
 
 steam_utils.getPlayerCount = function(lobby, include_spectators)

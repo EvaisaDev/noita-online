@@ -13,11 +13,15 @@ dofile("data/scripts/lib/utilities.lua")
 --local EntityGet_cfunc = ffi.cast("EntityGet_f*", 0x00527660)
 --local SetActiveHeldEntity_cfunc = ffi.cast("SetActiveHeldEntity_f*", 0x009ec390)
 
+local parallax_images = {
+	
+}
 
 
 --function EntityGet(entity_nr)
 --    return EntityGet_cfunc(EntityManager, entity_nr)
 --end
+local ffi = require("ffi")
 
 game_funcs = {
 	GetUnixTimestamp = function()
@@ -42,6 +46,39 @@ game_funcs = {
 		local vector = ffi.cast("void****", 0x00ff5604)[0][22]
 		vector[0] = entity]]
 		np.SetPlayerEntity(entity_id)
+	end,
+	ExposeImage = function(filename, width, height)
+		local id, w, h = ModImageMakeEditable( filename, width or 0, height or 0 )
+		return {
+			id = id,
+			width = w,
+			height = h
+		}
+	end,
+	ReplaceImage = function (file1, file2)
+		local id, w, h = ModImageIdFromFilename( file1 )
+		if id == 0 then
+			return false
+		end
+		local id2, w2, h2 = ModImageIdFromFilename( file2, w, h )
+		if id2 == 0 then
+			return false
+		end
+
+		for i = 0, w - 1 do
+			for j = 0, h - 1 do
+				local color = ModImageGetPixel( id2, i, j )
+				ModImageSetPixel( id, i, j, color )
+			end
+		end
+	end,
+	RefreshParallax = function(target, new)
+
+
+		-- refresh the parallax background
+		local load_outdoors = ffi.cast("void (__fastcall*)(void*)", 0x0087c970)
+		local ptr = ffi.cast("void**", ffi.cast("char**", 0x0120925c)[0] + 0x4c)[0]
+		load_outdoors(ptr)
 	end,
 	SetActiveHeldEntity = function(entity_id, item_id, unknown, make_noise)
 		--SetActiveHeldEntity_cfunc(EntityGet(entity_id), EntityGet(item_id), unknown, make_noise)

@@ -137,7 +137,7 @@ end
 function HasRequiredMods(lobby)
 	local required_mod_string = steam.matchmaking.getLobbyData(lobby, "required_mods") or ""
 
-	print(required_mod_string)
+	--print(required_mod_string)
 
 	local required_mods = required_mod_string ~= "" and bitser.loads(required_mod_string) or {}
 
@@ -190,7 +190,7 @@ function VersionInfo(lobby)
 		mp_version_string_user = "",
 		gamemode_version_same = true,
 		gamemode_missing = false,
-		gamemode_version_string = GameTextGetTranslatedOrNot("$mp_lobby_info_gm_same_version"),
+		gamemode_version_string = "",
 		gamemode_version_string_user = ""
 	}
 
@@ -222,6 +222,10 @@ function VersionInfo(lobby)
 			info.gamemode_version_same = false
 			info.gamemode_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_gm_host_newer"), GameTextGetTranslatedOrNot(active_mode.name), gamemode_version)
 			info.gamemode_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), active_mode.version)
+		else
+			info.gamemode_version_same = true
+			info.gamemode_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_gm_same_version"), GameTextGetTranslatedOrNot(active_mode.name))
+			info.gamemode_version_string_user = ""
 		end
 	end
 
