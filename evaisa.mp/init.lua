@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 337
+MP_VERSION = 338
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -864,6 +864,17 @@ function steam.matchmaking.onLobbyEnter(data)
 						gui_closed = true
 					end]]
 
+					if (lobby_gamemode ~= nil) then
+						local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
+						steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
+						steam.friends.setRichPresence( "steam_player_group", lobby_name )
+						
+						local member_count = steam.matchmaking.getLobbyMemberCount(lobby_code)
+			
+						steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
+			
+					end
+
 					lobby_gamemode.enter(lobby_code)
 				end
 			end
@@ -913,6 +924,17 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 	
 	if(lobby_code ~= nil)then
 		steam_utils.getLobbyMembers(lobby_code, true, true)
+
+		if (lobby_gamemode ~= nil) then
+			local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
+			steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
+			steam.friends.setRichPresence( "steam_player_group", lobby_name )
+			
+			local member_count = steam.matchmaking.getLobbyMemberCount(lobby_code)
+
+			steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
+
+		end
 		if(data.chatMemberStateChange == ChatMemberStateChangeEnum.k_EChatMemberStateChangeEntered)then
 
 			if (lobby_gamemode == nil) then

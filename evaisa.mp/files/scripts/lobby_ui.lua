@@ -1835,9 +1835,11 @@ local windows = {
 								steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
 							end
 
-
-							steam.friends.setRichPresence( "status", "Noita Arena - Waiting for players" )
-
+							steam.friends.setRichPresence( "status", "Noita Online || "..tostring(gamemodes[gamemode_index].name).." - Waiting for players" )
+							steam.friends.setRichPresence( "steam_player_group", lobby_name )
+							steam.friends.setRichPresence( "steam_player_group_size", "1" )
+							--steam.friends.setRichPresence( "connect", "lobby:"..code )
+							
 							lobby_code = code
 
 							local blacklisted_players = steam_utils.GetBlacklistedPlayers()

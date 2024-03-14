@@ -6,13 +6,13 @@ username_cache = {}
 
 last_language = nil
 
-steam_utils.truncateNameStreaming = function(name)
+steam_utils.truncateNameStreaming = function(name, id)
 	local name = name:sub(1, 1) .. "..."
 
-	if lobby_code ~= nil then
+	if lobby_code ~= nil and id ~= nil then
 		local members = steam_utils.getLobbyMembersIDs(lobby_code, true)
 		for i = 1, #members do
-			if members[i] == steam.user.getSteamID() then
+			if members[i] == id then
 				name = "(" .. tostring(i) .. ")" .. name
 				break
 			end
@@ -70,7 +70,7 @@ steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
 	
 	-- truncate name after first letter if streamer mode is enabled
 	if(ModSettingGet("evaisa.mp.streamer_mode") and not no_streamer_mode)then
-		name = steam_utils.truncateNameStreaming(name)
+		name = steam_utils.truncateNameStreaming(name, steam_id)
 	end
 
 
@@ -117,10 +117,19 @@ function color_merge(r,g,b,a)
 end
 
 local lfs = require("lfs")
+local fs = require("fs")
 
 -- clear avatar cache directory
 function clear_avatar_cache()
-	local cache_folder = "mods/evaisa.mp/cache/avatars/"
+	local cache_folder = "data/evaisa.mp/cache/avatars/"
+	-- create folder if it doesn't exist
+	local path = ""
+    for folder_name in cache_folder:gmatch("([^/]+)")do
+        path = path .. folder_name
+        fs.mkdir(path, true)
+        path = path .. "/"
+    end
+
 	for file in lfs.dir(cache_folder) do
 		if (file ~= "." and file ~= "..") then
 			local f = cache_folder .. file
@@ -146,7 +155,15 @@ steam_utils.getUserAvatar = function(user_id)
 		cached_avatars[user_id] = "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
 	end
 
-	local cache_folder = "mods/evaisa.mp/cache/avatars/"
+	local cache_folder = "data/evaisa.mp/cache/avatars/"
+
+	-- create directory if it doesn't exist, make full path
+	local path = ""
+    for folder_name in cache_folder:gmatch("([^/]+)")do
+        path = path .. folder_name
+        fs.mkdir(path, true)
+        path = path .. "/"
+    end
 
 	local image_data = steam.utils.getImageData(handle)
 	local width, height = steam.utils.getImageSize(handle)
