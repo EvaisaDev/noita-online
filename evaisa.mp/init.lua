@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 339
+MP_VERSION = 341
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -67,7 +67,11 @@ logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
 debug_log = logger.init("debugging.log")
+exception_log = logger.init("exceptions.log")
 debug_info = logger.init("debug_info.log", nil, true)
+
+try = dofile("mods/evaisa.mp/lib/try_catch.lua")
+
 --fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
 
 
@@ -459,449 +463,473 @@ local laa_check_busy = false
 local invalid_version_popup_open = false
 
 function OnWorldPreUpdate()
-	if(GameHasFlagRun("mp_blocked_load"))then
-		return
-	end
-
-	if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
-		profile.start()
-	end
-
-	if (input ~= nil and input:WasKeyPressed("f8")) then
-		profile_next = not profile_next
-		if(profile_next)then
-			profile.clear()
-			profiler_result_csv = io.open("profiler_online.csv", "w+")
-			profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
-		end
-	end 
-
-	--input:Update()
-
-	wake_up_waiting_threads(1)
-	--math.randomseed( os.time() )
-
-	if (not IsPaused()) then
-		popup.update()
-	end
-
-
-	if steam and GameGetFrameNum() >= 60 then
-
-
-		--[[if(not laa_check_done)then
-			laa_enabled = checkLAA("noita.exe")
-			print("LAA: " .. tostring(laa_enabled))
-
-			
-			if(not laa_enabled)then
-				laa_check_busy = true
-				popup.create("laa_message", GameTextGetTranslatedOrNot("$mp_laa_message"), {
-					GameTextGetTranslatedOrNot("$mp_laa_description"),
-					{
-						text = GameTextGetTranslatedOrNot("$mp_laa_warning"),
-						color = {217 / 255,52 / 255,52 / 255, 1}
-					}
-				}, {
-					{
-						text = GameTextGetTranslatedOrNot("$mp_laa_patch"),
-						callback = function()
-							LAAPatch("noita.exe", "noita")
-							laa_check_busy = false
-						end
-					},
-					{
-						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-						callback = function()
-							laa_check_busy = false
-						end
-					},
-				}, -6000)
-			end
-			laa_check_done = true
-		end]]
-
-		if(is_invalid_version)then
-			
-			if(not invalid_version_popup_open)then
-				invalid_version_popup_open = true
-				popup.create("invalid_version_message", GameTextGetTranslatedOrNot("$mp_invalid_version"),
-				GameTextGetTranslatedOrNot("$mp_invalid_version_description"), {
-					{
-						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-						callback = function()
-							invalid_version_popup_open = false
-						end
-					}
-				}, -6000)
-
-			end
+	try(function()
+		if(GameHasFlagRun("mp_blocked_load"))then
 			return
 		end
-		
-		if(not laa_check_busy)then
-			if(not steam.user.loggedOn())then
-				if(GameGetFrameNum() % (60 * 5) == 0)then
-					GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
-				end
+
+		if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
+			profile.start()
+		end
+
+		if (input ~= nil and input:WasKeyPressed("f8")) then
+			profile_next = not profile_next
+			if(profile_next)then
+				profile.clear()
+				profiler_result_csv = io.open("profiler_online.csv", "w+")
+				profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
+			end
+		end 
+
+		--input:Update()
+
+		wake_up_waiting_threads(1)
+		--math.randomseed( os.time() )
+
+		if (not IsPaused()) then
+			popup.update()
+		end
+
+
+		if steam and GameGetFrameNum() >= 60 then
+
+
+			--[[if(not laa_check_done)then
+				laa_enabled = checkLAA("noita.exe")
+				print("LAA: " .. tostring(laa_enabled))
+
 				
-				if(connection_popup_was_open_timer > 0)then
-					connection_popup_was_open_timer = connection_popup_was_open_timer - 1
-				end
-
-
-
-				if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
-					connection_popup_open = true
-					connection_popup_was_open_timer = 60 * 60 * 2
-					popup.create("connection_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
-					GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
+				if(not laa_enabled)then
+					laa_check_busy = true
+					popup.create("laa_message", GameTextGetTranslatedOrNot("$mp_laa_message"), {
+						GameTextGetTranslatedOrNot("$mp_laa_description"),
+						{
+							text = GameTextGetTranslatedOrNot("$mp_laa_warning"),
+							color = {217 / 255,52 / 255,52 / 255, 1}
+						}
+					}, {
+						{
+							text = GameTextGetTranslatedOrNot("$mp_laa_patch"),
+							callback = function()
+								LAAPatch("noita.exe", "noita")
+								laa_check_busy = false
+							end
+						},
 						{
 							text = GameTextGetTranslatedOrNot("$mp_close_popup"),
 							callback = function()
-								if(lobby_code ~= nil)then
-									connection_popup_open = false
-								end
+								laa_check_busy = false
+							end
+						},
+					}, -6000)
+				end
+				laa_check_done = true
+			end]]
+
+			if(is_invalid_version)then
+				
+				if(not invalid_version_popup_open)then
+					invalid_version_popup_open = true
+					popup.create("invalid_version_message", GameTextGetTranslatedOrNot("$mp_invalid_version"),
+					GameTextGetTranslatedOrNot("$mp_invalid_version_description"), {
+						{
+							text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+							callback = function()
+								invalid_version_popup_open = false
 							end
 						}
 					}, -6000)
+
 				end
+				return
 			end
-
-
-			if(input == nil)then
-				input = dofile_once("mods/evaisa.mp/lib/input.lua")
-			end
-
-			if(bindings == nil)then
-				bindings = dofile_once("mods/evaisa.mp/lib/keybinds.lua")
-				bindings:RegisterBinding("chat_submit", "Noita Online", "Chat Send", "Key_RETURN", "key", false, true, false, false)
-				bindings:RegisterBinding("chat_submit2", "Noita Online", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
-				bindings:RegisterBinding("chat_open", "Noita Online", "Open Chat", "Key_t", "key", false, true, false, false)
 			
-				-- loop through gamemodes
-				for k, v in ipairs(gamemodes) do
-					if(v.binding_register ~= nil)then
-						v.binding_register(bindings)
+			if(not laa_check_busy)then
+				if(not steam.user.loggedOn())then
+					if(GameGetFrameNum() % (60 * 5) == 0)then
+						GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
+					end
+					
+					if(connection_popup_was_open_timer > 0)then
+						connection_popup_was_open_timer = connection_popup_was_open_timer - 1
+					end
+
+
+
+					if(not connection_popup_open and connection_popup_was_open_timer <= 0)then
+						connection_popup_open = true
+						connection_popup_was_open_timer = 60 * 60 * 2
+						popup.create("connection_message", GameTextGetTranslatedOrNot("$mp_steam_connection_failed_title"),
+						GameTextGetTranslatedOrNot("$mp_steam_connection_failed_description"), {
+							{
+								text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+								callback = function()
+									if(lobby_code ~= nil)then
+										connection_popup_open = false
+									end
+								end
+							}
+						}, -6000)
 					end
 				end
-			end
 
-			if(init_cleanup == false)then
-				local lastCode = ModSettingGet("last_lobby_code")
-				--print("Code: "..tostring(lastCode))
-				if (steam) then
-					if (lastCode ~= nil and lastCode ~= "") then
-						local lobCode = steam.extra.parseUint64(lastCode)
-						if (tostring(lobCode) ~= "0") then
-							if (steam.extra.isSteamIDValid(lobCode)) then
-								gamemode_settings = {}
-								
-								steam_utils.Leave(lobCode)
+
+				if(input == nil)then
+					input = dofile_once("mods/evaisa.mp/lib/input.lua")
+				end
+
+				if(bindings == nil)then
+					bindings = dofile_once("mods/evaisa.mp/lib/keybinds.lua")
+					bindings:RegisterBinding("chat_submit", "Noita Online", "Chat Send", "Key_RETURN", "key", false, true, false, false)
+					bindings:RegisterBinding("chat_submit2", "Noita Online", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
+					bindings:RegisterBinding("chat_open", "Noita Online", "Open Chat", "Key_t", "key", false, true, false, false)
+				
+					-- loop through gamemodes
+					for k, v in ipairs(gamemodes) do
+						if(v.binding_register ~= nil)then
+							v.binding_register(bindings)
+						end
+					end
+				end
+
+				if(init_cleanup == false)then
+					local lastCode = ModSettingGet("last_lobby_code")
+					--print("Code: "..tostring(lastCode))
+					if (steam) then
+						if (lastCode ~= nil and lastCode ~= "") then
+							local lobCode = steam.extra.parseUint64(lastCode)
+							if (tostring(lobCode) ~= "0") then
+								if (steam.extra.isSteamIDValid(lobCode)) then
+									gamemode_settings = {}
+									
+									steam_utils.Leave(lobCode)
+								end
+							end
+							ModSettingRemove("last_lobby_code")
+							lobby_code = nil
+						end
+					end
+					init_cleanup = true
+				end
+
+				--pretty.table(steam.networking)
+				lobby_code = lobby_code or nil
+				
+				ResetIDs()
+				ResetWindowStack()
+
+				if (not IsPaused()) then
+					dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
+					dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
+				end
+				if (GameGetFrameNum() % (60 * 10) == 0) then
+					steamutils.CheckLocalLobbyData()
+				end
+
+				if (lobby_code ~= nil) then
+
+					if (lobby_gamemode == nil) then
+						return
+					end
+
+					delay.update()
+
+					if(Starting ~= nil)then
+						Starting = Starting - 1
+						if(Starting < 0)then
+							Starting = 0
+						end
+					end
+
+					if(Starting == 0)then
+						StartGame()
+						Starting = nil
+					end
+
+					--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+
+					--print("a")
+
+
+					--print("b")
+
+					if (GameGetFrameNum() % 60 == 0) then
+						last_bytes_sent = bytes_sent
+						last_bytes_received = bytes_received
+						bytes_sent = 0
+						bytes_received = 0
+
+						local function format_bytes(bytes)
+							return bytes < 1024 and tostring(bytes) .. " B/s" or tostring(math.floor(bytes / 1024)) .. " KB/s"
+						end
+
+						local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
+
+						local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
+
+						local network_string = "Data throughput: ".."in: " .. input_string .. " | out: " .. output_string
+
+						for k, v in pairs(bytes_sent_per_type) do
+							if(bytes_received_per_type[k] == nil)then
+								bytes_received_per_type[k] = 0
+							end
+							local sent = v
+							local received = bytes_received_per_type[k]
+							network_string = network_string .. "\n["..k.."]: out: "..format_bytes(sent).." | in: "..format_bytes(received)
+						end
+
+						bytes_sent_per_type = {}
+						bytes_received_per_type = {}
+
+						networking_log:print(network_string.."\n")
+					end
+					--[[
+					local players = get_players()
+					
+					if(players[1] ~= nil)then
+						local player = players[1]
+						
+						GetUpdatedEntityID = function()
+							return player
+						end
+						dofile("mods/evaisa.mp/files/scripts/player_update.lua")
+					end
+					]]
+					--print("c")
+
+					byte_rate_gui = byte_rate_gui or GuiCreate()
+					GuiStartFrame(byte_rate_gui)
+
+					local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
+
+					local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or
+						tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
+
+					local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or
+						tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
+
+					local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
+						"in: " .. input_string .. " | out: " .. output_string)
+
+					GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
+						output_string)
+
+					--print("d")
+
+					--print("Game in progress: "..tostring(game_in_progress))
+
+					if (game_in_progress) then
+						--print("the hell??")
+
+						local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+
+
+
+						--print("e")
+						if (owner == steam.user.getSteamID()) then
+							if (GameGetFrameNum() % 2 == 0) then
+								local seed = tostring(math.random(1, 1000000))
+
+								--print("f")
+
+								steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
 							end
 						end
-						ModSettingRemove("last_lobby_code")
-						lobby_code = nil
+
+						lobby_gamemode.update(lobby_code)
+
+						
 					end
+					ReceiveMessages(lobby_gamemode, not game_in_progress)
 				end
-				init_cleanup = true
-			end
-
-			--pretty.table(steam.networking)
-			lobby_code = lobby_code or nil
-			
-			ResetIDs()
-			ResetWindowStack()
-
-			if (not IsPaused()) then
-				dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
-				dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
-			end
-			if (GameGetFrameNum() % (60 * 10) == 0) then
-				steamutils.CheckLocalLobbyData()
-			end
-
-			if (lobby_code ~= nil) then
-
-				if (lobby_gamemode == nil) then
-					return
-				end
-
-				delay.update()
-
-				if(Starting ~= nil)then
-					Starting = Starting - 1
-					if(Starting < 0)then
-						Starting = 0
-					end
-				end
-
-				if(Starting == 0)then
-					StartGame()
-					Starting = nil
-				end
-
-				--game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
-
-				--print("a")
-
-
-				--print("b")
-
-				if (GameGetFrameNum() % 60 == 0) then
-					last_bytes_sent = bytes_sent
-					last_bytes_received = bytes_received
-					bytes_sent = 0
-					bytes_received = 0
-
-					local function format_bytes(bytes)
-						return bytes < 1024 and tostring(bytes) .. " B/s" or tostring(math.floor(bytes / 1024)) .. " KB/s"
-					end
-
-					local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
-
-					local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
-
-					local network_string = "Data throughput: ".."in: " .. input_string .. " | out: " .. output_string
-
-					for k, v in pairs(bytes_sent_per_type) do
-						if(bytes_received_per_type[k] == nil)then
-							bytes_received_per_type[k] = 0
-						end
-						local sent = v
-						local received = bytes_received_per_type[k]
-						network_string = network_string .. "\n["..k.."]: out: "..format_bytes(sent).." | in: "..format_bytes(received)
-					end
-
-					bytes_sent_per_type = {}
-					bytes_received_per_type = {}
-
-					networking_log:print(network_string.."\n")
-				end
-				--[[
-				local players = get_players()
-				
-				if(players[1] ~= nil)then
-					local player = players[1]
-					
-					GetUpdatedEntityID = function()
-						return player
-					end
-					dofile("mods/evaisa.mp/files/scripts/player_update.lua")
-				end
-				]]
-				--print("c")
-
-				byte_rate_gui = byte_rate_gui or GuiCreate()
-				GuiStartFrame(byte_rate_gui)
-
-				local screen_width, screen_height = GuiGetScreenDimensions(byte_rate_gui)
-
-				local output_string = last_bytes_sent < 1024 and tostring(last_bytes_sent) .. " B/s" or
-					tostring(math.floor(last_bytes_sent / 1024)) .. " KB/s"
-
-				local input_string = last_bytes_received < 1024 and tostring(last_bytes_received) .. " B/s" or
-					tostring(math.floor(last_bytes_received / 1024)) .. " KB/s"
-
-				local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
-					"in: " .. input_string .. " | out: " .. output_string)
-
-				GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
-					output_string)
-
-				--print("d")
-
-				--print("Game in progress: "..tostring(game_in_progress))
-
-				if (game_in_progress) then
-					--print("the hell??")
-
-					local owner = steam.matchmaking.getLobbyOwner(lobby_code)
-
-
-
-					--print("e")
-					if (owner == steam.user.getSteamID()) then
-						if (GameGetFrameNum() % 2 == 0) then
-							local seed = tostring(math.random(1, 1000000))
-
-							--print("f")
-
-							steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
-						end
-					end
-
-					lobby_gamemode.update(lobby_code)
-
-					
-				end
-				ReceiveMessages(lobby_gamemode, not game_in_progress)
 			end
 		end
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
 						   unknown1, multicast_index, unknown3)
-	if steam then
-		--pretty.table(steam.networking)
-		lobby_code = lobby_code or nil
+	try(function()
+		if steam then
+			--pretty.table(steam.networking)
+			lobby_code = lobby_code or nil
 
-		if (lobby_code ~= nil) then
+			if (lobby_code ~= nil) then
 
-			if (lobby_gamemode ~= nil and game_in_progress) then
-				if (lobby_gamemode.on_projectile_fired) then
-					lobby_gamemode.on_projectile_fired(lobby_code, shooter_id, projectile_id, rng, position_x, position_y,
-						target_x, target_y, send_message, unknown1, multicast_index, unknown3)
+				if (lobby_gamemode ~= nil and game_in_progress) then
+					if (lobby_gamemode.on_projectile_fired) then
+						lobby_gamemode.on_projectile_fired(lobby_code, shooter_id, projectile_id, rng, position_x, position_y,
+							target_x, target_y, send_message, unknown1, multicast_index, unknown3)
+					end
 				end
 			end
 		end
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
 							   unknown1, multicast_index, unknown3)
-	if steam then
-		--pretty.table(steam.networking)
-		lobby_code = lobby_code or nil
+	try(function()
+		if steam then
+			--pretty.table(steam.networking)
+			lobby_code = lobby_code or nil
 
-		if (lobby_code ~= nil) then
+			if (lobby_code ~= nil) then
 
-			if (lobby_gamemode ~= nil and game_in_progress) then
-				if (lobby_gamemode.on_projectile_fired_post) then
-					lobby_gamemode.on_projectile_fired_post(lobby_code, shooter_id, projectile_id, rng, position_x,
-						position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
+				if (lobby_gamemode ~= nil and game_in_progress) then
+					if (lobby_gamemode.on_projectile_fired_post) then
+						lobby_gamemode.on_projectile_fired_post(lobby_code, shooter_id, projectile_id, rng, position_x,
+							position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
+					end
 				end
 			end
 		end
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 function OnWorldPostUpdate()
-	if steam then
-		--pretty.table(steam.networking)
-		lobby_code = lobby_code or nil
+	try(function()
+		if steam then
+			--pretty.table(steam.networking)
+			lobby_code = lobby_code or nil
 
-		if (lobby_code ~= nil) then
+			if (lobby_code ~= nil) then
 
-			if (lobby_gamemode ~= nil and game_in_progress) then
-				lobby_gamemode.late_update(lobby_code)
+				if (lobby_gamemode ~= nil and game_in_progress) then
+					lobby_gamemode.late_update(lobby_code)
 
-				--[[
-				local messages = steam.networking.pollMessages() or {}
-				for k, v in ipairs(messages)do
-					bytes_received = bytes_received + v.msg_size
-					if(lobby_gamemode.message)then
-						lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
+					--[[
+					local messages = steam.networking.pollMessages() or {}
+					for k, v in ipairs(messages)do
+						bytes_received = bytes_received + v.msg_size
+						if(lobby_gamemode.message)then
+							lobby_gamemode.message(lobby_code, steamutils.parseData(v.data), v.user)
+						end
 					end
+					]]
+					--ReceiveMessages(lobby_gamemode)
 				end
-				]]
-				--ReceiveMessages(lobby_gamemode)
 			end
 		end
-	end
-	GameRemoveFlagRun("chat_bind_disabled")
-	lobby_data_updated_this_frame = {}
-	if(bindings ~= nil and not IsPaused())then
-		bindings:Update()
-	end
+		GameRemoveFlagRun("chat_bind_disabled")
+		lobby_data_updated_this_frame = {}
+		if(bindings ~= nil and not IsPaused())then
+			bindings:Update()
+		end
 
-	if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
-		profile.stop()
+		if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
+			profile.stop()
 
-		profiler_result_csv:write(profile.csv(500))
-		profile.reset()
-		
-	end
+			profiler_result_csv:write(profile.csv(500))
+			profile.reset()
+			
+		end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 
 
 function steam.matchmaking.onLobbyEnter(data)
-	clear_avatar_cache()
-	for k, v in pairs(active_members) do
-		active_members[k] = nil
-		member_message_frames[k] = nil
-		lobby_members = {}
-		lobby_members_ids = {}
-		steam.networking.closeSession(v)
-		mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
-	end
-	input:Clear()
-	Starting = nil
-	in_game = false
-	game_in_progress = false
+	try(function()
+		clear_avatar_cache()
+		for k, v in pairs(active_members) do
+			active_members[k] = nil
+			member_message_frames[k] = nil
+			lobby_members = {}
+			lobby_members_ids = {}
+			steam.networking.closeSession(v)
+			mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(v))
+		end
+		input:Clear()
+		Starting = nil
+		in_game = false
+		game_in_progress = false
 
-	local user = steam.user.getSteamID()
+		local user = steam.user.getSteamID()
 
-	steamutils.getUserAvatar(user)
+		steamutils.getUserAvatar(user)
 
 
-	if (data.response ~= 2) then
-		lobby_code = data.lobbyID
-		mp_log:print("Code set to: " .. tostring(lobby_code) .. "[" .. type(lobby_code) .. "]")
-		ModSettingSet("last_lobby_code", tostring(lobby_code))
-		lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		if (data.response ~= 2) then
+			lobby_code = data.lobbyID
+			mp_log:print("Code set to: " .. tostring(lobby_code) .. "[" .. type(lobby_code) .. "]")
+			ModSettingSet("last_lobby_code", tostring(lobby_code))
+			lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-		if handleVersionCheck() and handleModCheck() then
-			if handleGamemodeVersionCheck(lobby_code) then
-				if (lobby_gamemode) then
-					defineLobbyUserData(lobby_code)
-					
-					delay.new(30, function()
-						for k, setting in ipairs(lobby_gamemode.settings or {}) do
-							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
-								setting.id)
-						end
-	
-						if (lobby_gamemode.refresh) then
-							lobby_gamemode.refresh(lobby_code)
-						end
-					end, function(frames) end)
-
-					--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
-					if(game_in_progress)then
-						gui_closed = true
-					end]]
-
-					if (lobby_gamemode ~= nil) then
-						local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
-						steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
-						steam.friends.setRichPresence( "steam_player_group", lobby_name )
+			if handleVersionCheck() and handleModCheck() then
+				if handleGamemodeVersionCheck(lobby_code) then
+					if (lobby_gamemode) then
+						defineLobbyUserData(lobby_code)
 						
-						local member_count = steam.matchmaking.getLobbyMemberCount(lobby_code)
-			
-						steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
-			
-					end
+						delay.new(30, function()
+							for k, setting in ipairs(lobby_gamemode.settings or {}) do
+								gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
+									setting.id)
+							end
+		
+							if (lobby_gamemode.refresh) then
+								lobby_gamemode.refresh(lobby_code)
+							end
+						end, function(frames) end)
 
-					lobby_gamemode.enter(lobby_code)
+						--[[game_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+						if(game_in_progress)then
+							gui_closed = true
+						end]]
+
+						if (lobby_gamemode ~= nil) then
+							local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
+							steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
+							steam.friends.setRichPresence( "steam_player_group", lobby_name )
+							
+							local member_count = steam.matchmaking.getNumLobbyMembers(lobby_code)
+				
+							steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
+				
+						end
+
+						lobby_gamemode.enter(lobby_code)
+					end
 				end
-			end
-		end	
-	else
-		msg.log("Invalid lobby ID")
-	end
+			end	
+		else
+			msg.log("Invalid lobby ID")
+		end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 function steam.matchmaking.onLobbyDataUpdate(data)
-	if(lobby_code ~= nil)then
-		local current_lobby_data = {}
-		local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
-		for i = 1, lobby_data_count do
-			local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
-			current_lobby_data[data.key] = data.value
-			--print("Lobby data: " .. data.key .. " = " .. data.value)
-			if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
-				lobby_data_updated_this_frame[data.key] = true
-				--print("Updated lobby data: " .. data.key .. " to " .. data.value)
+	try(function()
+		if(lobby_code ~= nil)then
+			local current_lobby_data = {}
+			local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
+			for i = 1, lobby_data_count do
+				local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
+				current_lobby_data[data.key] = data.value
+				--print("Lobby data: " .. data.key .. " = " .. data.value)
+				if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
+					lobby_data_updated_this_frame[data.key] = true
+					--print("Updated lobby data: " .. data.key .. " to " .. data.value)
+				end
 			end
+			lobby_data_last_frame = current_lobby_data
+		else
+			lobby_data_last_frame = {}
+			lobby_data_updated_this_frame = {}
 		end
-		lobby_data_last_frame = current_lobby_data
-	else
-		lobby_data_last_frame = {}
-		lobby_data_updated_this_frame = {}
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
@@ -915,66 +943,71 @@ ChatMemberStateChangeEnum = {
 }
 
 function steam.matchmaking.onLobbyChatUpdate(data)
-	if handleBanCheck(data.userChanged) then
-		return
-	end
-	if handleInProgressCheck(data.userChanged) then
-		return
-	end
-	
-	if(lobby_code ~= nil)then
-		steam_utils.getLobbyMembers(lobby_code, true, true)
+	try(function()
 
-		if (lobby_gamemode ~= nil) then
-			local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
-			steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
-			steam.friends.setRichPresence( "steam_player_group", lobby_name )
-			
-			local member_count = steam.matchmaking.getLobbyMemberCount(lobby_code)
-
-			steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
-
+		if handleBanCheck(data.userChanged) then
+			return
 		end
-		if(data.chatMemberStateChange == ChatMemberStateChangeEnum.k_EChatMemberStateChangeEntered)then
-
-			if (lobby_gamemode == nil) then
-				return
-			end
-
-			print("A player joined!")
-			
-			local h = data.userChanged
-
-			steamutils.getUserAvatar(h)
-
-			getLobbyUserData(lobby_code, h, true)
-
-			if (not active_members[tostring(h)]) then
-				active_members[tostring(h)] = h
-			end
-			
-			--print("Clearing frames for " .. tostring(h))
-			member_message_frames[tostring(h)] = nil
+		if handleInProgressCheck(data.userChanged) then
+			return
+		end
 		
+		if(lobby_code ~= nil)then
+			steam_utils.getLobbyMembers(lobby_code, true, true)
 
-			if(lobby_gamemode.player_join)then
-				lobby_gamemode.player_join(lobby_code, h)
+			if (lobby_gamemode ~= nil) then
+				local lobby_name = steam.matchmaking.getLobbyData(lobby_code, "name")
+				steam.friends.setRichPresence( "status", "Noita Online || "..GameTextGetTranslatedOrNot(tostring(lobby_gamemode.name)))
+				steam.friends.setRichPresence( "steam_player_group", lobby_name )
+				
+				local member_count = steam.matchmaking.getNumLobbyMembers(lobby_code)
+
+				steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
+
 			end
-		else
-			local h = data.userChanged
+			if(data.chatMemberStateChange == ChatMemberStateChangeEnum.k_EChatMemberStateChangeEntered)then
 
-			active_members[tostring(h)] = nil
+				if (lobby_gamemode == nil) then
+					return
+				end
 
-			--print("Clearing frames for " .. tostring(h))
-			member_message_frames[tostring(h)] = nil
-			steam.networking.closeSession(h)
-			mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(h))
-			-- run gamemode on_leave
-			if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
-				lobby_gamemode.disconnected(lobby_code, h)
+				print("A player joined!")
+				
+				local h = data.userChanged
+
+				steamutils.getUserAvatar(h)
+
+				getLobbyUserData(lobby_code, h, true)
+
+				if (not active_members[tostring(h)]) then
+					active_members[tostring(h)] = h
+				end
+				
+				--print("Clearing frames for " .. tostring(h))
+				member_message_frames[tostring(h)] = nil
+			
+
+				if(lobby_gamemode.player_join)then
+					lobby_gamemode.player_join(lobby_code, h)
+				end
+			else
+				local h = data.userChanged
+
+				active_members[tostring(h)] = nil
+
+				--print("Clearing frames for " .. tostring(h))
+				member_message_frames[tostring(h)] = nil
+				steam.networking.closeSession(h)
+				mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(h))
+				-- run gamemode on_leave
+				if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
+					lobby_gamemode.disconnected(lobby_code, h)
+				end
 			end
 		end
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 function steam.matchmaking.onGameLobbyJoinRequested(data)
@@ -1000,66 +1033,70 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 end
 
 function steam.matchmaking.onLobbyChatMsgReceived(data)
-	--pretty.table(data)
-	--[[
-		example data:
+	try(function()
+		--pretty.table(data)
+		--[[
+			example data:
 
-		{
-			lobbyID = 9223372036854775807,
-			userID = 76361198523269435,
-			type = 1,
-			chatID = 1,
-			fromOwner = true,
-			message = "disconnect;76561198983269435;You were kicked from the lobby."
-		}
-	]]
-	mp_log:print(tostring(data.message))
+			{
+				lobbyID = 9223372036854775807,
+				userID = 76361198523269435,
+				type = 1,
+				chatID = 1,
+				fromOwner = true,
+				message = "disconnect;76561198983269435;You were kicked from the lobby."
+			}
+		]]
+		mp_log:print(tostring(data.message))
 
-	handleDisconnect(data)
-	handleChatMessage(data)
+		handleDisconnect(data)
+		handleChatMessage(data)
 
-	local owner = steam.matchmaking.getLobbyOwner(lobby_code)
-
-
-	if (data.fromOwner and data.message == "start" or data.message == "restart") then
-		if(owner == steam.user.getSteamID())then
-			StartGame()
-		else
-			Starting = 30
-		end
-	elseif (data.fromOwner and data.message == "refresh") then
-
-		if handleVersionCheck() and handleModCheck() then
-			if handleGamemodeVersionCheck(lobby_code) then
-				if (lobby_gamemode) then
-					--game_in_progress = false
-					--print("Refreshing lobby data in 30 frames")
-					delay.new(30, function()
-						for k, setting in ipairs(lobby_gamemode.settings or {}) do
-							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
-								setting.id)
-						end
-	
-						if (lobby_gamemode.refresh) then
-							lobby_gamemode.refresh(lobby_code)
-						end
-					end, function(frames) end)
+		local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
 
-				else
-					disconnect({
-						lobbyID = lobby_code,
-						message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))--"Gamemode missing: " .. tostring(lobby_gamemode.id)
-					})
+		if (data.fromOwner and data.message == "start" or data.message == "restart") then
+			if(owner == steam.user.getSteamID())then
+				StartGame()
+			else
+				Starting = 30
+			end
+		elseif (data.fromOwner and data.message == "refresh") then
+
+			if handleVersionCheck() and handleModCheck() then
+				if handleGamemodeVersionCheck(lobby_code) then
+					if (lobby_gamemode) then
+						--game_in_progress = false
+						--print("Refreshing lobby data in 30 frames")
+						delay.new(30, function()
+							for k, setting in ipairs(lobby_gamemode.settings or {}) do
+								gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
+									setting.id)
+							end
+		
+							if (lobby_gamemode.refresh) then
+								lobby_gamemode.refresh(lobby_code)
+							end
+						end, function(frames) end)
+
+
+					else
+						disconnect({
+							lobbyID = lobby_code,
+							message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))--"Gamemode missing: " .. tostring(lobby_gamemode.id)
+						})
+					end
 				end
 			end
+		elseif (owner == steam.user.getSteamID() and data.message == "spectate") then
+			local user = data.userID
+			print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
+			local spectating = steamutils.IsSpectator(lobby_code, user)
+			steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
 		end
-	elseif (owner == steam.user.getSteamID() and data.message == "spectate") then
-		local user = data.userID
-		print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
-		local spectating = steamutils.IsSpectator(lobby_code, user)
-		steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
-	end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+	end)
 end
 
 --[[

@@ -429,6 +429,9 @@ function spng.save(opt)
 	local fmt = C.SPNG_FMT_PNG
 	local flags = C.SPNG_ENCODE_FINALIZE
 	local ok, err = check(C.spng_encode_image(ctx, data, bmp.size, fmt, flags))
+
+	free()
+
 	if not ok then
 		return nil, write_err or err
 	end

@@ -16,6 +16,8 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
 
     local new_logger = {
         log_file = io.open(file_path, "a"),
+        last_print = nil,
+        last_was_duplicate = false,
         enabled = true
     }
 
@@ -48,14 +50,32 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         -- Include timestamp in the log message
         local log_message = ""
 
+        local log_without_prefix = ""
+
         if(no_prefix)then
             log_message = string.format("%s\n", message)
         else
             -- Get the current timestamp
             local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+
+            log_without_prefix = string.format("%s\n", message)
             
             log_message = string.format("%s [%s:%d]: %s\n", timestamp, debug_info.source, debug_info.currentline, message)
         end
+
+        -- if the message is the same as the last one, don't print it again
+        if new_logger.last_print == log_without_prefix then
+            if(not new_logger.last_was_duplicate)then
+                new_logger.log_file:write("\n[Multiple repeating prints detected, hiding..]\n")
+                new_logger.log_file:flush()
+            end
+            new_logger.last_was_duplicate = true
+            return
+        else
+            new_logger.last_was_duplicate = false
+        end
+
+        new_logger.last_print = log_without_prefix
 
         new_logger.log_file:write(log_message)
         new_logger.log_file:flush()

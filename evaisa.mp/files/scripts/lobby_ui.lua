@@ -175,6 +175,11 @@ local windows = {
 							local lobby_mode_id = steam.matchmaking.getLobbyData(v, "gamemode")
 							local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 							local lobby_name = steam.matchmaking.getLobbyData(v, "name")
+							local custom_lobby_string = (active_mode and active_mode.custom_lobby_string) and active_mode.custom_lobby_string(v) or ""
+
+							if(custom_lobby_string ~= "")then
+								custom_lobby_string = custom_lobby_string .. " "
+							end	
 
 							local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 							local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
@@ -228,14 +233,14 @@ local windows = {
 									
 									GuiZSetForNextWidget(menu_gui, -6000)
 									GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-									GuiText(menu_gui, 0, 0, lobby_name)
+									GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 
 								else
 									if(active_mode ~= nil)then
 
 										if(HasRequiredMods(v))then
 											GuiZSetForNextWidget(menu_gui, -6000)
-											if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+											if(GuiButton(menu_gui, NewID(), 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name))then
 												steam_utils.Leave(v)
 												steam.matchmaking.joinLobby(v, function(e)
 												end)
@@ -265,7 +270,7 @@ local windows = {
 		
 											GuiZSetForNextWidget(menu_gui, -6000)
 											GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-											GuiText(menu_gui, 0, 0, lobby_name)
+											GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 										end
 									else
 										--[[if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..""..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
@@ -291,7 +296,7 @@ local windows = {
 	
 										GuiZSetForNextWidget(menu_gui, -6000)
 										GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-										GuiText(menu_gui, 0, 0, lobby_name)
+										GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 									end
 								end
 
@@ -309,6 +314,11 @@ local windows = {
 						local lobby_mode_id = steam.matchmaking.getLobbyData(v, "gamemode")
 						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(v, "gamemode"))
 						local lobby_name = steam.matchmaking.getLobbyData(v, "name")
+						local custom_lobby_string = (active_mode and active_mode.custom_lobby_string) and active_mode.custom_lobby_string(v) or ""
+
+						if(custom_lobby_string ~= "")then
+							custom_lobby_string = custom_lobby_string .. " "
+						end
 
 						local lobby_members = steam.matchmaking.getNumLobbyMembers(v)
 						local lobby_max_players = steam.matchmaking.getLobbyMemberLimit(v)
@@ -360,12 +370,12 @@ local windows = {
 
 								GuiZSetForNextWidget(menu_gui, -6000)
 								GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-								GuiText(menu_gui, 0, 0, lobby_name)
+								GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 							else
 								if(active_mode ~= nil)then
 									if(HasRequiredMods(v))then
 										GuiZSetForNextWidget(menu_gui, -6000)
-										if(GuiButton(menu_gui, NewID(), 0, 0, "("..GameTextGetTranslatedOrNot(active_mode.name)..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
+										if(GuiButton(menu_gui, NewID(), 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name))then
 											steam_utils.Leave(v)
 											steam.matchmaking.joinLobby(v, function(e)
 											end)
@@ -395,7 +405,7 @@ local windows = {
 	
 										GuiZSetForNextWidget(menu_gui, -6000)
 										GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-										GuiText(menu_gui, 0, 0, lobby_name)
+										GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 									end
 								else
 									--[[if(GuiButton(menu_gui, NewID(), 0, 0, "("..lobby_mode_id..GameTextGetTranslatedOrNot("$mp_missing")..")("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..lobby_name))then
@@ -419,7 +429,7 @@ local windows = {
 
 									GuiZSetForNextWidget(menu_gui, -6000)
 									GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
-									GuiText(menu_gui, 0, 0, lobby_name)
+									GuiText(menu_gui, 0, 0, "("..tostring(lobby_members).."/"..tostring(lobby_max_players)..") "..custom_lobby_string..lobby_name)
 								end
 							end
 							
