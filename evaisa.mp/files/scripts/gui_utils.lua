@@ -90,7 +90,11 @@ function GetGuiMousePosition()
 			GuiStartFrame(temp_gui)
 			local screen_width, screen_height = GuiGetScreenDimensions(temp_gui)
 			local input_x, input_y = 100, 100;
-			local mx, my = mouse_raw_x * screen_width / 1280, mouse_raw_y * screen_height / 720
+
+			local b_width = tonumber(game_config.get("internal_size_w")) or 1280
+			local b_height = tonumber(game_config.get("internal_size_h")) or 720
+
+			local mx, my = mouse_raw_x * screen_width / b_width, mouse_raw_y * screen_height / b_height
 			--local mx, my = ComponentGetValue2(controls_component, "mMousePositionRaw")
 			return mx, my
 		end

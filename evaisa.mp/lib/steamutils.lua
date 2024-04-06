@@ -241,6 +241,7 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 
 	for i = 1, #lobby_members[tostring(lobby_id)] do
 		local member = lobby_members[tostring(lobby_id)][i]
+		member.is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(member.id) .. "_spectator") == "true"
 		if(not member.is_spectator or include_spectators)then
 			table.insert(out, member)
 		end

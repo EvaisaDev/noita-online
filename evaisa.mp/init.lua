@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 341
+MP_VERSION = 342
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -74,7 +74,7 @@ try = dofile("mods/evaisa.mp/lib/try_catch.lua")
 
 --fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
 
-
+game_config = dofile("mods/evaisa.mp/lib/game_config.lua")
 
 local function readWord(file)
 	local byte1, byte2 = file:read(1), file:read(1)
@@ -256,6 +256,18 @@ function FilterLog(source, function_name, line, ...)
 	debug_log:print(source .. " " .. function_name .. " " .. line .. " " .. table.concat({...}, " "))
 	return false
 end]]
+
+np.EnableLogFiltering(true)
+
+function FilterLog(source, function_name, line, ...)
+	debug_log:print(source .. " " .. function_name .. " " .. line .. " " .. table.concat({...}, " "))
+	-- if contains "Lua error" or "Stack traceback"
+	if (string.find(table.concat({...}, " "), "Lua error") or string.find(table.concat({...}, " "), "Stack traceback")) then
+		exception_log:print(source .. " " .. function_name .. " " .. line .. " " .. table.concat({...}, " "))
+		return true
+	end
+	return false
+end
 
 --GameSDK = require("game_sdk")
 
@@ -1093,6 +1105,7 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
 			local spectating = steamutils.IsSpectator(lobby_code, user)
 			steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
+			-- re_enter lobby
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))

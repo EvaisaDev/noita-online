@@ -314,10 +314,13 @@ input.GetUIMousePos = function(self, gui)
         input_manager = EntityLoad("mods/evaisa.mp/files/entities/input_manager.xml")
     end
 
+    local b_width = tonumber(game_config.get("internal_size_w")) or 1280
+    local b_height = tonumber(game_config.get("internal_size_h")) or 720
+
     local controls_component = EntityGetFirstComponentIncludingDisabled(input_manager, "ControlsComponent")
     local screen_width, screen_height = GuiGetScreenDimensions(gui)
     local mouse_raw_x, mouse_raw_y = ComponentGetValue2(controls_component, "mMousePositionRaw")
-    local mx, my = mouse_raw_x * screen_width / 1280, mouse_raw_y * screen_height / 720
+    local mx, my = mouse_raw_x * screen_width / b_width, mouse_raw_y * screen_height / b_height
 
     return mx, my
 end

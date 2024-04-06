@@ -30,6 +30,13 @@ mod_settings =
 				scope = MOD_SETTING_SCOPE_RUNTIME,
 			},
 			{
+				id = "presets_as_json",
+				ui_name = "Presets as JSON",
+				ui_description = "Save presets as plain text JSON files.\nThis allows you to edit presets outside of the game. \nIssues caused by doing so will not be supported.",
+				value_default = false,
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
+			{
 				id = "streamer_mode",
 				ui_name = "Streamer Mode",
 				ui_description = "Disable avatars and other stuff.",
@@ -51,16 +58,6 @@ mod_settings =
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				category_id = "keybinds",
-				ui_name = "Keybindings",
-				ui_description = "You can edit keybinds here.",
-				foldable = true,
-				_folded = true,
-				settings = {
-		
-				}
-			},
-			{
 				id = "profiler_rate",
 				ui_name = "Profiler Rate",
 				ui_description = "The rate at which the debugging profiler runs, in frames.",
@@ -71,6 +68,16 @@ mod_settings =
 				value_display_formatting = " $0",
 				scope = MOD_SETTING_SCOPE_RUNTIME,
 			},
+			{
+				category_id = "keybinds",
+				ui_name = "Keybindings",
+				ui_description = "You can edit keybinds here.",
+				foldable = true,
+				_folded = true,
+				settings = {
+		
+				}
+			}
 		},
 	},
 }

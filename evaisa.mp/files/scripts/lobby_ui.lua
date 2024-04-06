@@ -636,12 +636,63 @@ local windows = {
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steamutils.IsSpectator(lobby_code)
-				if(active_mode and active_mode.spectate ~= nil and active_mode.disable_spectator_system ~= true)then
+				if(active_mode and active_mode.enable_spectator)then
 					if(GuiButton(menu_gui, NewID("lobby_spectate_button"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
+
+							if(lobby_gamemode and game_in_progress)then
+								in_game = true
+								game_in_progress = true
+								
+								gui_closed = true
+				
+								if(spectating)then
+									mp_log:print("Checking if gamemode has spectate function")
+									if(lobby_gamemode.spectate ~= nil)then
+										mp_log:print("Starting gamemode in spectator mode")
+										lobby_gamemode.spectate(lobby_code, true)
+									elseif(lobby_gamemode.start ~= nil)then
+										mp_log:print("Starting gamemode")
+										lobby_gamemode.start(lobby_code, true)
+									end
+								else
+									mp_log:print("Checking if gamemode has start function")
+									if(lobby_gamemode.start ~= nil)then
+										mp_log:print("Starting gamemode")
+										lobby_gamemode.start(lobby_code, true)
+									end
+								end
+							end
+
 						else
 							steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+							
+							delay.new(30, function()
+								if(lobby_gamemode and game_in_progress)then
+									in_game = true
+									game_in_progress = true
+									
+									gui_closed = true
+					
+									if(spectating)then
+										mp_log:print("Checking if gamemode has spectate function")
+										if(lobby_gamemode.spectate ~= nil)then
+											mp_log:print("Starting gamemode in spectator mode")
+											lobby_gamemode.spectate(lobby_code, true)
+										elseif(lobby_gamemode.start ~= nil)then
+											mp_log:print("Starting gamemode")
+											lobby_gamemode.start(lobby_code, true)
+										end
+									else
+										mp_log:print("Checking if gamemode has start function")
+										if(lobby_gamemode.start ~= nil)then
+											mp_log:print("Starting gamemode")
+											lobby_gamemode.start(lobby_code, true)
+										end
+									end
+								end
+							end)
 						end
 					end
 				end
@@ -1155,9 +1206,26 @@ local windows = {
 									filename = filename:gsub(".mp_preset", "")
 									local valid, preset_data = pcall(bitser.loads, data)
 									if(valid and preset_data ~= nil)then
-										table.insert(presets, {name = filename, data = preset_data})
+										table.insert(presets, {name = filename, extension = ".mp_preset", data = preset_data})
 									else
-										table.insert(presets, {name = filename,	corrupt = true, data = {
+										table.insert(presets, {name = filename, extension = ".mp_preset",	corrupt = true, data = {
+											version = preset_version,
+											settings = {}
+										}})
+									end
+								end
+							elseif(filename:sub(-5) == ".json")then
+								local preset_data = {}
+								local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
+								if(file ~= nil)then
+									local data = file:read("*all")
+									file:close()
+									filename = filename:gsub(".json", "")
+									local valid, preset_data = pcall(json.parse, data)
+									if(valid and preset_data ~= nil)then
+										table.insert(presets, {name = filename, extension = ".json", data = preset_data})
+									else
+										table.insert(presets, {name = filename, extension = ".json", corrupt = true, data = {
 											version = preset_version,
 											settings = {}
 										}})
@@ -1179,9 +1247,17 @@ local windows = {
 								settings_data = active_mode.save_preset(lobby_code, settings_data)
 							end
 
-							local serialized_data = bitser.dumps(settings_data)
+							local serialized_data = nil
+							local extension = ""
+							if(ModSettingGet("evaisa.mp.presets_as_json"))then
+								serialized_data = json.stringify(settings_data)
+								extension = ".json"
+							else
+								serialized_data = bitser.dumps(settings_data)
+								extension = ".mp_preset"
+							end
 							--print(json.stringify(settings_data))
-							local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. ".mp_preset", "w")
+							local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. extension, "w")
 							if(file ~= nil)then
 								file:write(serialized_data)
 								file:close()
@@ -1192,9 +1268,9 @@ local windows = {
 						end
 					end
 
-					local function RemovePreset(name)
+					local function RemovePreset(name, extension)
 						if(name ~= " " and name ~= "_" and #name > 0)then
-							os.remove(gamemode_preset_folder_name .. "\\" .. name .. ".mp_preset")
+							os.remove(gamemode_preset_folder_name .. "\\" .. name .. extension)
 						end
 					end
 
@@ -1247,9 +1323,9 @@ local windows = {
 						end
 
 						if(GuiButton(menu_gui, NewID("open_presets_folder"), 0, 10, GameTextGetTranslatedOrNot("$mp_open_preset_folder")))then
-							os.execute("start \"\" \"" .. gamemode_preset_folder_name .. "\"")
+							os.execute("explorer \"" .. gamemode_preset_folder_name .. "\"")
 						end
-						if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
+						--[[if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
 							local table_string = "[\""..preset_name.."\"] = {\n"
 							table_string = table_string .. "\t[\"version\"] = "..tostring(preset_version)..",\n"
 							table_string = table_string .. "\t[\"settings\"] = {\n"
@@ -1267,7 +1343,7 @@ local windows = {
 							steam.utils.setClipboard(table_string)
 							print("Copied preset table to clipboard")
 							GamePrint("Copied preset table to clipboard")
-						end
+						end]]
 						if(GuiButton(menu_gui, NewID("refresh_presets"), 0, 0, GameTextGetTranslatedOrNot("$mp_refresh_presets")))then
 							RefreshPresets()
 						end
@@ -1286,7 +1362,7 @@ local windows = {
 									{
 										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_delete"),
 										callback = function()
-											RemovePreset(preset.name)
+											RemovePreset(preset.name, preset.extension)
 											RefreshPresets()
 										end
 									},
