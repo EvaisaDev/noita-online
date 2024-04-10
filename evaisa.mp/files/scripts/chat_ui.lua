@@ -7,9 +7,7 @@ chat_gui = chat_gui or GuiCreate()
 
 GuiStartFrame(chat_gui)
 
-if (GameGetIsGamepadConnected()) then
-	GuiOptionsAdd(chat_gui, GUI_OPTION.NonInteractive)
-end
+
 
 
 GuiOptionsAdd(chat_gui, GUI_OPTION.NoPositionTween)
@@ -286,9 +284,9 @@ if (lobby_code ~= nil) then
 
 	--end
 
-	if (not chat_open) then
+	--[[if (not chat_open) then
 		GuiOptionsAdd(chat_gui, GUI_OPTION.NonInteractive)
-	end
+	end]]
 
 
 	if (chat_open) then
@@ -422,11 +420,11 @@ if (lobby_code ~= nil) then
 		was_input_hovered = input_hovered
 	end
 
-	if (not GameGetIsGamepadConnected()) then
-		GuiOptionsRemove(chat_gui, GUI_OPTION.NonInteractive)
-	end
-
 	GuiZSetForNextWidget(chat_gui, 0)
+
+	if (GameGetIsGamepadConnected()) then
+		GuiOptionsAddForNextWidget(chat_gui, GUI_OPTION.NonInteractive)
+	end
 	if (GuiImageButton(chat_gui, NewID("MenuButton"), screen_width - 40, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/chat.png")) then
 		chat_open = not chat_open
 		chat_opened_with_bind = false

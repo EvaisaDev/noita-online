@@ -307,17 +307,26 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 
 	local screen_width, screen_height = GuiGetScreenDimensions( gui )
 	
+	local was_non_interactive = GuiOptionsHas(gui, GUI_OPTION.NonInteractive)
+	GuiOptionsAdd(gui, GUI_OPTION.NonInteractive)
+
 	GuiBeginAutoBox(gui)
 	GuiLayoutBeginHorizontal( gui, screen_width + 5, screen_height + 5, true, 0, 0)
 	callback(x, y, w, h)
 	GuiLayoutEnd( gui )
 	GuiZSetForNextWidget( gui, 10)
 	GuiEndAutoBoxNinePiece( gui, 2, 0, 0, false, 0)
-	local _, _, _, _, _, content_width, content_height = GuiGetPreviousWidgetInfo( gui )
-	--print("contents height: "..tostring(content_height))
-	--print("container height: "..tostring(h)	)
+
+	if(was_non_interactive)then
+		GuiOptionsAdd(gui, GUI_OPTION.NonInteractive)
+	else
+		GuiOptionsRemove(gui, GUI_OPTION.NonInteractive)
+	end
 
 	
+
+	local _, _, _, _, _, content_width, content_height = GuiGetPreviousWidgetInfo( gui )
+
 	if(content_height < h and not disable_scroll)then
 		w = w + 8
 	elseif(content_height >= h and not disable_scroll)then
@@ -330,9 +339,12 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	GuiZSetForNextWidget( gui, z_index + 1 )
 	GuiBeginScrollContainer( gui, id + id_extra, x, y, w, h, true, 2, 2 )
 	GuiZSet( gui, z_index )
+	GuiOptionsAddForNextWidget(gui, GUI_OPTION.GamepadDefaultWidget)
 	callback(x, y, w, h)
 	GuiZSet( gui, 0 )
 	GuiEndScrollContainer( gui )
+
+
 end
 
 function CustomTooltip(gui, callback, z, x_offset, y_offset )

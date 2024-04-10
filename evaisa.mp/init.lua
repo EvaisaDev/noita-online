@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 342
+MP_VERSION = 344
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -49,6 +49,45 @@ string.bytes = function(str)
 	end
 	return bytes
 end
+
+
+----------------- Gui Option Jankery ----------------
+
+local gui_option_cache = {}
+
+local gui_option_add = GuiOptionsAdd
+local gui_option_remove = GuiOptionsRemove
+
+function GuiOptionsAdd(gui, option)
+	gui_option_cache[gui] = gui_option_cache[gui] or {}
+	gui_option_cache[gui][option] = true
+	gui_option_add(gui, option)
+end
+
+function GuiOptionsRemove(gui, option)
+	if(gui_option_cache[gui] and gui_option_cache[gui][option])then
+		gui_option_remove(gui, option)
+		gui_option_cache[gui][option] = nil
+	end
+end
+
+-- epic new function truly
+function GuiOptionsHas(gui, option)
+	return gui_option_cache[gui] and gui_option_cache[gui][option]
+end
+
+function GuiOptionsList(gui)
+	local options = {}
+
+	if(gui_option_cache[gui])then
+		for k, v in pairs(gui_option_cache[gui])do
+			table.insert(options, k)
+		end
+	end
+
+	return options
+end
+
 
 
 
@@ -592,10 +631,18 @@ function OnWorldPreUpdate()
 
 				if(bindings == nil)then
 					bindings = dofile_once("mods/evaisa.mp/lib/keybinds.lua")
-					bindings:RegisterBinding("chat_submit", "Noita Online", "Chat Send", "Key_RETURN", "key", false, true, false, false)
-					bindings:RegisterBinding("chat_submit2", "Noita Online", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
-					bindings:RegisterBinding("chat_open", "Noita Online", "Open Chat", "Key_t", "key", false, true, false, false)
+
+					-- keyboards bindings
+					bindings:RegisterBinding("chat_submit", "Noita Online [keyboard]", "Chat Send", "Key_RETURN", "key", false, true, false, false)
+					bindings:RegisterBinding("chat_submit2", "Noita Online [keyboard]", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
+					bindings:RegisterBinding("chat_open", "Noita Online [keyboard]", "Open Chat", "Key_t", "key", false, true, false, false)
+					bindings:RegisterBinding("lobby_menu_open", "Noita Online [keyboard]", "Open Lobby Menu", "Key_y", "key", false, true, false, false)
 				
+					-- gamepad bindings
+					bindings:RegisterBinding("chat_submit_gp", "Noita Online [gamepad]", "Chat Send", "", "button", false, false, true, false, true)
+					bindings:RegisterBinding("chat_open_gp", "Noita Online [gamepad]", "Open Chat", "", "button", false, false, true, false, true)
+					bindings:RegisterBinding("lobby_menu_open_gp", "Noita Online [gamepad]", "Open Lobby Menu", "", "button", false, false, true, false, true)
+					
 					-- loop through gamemodes
 					for k, v in ipairs(gamemodes) do
 						if(v.binding_register ~= nil)then

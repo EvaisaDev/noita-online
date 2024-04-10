@@ -17,9 +17,6 @@ status = {
 }
 
 GuiOptionsAdd( menu_gui, GUI_OPTION.NoPositionTween )
-if(GameGetIsGamepadConnected())then
-	GuiOptionsAdd(menu_gui, GUI_OPTION.NonInteractive)
-end
 
 local lobby_types = {
 	GameTextGetTranslatedOrNot("$mp_public"),
@@ -2145,6 +2142,17 @@ local windows = {
 }
 
 GuiZSetForNextWidget(menu_gui, 0)
+if (GameGetIsGamepadConnected()) then
+	GuiOptionsAddForNextWidget(menu_gui, GUI_OPTION.NonInteractive)
+end
+
+if ((bindings:IsJustDown("lobby_menu_open") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
+	gui_closed = not gui_closed
+	invite_menu_open = false
+	selected_player = nil
+	GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+end
+
 if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/menu.png"))then
 	gui_closed = not gui_closed
 	invite_menu_open = false 
@@ -2157,7 +2165,7 @@ if(not gui_closed)then
 	if(lobby_code ~= nil)then
 		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 		if(active_mode ~= nil)then
-			version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name).." (build "..tostring(active_mode.version).." "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text)..")"
+			version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name or "").." (build "..tostring(active_mode.version or "").." "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text or "")..")"
 			if(active_mode.version_display)then
 				version_string = active_mode.version_display(version_string)
 			end
