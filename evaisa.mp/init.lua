@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 344
+MP_VERSION = 345
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
@@ -1024,6 +1024,8 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 				steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
 
 			end
+
+
 			if(data.chatMemberStateChange == ChatMemberStateChangeEnum.k_EChatMemberStateChangeEntered)then
 
 				if (lobby_gamemode == nil) then

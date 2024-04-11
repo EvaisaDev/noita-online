@@ -722,40 +722,51 @@ local windows = {
 				--print(tostring(spectating))
 
 				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+				local custom_enter_check = true
+				local custom_enter_string = ""
+				if(active_mode and active_mode.custom_enter_check)then
+					custom_enter_check, custom_enter_string = active_mode.custom_enter_check(lobby_code)
+				end
 				if(lobby_in_progress and not in_game)then
-					if GuiButton(menu_gui, NewID("lobby_enter_button"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
-						
-						local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-
-						mp_log:print("Attempting to load into gamemode: "..(active_mode and active_mode.name or "UNKNOWN"))
-
-						if(active_mode)then
-
-							in_game = true
-							game_in_progress = true
+					if(custom_enter_check)then
+						if GuiButton(menu_gui, NewID("lobby_enter_button"), 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game")) then
 							
-							gui_closed = true
+							local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
-							mp_log:print("Attempting to start gamemode")
-							if(spectating)then
-								mp_log:print("Checking if gamemode has spectate function")
-								if(active_mode.spectate ~= nil)then
-									mp_log:print("Starting gamemode in spectator mode")
-									active_mode.spectate(lobby_code, true)
-								elseif(active_mode.start ~= nil)then
-									mp_log:print("Starting gamemode")
-									active_mode.start(lobby_code, true)
+							mp_log:print("Attempting to load into gamemode: "..(active_mode and active_mode.name or "UNKNOWN"))
+
+							if(active_mode)then
+
+								in_game = true
+								game_in_progress = true
+								
+								gui_closed = true
+
+								mp_log:print("Attempting to start gamemode")
+								if(spectating)then
+									mp_log:print("Checking if gamemode has spectate function")
+									if(active_mode.spectate ~= nil)then
+										mp_log:print("Starting gamemode in spectator mode")
+										active_mode.spectate(lobby_code, true)
+									elseif(active_mode.start ~= nil)then
+										mp_log:print("Starting gamemode")
+										active_mode.start(lobby_code, true)
+									end
+								else
+									mp_log:print("Checking if gamemode has start function")
+									if(active_mode.start ~= nil)then
+										mp_log:print("Starting gamemode")
+										active_mode.start(lobby_code, true)
+									end
 								end
-							else
-								mp_log:print("Checking if gamemode has start function")
-								if(active_mode.start ~= nil)then
-									mp_log:print("Starting gamemode")
-									active_mode.start(lobby_code, true)
-								end
+
+
 							end
-
-
 						end
+					else
+						GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
+						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_enter_game"))
+						GuiTooltip(menu_gui, custom_enter_string, "")
 					end
 				end
 
@@ -2146,11 +2157,13 @@ if (GameGetIsGamepadConnected()) then
 	GuiOptionsAddForNextWidget(menu_gui, GUI_OPTION.NonInteractive)
 end
 
-if ((bindings:IsJustDown("lobby_menu_open") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
-	gui_closed = not gui_closed
-	invite_menu_open = false
-	selected_player = nil
-	GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+if (not GameHasFlagRun("chat_input_hovered")) then
+	if ((bindings:IsJustDown("lobby_menu_open") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
+		gui_closed = not gui_closed
+		invite_menu_open = false
+		selected_player = nil
+		GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+	end
 end
 
 if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/menu.png"))then
