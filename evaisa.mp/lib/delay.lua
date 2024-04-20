@@ -15,6 +15,14 @@ delay.update = function()
             return
         end
 
+        --v.total_frames = v.total_frames or 0
+        --v.total_frames = v.total_frames + 1
+
+        --[[if(v.total_frames > 10 * 60 * 60)then
+            table.remove(delay_queue, i)
+            return
+        end]]
+
         if(type(v.frames) == "number")then
             v.frames = v.frames - 1
         end
