@@ -348,6 +348,7 @@ steam_utils.Leave = function(lobby_id)
 	cached_lobby_data = {}
 	initial_refreshes = 10
 	delay.reset()
+	is_awaiting_spectate = false
 	gui_closed = false
 	gamemode_settings = {}
 	steam.matchmaking.leaveLobby(lobby_id)
@@ -390,6 +391,65 @@ steam_utils.GetBlacklistedPlayers = function()
 	return out
 end
 
+steam_utils.AddLobbyFlag = function(lobby, flag)
+	local flags = steam.matchmaking.getLobbyData(lobby, "flags")
+	if (flags == nil or flags == "") then
+		flags = flag
+	else
+		flags = flags .. "," .. flag
+	end
+
+	print("Added flag: " .. flag)
+
+	steam.matchmaking.setLobbyData(lobby, "flags", flags)
+end
+
+steam_utils.RemoveLobbyFlag = function(lobby, flag)
+	local flags = steam.matchmaking.getLobbyData(lobby, "flags")
+	if (flags == nil or flags == "") then
+		return
+	end
+	local flag_table = {}
+	for f in flags:gmatch("([^,]+)") do
+		if (f ~= flag) then
+			table.insert(flag_table, f)
+		end
+	end
+	local new_flags = table.concat(flag_table, ",")
+
+	print("Removed flag: " .. flag)
+
+	steam.matchmaking.setLobbyData(lobby, "flags", new_flags)
+end
+
+steam_utils.GetLobbyFlags = function(lobby)
+	local flags = steam.matchmaking.getLobbyData(lobby, "flags")
+	if (flags == nil or flags == "") then
+		return {}
+	end
+	local out = {}
+	for f in flags:gmatch("([^,]+)") do
+		table.insert(out, f)
+	end
+	return out
+end
+
+steam_utils.HasLobbyFlag = function(lobby, flag)
+	local flags = steam.matchmaking.getLobbyData(lobby, "flags")
+	local has_flag = false
+	if (flags ~= nil and flags ~= "") then
+
+		for f in flags:gmatch("([^,]+)") do
+			if (f == flag) then
+				has_flag = true
+				break
+			end
+		end
+	end
+
+	print("Has flag: " .. tostring(has_flag))
+	return has_flag
+end
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
 	if (key == "time_updated") then

@@ -6,12 +6,24 @@ delay.reset = function()
 end
 
 delay.update = function()
-    for i, v in ipairs(delay_queue) do
-        v.frames = v.frames - 1
+    for i = #delay_queue, 1, -1 do
+        local v = delay_queue[i]
+
+        if(type(v.frames) == "number")then
+            v.frames = v.frames - 1
+        end
+
         if(v.tick_callback)then
             v.tick_callback(v.frames)
         end
-        if(v.frames <= 0)then
+
+        --[[print("type: "..type(v.frames))
+
+        if(type(v.frames) == "function")then
+            print("waw: "..v.frames())
+        end]]
+
+        if((type(v.frames) == "number" and v.frames <= 0) or (type(v.frames) == "function" and v.frames()))then
             if(v.finish_callback)then
                 v.finish_callback()
             end

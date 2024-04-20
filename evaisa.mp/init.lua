@@ -1,10 +1,11 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 345
+MP_VERSION = 346
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
+exceptions_in_logger = true
 
 -----------------------------------
 
@@ -448,7 +449,7 @@ end
 
 local function ReceiveMessages(gamemode, ignore)
 	local messages = steam.networking.pollMessages() or {}
-	if(ignore)then
+	if(ignore or is_awaiting_spectate)then
 		return
 	end
 	for k, v in ipairs(messages) do
@@ -469,6 +470,8 @@ local function ReceiveMessages(gamemode, ignore)
 			local event = data[1]
 			local message = data[2]
 			local frame = data[3]
+
+			--GamePrint("Received event: "..event)
 
 			if (data[3]) then
 				-- check if frame is newer than member message frame
@@ -805,6 +808,9 @@ function OnWorldPreUpdate()
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -827,6 +833,9 @@ function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -849,6 +858,9 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -891,6 +903,9 @@ function OnWorldPostUpdate()
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -964,6 +979,9 @@ function steam.matchmaking.onLobbyEnter(data)
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -988,6 +1006,9 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -1068,6 +1089,9 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -1154,10 +1178,14 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 			print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
 			local spectating = steamutils.IsSpectator(lobby_code, user)
 			steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
+			--steam_utils.sendToPlayer("enter_now", {}, user, true)
 			-- re_enter lobby
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
 	end)
 end
 
@@ -1343,7 +1371,7 @@ function OnPlayerSpawned(player)
 	GameRemoveFlagRun("game_paused")
 	rand = rng.new(os.time()+GameGetFrameNum())
 	delay.reset()
-	
+	is_awaiting_spectate = false
 	--ModSettingRemove("lobby_data_store")
 	--print(pretty.table(bitser))
 

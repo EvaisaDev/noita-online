@@ -661,11 +661,17 @@ local windows = {
 									end
 								end
 							end
+				
 
 						else
 							steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
 							
-							delay.new(30, function()
+							is_awaiting_spectate = true
+
+							delay.new(function()
+								return steamutils.IsSpectator(lobby_code) ~= spectating
+							end, function()
+								is_awaiting_spectate = false
 								if(lobby_gamemode and game_in_progress)then
 									in_game = true
 									game_in_progress = true

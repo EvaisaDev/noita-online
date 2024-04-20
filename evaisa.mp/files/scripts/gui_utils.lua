@@ -68,15 +68,17 @@ end
 
 
 function WorldToScreenPos(gui_input, x, y)
-    local virt_x = MagicNumbersGetValue("VIRTUAL_RESOLUTION_X")
-    local virt_y = MagicNumbersGetValue("VIRTUAL_RESOLUTION_Y")
-    local screen_width, screen_height = GuiGetScreenDimensions(gui_input)
-    local scale_x = virt_x / screen_width
-    local scale_y = virt_y / screen_height
-    local cx, cy = GameGetCameraPos()
-    local sx, sy = (x - cx) / scale_x + screen_width / 2 + 1.5, (y - cy) / scale_y + screen_height / 2
-    return sx, sy
-end
+	local ww, wh = MagicNumbersGetValue("VIRTUAL_RESOLUTION_X"), MagicNumbersGetValue("VIRTUAL_RESOLUTION_Y")
+	local sw, sh = GuiGetScreenDimensions(gui_input)
+	local _, _, cam_w, cam_h = GameGetCameraBounds()
+	local cx, cy = GameGetCameraPos()
+	cx = cx - cam_w / 2
+	cy = cy - cam_h / 2
+	x, y = x - cx, y - cy
+	x, y = x / ww, y / wh
+	x, y = x * sw, y * sh
+	return x, y
+  end
 
 temp_gui = temp_gui or GuiCreate()
 
