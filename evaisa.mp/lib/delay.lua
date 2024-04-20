@@ -9,6 +9,12 @@ delay.update = function()
     for i = #delay_queue, 1, -1 do
         local v = delay_queue[i]
 
+        -- if v is null, remove it
+        if(v == nil)then
+            table.remove(delay_queue, i)
+            return
+        end
+
         if(type(v.frames) == "number")then
             v.frames = v.frames - 1
         end
@@ -16,12 +22,6 @@ delay.update = function()
         if(v.tick_callback)then
             v.tick_callback(v.frames)
         end
-
-        --[[print("type: "..type(v.frames))
-
-        if(type(v.frames) == "function")then
-            print("waw: "..v.frames())
-        end]]
 
         if((type(v.frames) == "number" and v.frames <= 0) or (type(v.frames) == "function" and v.frames()))then
             if(v.finish_callback)then
