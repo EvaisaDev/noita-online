@@ -157,7 +157,6 @@ steam_utils.getUserAvatar = function(user_id)
 
 	local cache_folder = "data/evaisa.mp/cache/avatars/"
 
-	-- create directory if it doesn't exist, make full path
 	local path = ""
     for folder_name in cache_folder:gmatch("([^/]+)")do
         path = path .. folder_name
@@ -173,8 +172,6 @@ steam_utils.getUserAvatar = function(user_id)
 		return "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
 	end
 
-	--print(inspect(image_data))
-
 	local path = cache_folder .. tostring(user_id) .. ".png"
 
 	local png = pngencoder(width, height)
@@ -189,12 +186,7 @@ steam_utils.getUserAvatar = function(user_id)
 		end
 	end
 
-
-
 	local data = table.concat(png.output)
-
-	--print("Writing avatar to " .. path)
-	--print("Image data: " .. tostring(data))
 
 	local file = io.open(path, "wb")
 	file:write(data)

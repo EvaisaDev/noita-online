@@ -6,6 +6,7 @@ VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
+dev_mode = false
 
 -----------------------------------
 
@@ -225,7 +226,6 @@ lobby_gamemode = nil
 
 disable_print = false
 
-dev_mode = false
 
 debug_info:print("Dev mode: " .. tostring(dev_mode))
 

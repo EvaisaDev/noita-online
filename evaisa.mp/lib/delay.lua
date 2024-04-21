@@ -47,6 +47,15 @@ delay.new = function(frames, finish_callback, tick_callback)
         finish_callback = finish_callback
     }
     table.insert(delay_queue, self)
+    
+    self.clear = function()
+        for i = #delay_queue, 1, -1 do
+            if(delay_queue[i] == self)then
+                table.remove(delay_queue, i)
+            end
+        end
+    end
+    
     return self
 end
 
