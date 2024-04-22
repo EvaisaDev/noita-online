@@ -1525,7 +1525,7 @@ local windows = {
 						end
 					end]]
 					
-					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(active_mode.name))
+					--GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(active_mode.name))
 					GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)

@@ -1,7 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
-MP_VERSION = 348
+MP_VERSION = 349
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
