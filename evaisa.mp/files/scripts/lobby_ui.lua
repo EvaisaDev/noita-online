@@ -1478,7 +1478,7 @@ local windows = {
 				end
 			end
 
-			if(lobby_settings_open)then
+			if(lobby_settings_open and lobby_code ~= nil)then
 				
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
@@ -1873,12 +1873,12 @@ local windows = {
 					end
 
 
-					if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(gamemodes[gamemode_index].name)))then
+					--[[if(GuiButton(menu_gui, NewID("CreateLobby"), 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(gamemodes[gamemode_index].name)))then
 						gamemode_index = gamemode_index + 1
 						if(gamemode_index > #gamemodes)then
 							gamemode_index = 1
 						end
-					end
+					end]]
 
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
