@@ -783,7 +783,16 @@ local windows = {
 				for k, v in pairs(players) do
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 	
-					GuiImage(menu_gui, NewID("lobby_player"), 0, 0, steam_utils.getUserAvatar(v.id), 1, 10 / 32, 10 / 32, 0)
+					local extra_x = 0
+					local alpha = 1
+					if(v.is_spectator)then
+						alpha = 0.5
+						extra_x = 0
+						GuiImage(menu_gui, NewID("lobby_player"), 0, 0, "mods/evaisa.mp/files/gfx/ui/spectator.png", 1, 1, 1, 0)
+					end
+
+
+					GuiImage(menu_gui, NewID("lobby_player"), extra_x, 0, steam_utils.getUserAvatar(v.id), alpha, 10 / 32, 10 / 32, 0)
 
 					if(v.id ~= steam.user.getSteamID() and owner == steam.user.getSteamID())then
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
@@ -841,9 +850,9 @@ local windows = {
 						GuiImage(menu_gui, NewID("lobby_player"), 2, -3, "mods/evaisa.mp/files/gfx/ui/crown.png", 1, 1, 1, 0)
 						--selected_player
 						if(selected_player == v.id)then
-							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, 1 )
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, alpha )
 						else
-							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, alpha )
 						end
 						if(GuiButton(menu_gui, NewID("lobby_player"), -5, 0, tostring(v.name)))then
 							lobby_presets_open = false
@@ -856,9 +865,9 @@ local windows = {
 						end
 					else
 						if(selected_player == v.id)then
-							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, 1 )
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 0.2, alpha )
 						else
-							GuiColorSetForNextWidget( menu_gui, 1, 1, 1, 1 )
+							GuiColorSetForNextWidget( menu_gui, 1, 1, 1,alpha )
 						end
 
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, tostring(v.name)))then

@@ -1,6 +1,7 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
+--discord_app_id = 943584660334739457LL
 MP_VERSION = 349
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
@@ -283,8 +284,6 @@ if ((ModSettingGet("last_serialization_version") or "1") ~= serialization_versio
 	ModSettingSet("last_serialization_version", serialization_version)
 end
 
-local application_id = 943584660334739457LL
-
 np.InstallShootProjectileFiredCallbacks()
 np.EnableGameSimulatePausing(false)
 np.InstallDamageDetailsPatch()
@@ -312,6 +311,12 @@ end
 --GameSDK = require("game_sdk")
 
 steam = require("luasteam")
+
+
+--GameSDK = nil
+--discord_sdk = nil
+
+
 --require("physics")
 steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 clear_avatar_cache()
@@ -408,8 +413,6 @@ http_get = function(url, callback)
 end]]
 
 if type(Steam) == 'boolean' then Steam = nil end
-
-instance = instance or nil
 
 activity = activity or nil
 
@@ -626,6 +629,10 @@ function OnWorldPreUpdate()
 						}, -6000)
 					end
 				end
+
+				--[[if(GameSDK ~= nil and discord_sdk ~= nil)then
+					GameSDK.runCallbacks(discord_sdk.corePtr)
+				end]]
 
 
 				if(input == nil)then
@@ -1239,6 +1246,13 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	steam.init()
 	steam.friends.setRichPresence("status", "Noita Online - Menu")
 
+	--[[if(GameSDK == nil)then
+		GameSDK = require("game_sdk")
+
+		discord_sdk = GameSDK.initialize(discord_app_id)
+	end]]
+
+	
 
 
 	mod_data = ModData()
