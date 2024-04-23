@@ -789,6 +789,7 @@ local windows = {
 						alpha = 0.5
 						extra_x = 0
 						GuiImage(menu_gui, NewID("lobby_player"), 0, 0, "mods/evaisa.mp/files/gfx/ui/spectator.png", 1, 1, 1, 0)
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_spectator_hover"), "")
 					end
 
 
@@ -1419,7 +1420,20 @@ local windows = {
 
 
 								gamemode_settings = preset_info.data.settings
-								--print("loaded: "..json.stringify(gamemode_settings))
+
+								-- loop through 
+								for k, setting in ipairs(active_mode.settings or {})do
+									if(gamemode_settings[setting.id] == nil)then
+										gamemode_settings[setting.id] = setting.default
+										print("Setting "..setting.id.." to default: "..tostring(setting.default))
+									end
+								end
+
+
+								print("loaded: "..json.stringify(gamemode_settings))
+
+
+
 								preset_name = preset_info.name
 								--settings_changed = true
 
@@ -1618,9 +1632,11 @@ local windows = {
 
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
+							print("Setting "..setting.id.." to default: "..tostring(setting.default))
 							--settings_changed = true
 							--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
 						else
+							
 							if(setting.type == "bool" and type(gamemode_settings[setting.id]) == "string")then
 								if(gamemode_settings[setting.id] == "true")then
 									gamemode_settings[setting.id] = true

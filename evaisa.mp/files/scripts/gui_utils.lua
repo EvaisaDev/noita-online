@@ -329,6 +329,8 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 
 	local _, _, _, _, _, content_width, content_height = GuiGetPreviousWidgetInfo( gui )
 
+	content_height = content_height - 8
+
 	if(content_height < h and not disable_scroll)then
 		w = w + 8
 	elseif(content_height >= h and not disable_scroll)then

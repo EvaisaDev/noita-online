@@ -2,7 +2,7 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 349
+MP_VERSION = 350
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
