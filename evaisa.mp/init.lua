@@ -2,12 +2,14 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 350
+MP_VERSION = 351
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
+debugging = false
+disable_print = false
 
 -----------------------------------
 
@@ -112,6 +114,12 @@ debug_log = logger.init("debugging.log")
 exception_log = logger.init("exceptions.log")
 debug_info = logger.init("debug_info.log", nil, true)
 
+if(not debugging)then
+	networking_log.enabled = false
+end
+
+
+
 try = dofile("mods/evaisa.mp/lib/try_catch.lua")
 
 --fontbuilder = dofile("mods/evaisa.mp/lib/fontbuilder.lua")
@@ -209,9 +217,16 @@ popup = dofile("mods/evaisa.mp/files/scripts/popup.lua")
 profile = dofile("mods/evaisa.mp/lib/profile.lua")
 
 local profile_next = false
-local profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
-local profiler_result_csv = io.open("profiler_online.csv", "w+")
-profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
+local profiler_rate = math.floor(ModSettingGet("evaisa.mp.profiler_rate") or 1)
+
+local profiler_folder_name = "noita_online_logs/profiler"
+
+-- create profiler folder
+if not os.rename(profiler_folder_name, profiler_folder_name) then
+	os.execute("mkdir \"" .. profiler_folder_name .. "\"")
+end
+
+local profiler_result_csv = nil
 
 
 debug_info:print("Build: " .. tostring(MP_VERSION))
@@ -225,7 +240,6 @@ Starting = nil
 
 lobby_gamemode = nil
 
-disable_print = false
 
 
 debug_info:print("Dev mode: " .. tostring(dev_mode))
@@ -241,7 +255,7 @@ function GetNoitaVersionHash()
 	return nil
 end
 
-local noita_version_hash = GetNoitaVersionHash()
+noita_version_hash = GetNoitaVersionHash()
 
 -- strip newlines and such from hash
 noita_version_hash = noita_version_hash:gsub("%s+", "")
@@ -355,7 +369,7 @@ function OnPausedChanged(paused, is_wand_pickup)
 	local players = EntityGetWithTag("player_unit") or {}
 
 	if(not is_wand_pickup)then
-		profiler_rate = ModSettingGet("evaisa.mp.profiler_rate") or 1
+		profiler_rate = math.floor(ModSettingGet("evaisa.mp.profiler_rate") or 1)
 	end
 
 	if (players[1]) then
@@ -450,6 +464,7 @@ function FindGamemode(id)
 	return nil
 end
 
+
 local function ReceiveMessages(gamemode, ignore)
 	local messages = steam.networking.pollMessages() or {}
 	if(ignore or is_awaiting_spectate)then
@@ -474,7 +489,7 @@ local function ReceiveMessages(gamemode, ignore)
 			local message = data[2]
 			local frame = data[3]
 
-			--GamePrint("Received event: "..event)
+			--print("Received event: "..event)
 
 			if (data[3]) then
 				-- check if frame is newer than member message frame
@@ -483,6 +498,9 @@ local function ReceiveMessages(gamemode, ignore)
 
 					--GamePrint("Received event: "..event)
 					if (gamemode.received) then
+						--[[if(event ~= "hm_timer_clear" and event ~= "handshake")then
+							print("Message received: " .. event)
+						end]]
 						gamemode.received(lobby_code, event, message, v.user)
 					end
 				--[[else
@@ -490,6 +508,9 @@ local function ReceiveMessages(gamemode, ignore)
 					print("Message dropped: " .. event)]]
 				end
 			elseif (gamemode.received) then
+				--[[if(event ~= "hm_timer_clear" and event ~= "handshake")then
+					print("Message received 2: " .. event)
+				end]]
 				gamemode.received(lobby_code, event, message, v.user)
 			end
 		end
@@ -519,6 +540,9 @@ local connection_popup_was_open_timer = 0
 local laa_check_busy = false
 local invalid_version_popup_open = false
 
+
+local did_frame = false
+
 function OnWorldPreUpdate()
 	try(function()
 		if(GameHasFlagRun("mp_blocked_load"))then
@@ -526,15 +550,20 @@ function OnWorldPreUpdate()
 		end
 
 		if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
+			did_frame = true
 			profile.start()
+			--print("Profiling frame: "..GameGetFrameNum())
+		else
+			did_frame = false
 		end
 
 		if (input ~= nil and input:WasKeyPressed("f8")) then
 			profile_next = not profile_next
 			if(profile_next)then
 				profile.clear()
-				profiler_result_csv = io.open("profiler_online.csv", "w+")
+				profiler_result_csv = io.open(profiler_folder_name.."/"..os.date("%Y-%m-%d_%H-%M-%S")..".csv", "w+")
 				profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
+				print("Starting profiler")
 			end
 		end 
 
@@ -723,6 +752,9 @@ function OnWorldPreUpdate()
 					--print("b")
 
 					if (GameGetFrameNum() % 60 == 0) then
+
+						steam_utils.updateCacheSpectators(lobby_code)
+						
 						last_bytes_sent = bytes_sent
 						last_bytes_received = bytes_received
 						bytes_sent = 0
@@ -901,7 +933,7 @@ function OnWorldPostUpdate()
 			bindings:Update()
 		end
 
-		if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
+		if(profile_next and did_frame)then
 			profile.stop()
 
 			profiler_result_csv:write(profile.csv(500))

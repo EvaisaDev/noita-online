@@ -212,7 +212,7 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 	end
 
 	if(not update_cache and lobby_members[tostring(lobby_id)])then
-		goto return_list
+		return lobby_members[tostring(lobby_id)]
 	end
 
 	lobby_members[tostring(lobby_id)] = {}
@@ -227,19 +227,17 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 		})
 	end
 
-	::return_list::
+	return lobby_members[tostring(lobby_id)]
+end
 
-	local out = {}
-
+steam_utils.updateCacheSpectators = function(lobby_id)
+	if(lobby_members[tostring(lobby_id)] == nil)then
+		return
+	end
 	for i = 1, #lobby_members[tostring(lobby_id)] do
 		local member = lobby_members[tostring(lobby_id)][i]
 		member.is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(member.id) .. "_spectator") == "true"
-		if(not member.is_spectator or include_spectators)then
-			table.insert(out, member)
-		end
 	end
-
-	return out
 end
 
 lobby_members_ids = lobby_members_ids or {}
@@ -321,14 +319,24 @@ steam_utils.doesLobbyExist = function(lobby_id, callback)
 end
 
 
-
 steam_utils.GetLobbyData = function(key)
+	if(lobby_code == nil)then
+		return nil
+	end
 	local value = lobby_data_last_frame[key]
 	if (value == nil or value == "") then
-		return nil
+		-- run getLobbyData to make sure
+		local code = lobby_code
+		value = steam.matchmaking.getLobbyData(code, key)
+
+		-- cache the value
+		lobby_data_last_frame[key] = value
+
+		return value
 	end
 	return value
 end
+
 
 steam_utils.Leave = function(lobby_id)
 
@@ -498,6 +506,7 @@ steam_utils.GetLocalLobbyData = function(lobby, key)
 	return value
 end
 
+lobby_data_cache = lobby_data_cache or {}
 
 steam_utils.CheckLocalLobbyData = function()
 	-- Get saved list of "all_keys" from data_store

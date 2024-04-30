@@ -224,6 +224,18 @@ local windows = {
 											GuiZSetForNextWidget(menu_gui, -6210)
 											GuiText(menu_gui, 0, 0, info.gamemode_version_string_user)
 										end
+
+										-- game version
+										GuiText(menu_gui, 0, 0, " ")
+
+										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
+										GuiZSetForNextWidget(menu_gui, -6210)
+										GuiText(menu_gui, 0, 0, info.game_version_string)
+										if(not info.game_version_same)then
+											GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
+											GuiZSetForNextWidget(menu_gui, -6210)
+											GuiText(menu_gui, 0, 0, info.game_version_string_user)
+										end
 	
 	
 									end, -6200, 0, 0)
@@ -360,6 +372,18 @@ local windows = {
 										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
 										GuiZSetForNextWidget(menu_gui, -6210)
 										GuiText(menu_gui, 0, 0, info.gamemode_version_string_user)
+									end
+
+									-- game version
+									GuiText(menu_gui, 0, 0, " ")
+
+									GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
+									GuiZSetForNextWidget(menu_gui, -6210)
+									GuiText(menu_gui, 0, 0, info.game_version_string)
+									if(not info.game_version_same)then
+										GuiColorSetForNextWidget( menu_gui, 0.8, 0.8, 0.8, 1.0 )
+										GuiZSetForNextWidget(menu_gui, -6210)
+										GuiText(menu_gui, 0, 0, info.game_version_string_user)
 									end
 
 
@@ -633,7 +657,21 @@ local windows = {
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				local spectating = steamutils.IsSpectator(lobby_code)
+
+	
+
 				if(active_mode and active_mode.enable_spectator)then
+					local is_busy = false
+					local busy_reason = ""
+					if(active_mode.custom_spectator_check)then
+						local can_spectate, reason = active_mode.custom_spectator_check(lobby_code)
+						if(not can_spectate)then
+							GuiOptionsAddForNextWidget(menu_gui, GUI_OPTION.NonInteractive)
+							GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1 )
+							is_busy = true
+							busy_reason = reason
+						end
+					end
 					if(GuiButton(menu_gui, NewID("lobby_spectate_button"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
 						if(owner == steam.user.getSteamID())then
 							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
@@ -697,6 +735,9 @@ local windows = {
 								end
 							end)
 						end
+					end
+					if(is_busy)then
+						GuiTooltip(menu_gui, busy_reason, "")
 					end
 				end
 				
@@ -1950,6 +1991,7 @@ local windows = {
 							steam.matchmaking.setLobbyData(code, "name", lobby_name)
 							steam.matchmaking.setLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
 							steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
+							steam.matchmaking.setLobbyData(code, "game_version", tostring(noita_version_hash))
 							steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
 							steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
 							steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))

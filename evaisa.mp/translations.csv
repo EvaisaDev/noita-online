@@ -129,3 +129,7 @@ mp_streamer_mode_popup_desc,Do you wish to turn on Streamer Mode? This can be di
 mp_streamer_mode_popup_desc2,Streamer mode disables profile pictures and hides usernames.,,,,,,,,,,,,,
 mp_streamer_mode_popup_enable,Enable Streamer Mode,,,,,,,,,,,,,
 mp_spectator_hover,"This player is in spectator mode, they will not partake in the game.",,,,,,,,,,,,,
+mp_game_version_mismatch,You are using a different version of Noita,,,,,,,,,,,,,
+mp_lobby_info_game_host_diff,The host is running a different version of Noita: %s ,,,,,,,,,,,,,
+mp_lobby_info_game_same_version,You are running the same version of Noita,,,,,,,,,,,,,
+mp_lobby_info_game_you_using,(You are running version %s),,,,,,,,,,,,,

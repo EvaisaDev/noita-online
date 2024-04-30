@@ -51,6 +51,7 @@ local bindings = {
     IsJustDown = function(self, id)
         if(GameHasFlagRun("evaisa.mp.reload_bindings"))then
             GameRemoveFlagRun("evaisa.mp.reload_bindings")
+            print("reloading binds!")
             self:Load()
         end
         local handlers = {
