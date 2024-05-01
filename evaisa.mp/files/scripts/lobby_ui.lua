@@ -1745,7 +1745,8 @@ local windows = {
 									offset = offset - 4
 								end   ]]      
 
-								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
+								GuiLayoutBeginHorizontal(menu_gui, 2, offset, true)
+								if(GuiButton(menu_gui, NewID("EditLobby"), 0, 0, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
 									selected_index = selected_index + 1
 									if(selected_index > #setting.options)then
 										selected_index = 1
@@ -1754,7 +1755,33 @@ local windows = {
 									settings_changed = true
 									--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
 								end
+
+								local _, _, _, _, _, w, h = GuiGetPreviousWidgetInfo(menu_gui)
+
 								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
+
+
+
+								if(setting.options[selected_index][3] ~= nil)then
+									local info = setting.options[selected_index][3]
+									local info_name = "???"
+									local info_desc = ""
+									if(type(info) == "function")then
+										info_name, info_desc = info()
+									elseif(type(info) == "table")then
+										info_name, info_desc = info[1], info[2]
+									else
+										info_name = info
+									end
+
+									if(info_name ~= nil)then
+										GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+										GuiText(menu_gui, 0, 0, "[?]")
+										GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(info_name), GameTextGetTranslatedOrNot(info_desc))
+									end
+								end
+
+								GuiLayoutEnd(menu_gui)
 
 								previous_type = "enum"
 								
