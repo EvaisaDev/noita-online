@@ -2,14 +2,14 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 352
+MP_VERSION = 353
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = true
+disable_print = false
 
 -----------------------------------
 
@@ -1032,6 +1032,12 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 			for i = 1, lobby_data_count do
 				local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
 				current_lobby_data[data.key] = data.value
+
+				-- if data.key ends with _spectator, then we need to update the spectator list
+				if(string.sub(data.key, -10) == "_spectator")then
+					steamutils.getLobbyMembers(lobby_code, true, true)
+				end
+				
 				--print("Lobby data: " .. data.key .. " = " .. data.value)
 				if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
 					lobby_data_updated_this_frame[data.key] = true

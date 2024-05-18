@@ -198,6 +198,7 @@ steam_utils.getUserAvatar = function(user_id)
 end
 
 lobby_members = lobby_members or {}
+lobby_members_no_spectators = lobby_members_no_spectators or {}
 was_streamer_mode = was_streamer_mode or false
 
 steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cache)
@@ -210,24 +211,48 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 		update_cache = true
 		was_streamer_mode = true
 	end
+	
 
-	if(not update_cache and lobby_members[tostring(lobby_id)])then
-		return lobby_members[tostring(lobby_id)]
+	if(not update_cache)then
+		if(include_spectators and lobby_members[tostring(lobby_id)])then
+			--print("Returning cached lobby members")
+			return lobby_members[tostring(lobby_id)]
+		elseif(not include_spectators and lobby_members_no_spectators[tostring(lobby_id)])then
+			--print("Returning cached lobby members without spectators")
+			return lobby_members_no_spectators[tostring(lobby_id)]
+		end
 	end
 
 	lobby_members[tostring(lobby_id)] = {}
+	lobby_members_no_spectators[tostring(lobby_id)] = {}
 
 	for i = 1, steam.matchmaking.getNumLobbyMembers(lobby_id) do
 		local h = steam.matchmaking.getLobbyMemberByIndex(lobby_id, i - 1)
 
+		-- if spectator
+		local is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") == "true"
+
+		if(not is_spectator)then
+			table.insert(lobby_members_no_spectators[tostring(lobby_id)], {
+				id = h, 
+				name = steam_utils.getTranslatedPersonaName(h, h == steam.user.getSteamID()),
+				is_spectator = is_spectator
+			})
+		end
+
 		table.insert(lobby_members[tostring(lobby_id)], {
 			id = h, 
 			name = steam_utils.getTranslatedPersonaName(h, h == steam.user.getSteamID()),
-			is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") == "true"
+			is_spectator = is_spectator
 		})
 	end
 
-	return lobby_members[tostring(lobby_id)]
+	if(include_spectators)then
+		return lobby_members[tostring(lobby_id)]
+	else
+		return lobby_members_no_spectators[tostring(lobby_id)]
+	end
+	
 end
 
 steam_utils.updateCacheSpectators = function(lobby_id)
