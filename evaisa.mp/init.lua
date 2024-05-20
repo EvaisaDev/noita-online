@@ -464,9 +464,13 @@ function FindGamemode(id)
 	return nil
 end
 
-function TryHandleMessage(lobby_code, event, message, user)
+function TryHandleMessage(lobby_code, event, message, user, ignore)
 	try(function()
 		if (lobby_gamemode ~= nil) then
+
+			if(event ~= "hm_timer_clear" and event ~= "ready")then
+				print(event)
+			end
 
 			local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 	
@@ -474,6 +478,8 @@ function TryHandleMessage(lobby_code, event, message, user)
 	
 			if (from_owner and event == "start" or event == "restart") then
 
+				print("Starting game")
+				
 				if(lobby_gamemode.apply_start_data)then
 					lobby_gamemode.apply_start_data(lobby_code, message)
 				end
@@ -484,6 +490,8 @@ function TryHandleMessage(lobby_code, event, message, user)
 					Starting = 30
 				end
 			elseif (from_owner and event == "refresh") then
+
+				print("Refreshing lobby data")
 	
 				if handleVersionCheck() and handleModCheck() then
 					if handleGamemodeVersionCheck(lobby_code) then
@@ -517,7 +525,7 @@ function TryHandleMessage(lobby_code, event, message, user)
 			end
 
 
-			if (lobby_gamemode.received) then
+			if (lobby_gamemode.received and not ignore) then
 				lobby_gamemode.received(lobby_code, event, message, user)
 			end
 		end
@@ -529,7 +537,7 @@ function TryHandleMessage(lobby_code, event, message, user)
 	end)
 end
 
-function HandleMessage(v)
+function HandleMessage(v, ignore)
 		
 	if(is_awaiting_spectate)then
 		return
@@ -544,7 +552,7 @@ function HandleMessage(v)
 	end
 
 	-- old api
-	if (lobby_gamemode.message) then
+	if (lobby_gamemode.message and not ignore) then
 		lobby_gamemode.message(lobby_code, data, v.user)
 	end
 	
@@ -560,21 +568,23 @@ function HandleMessage(v)
 		if (data[3]) then
 			if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
 				member_message_frames[tostring(v.user)] = frame
-				TryHandleMessage(lobby_code, event, message, v.user)
+				TryHandleMessage(lobby_code, event, message, v.user, ignore)
 			end
 		else
-			TryHandleMessage(lobby_code, event, message, v.user)
+			TryHandleMessage(lobby_code, event, message, v.user, ignore)
 		end
+	else
+		print("Invalid message: "..tostring(data))
 	end
 end
 
 local function ReceiveMessages(ignore)
 	local messages = steam.networking.pollMessages() or {}
-	if(ignore or is_awaiting_spectate)then
+	if(is_awaiting_spectate)then
 		return
 	end
 	for k, v in ipairs(messages) do
-		HandleMessage(v)
+		HandleMessage(v, ignore)
 	end
 end
 

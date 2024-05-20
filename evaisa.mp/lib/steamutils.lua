@@ -593,7 +593,7 @@ message_handlers = {
 
 			if(member.id == steam.user.getSteamID())then
 				HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
-				return
+				goto continue
 			end
 
 			if (reliable) then
@@ -617,6 +617,8 @@ message_handlers = {
 				end
 				bytes_sent = bytes_sent + size
 			end
+
+			::continue::
 		end
 	end,
 	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event)
@@ -690,7 +692,7 @@ message_handlers = {
 
 		if(steam_utils.IsOwner(lobby))then
 			HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
-			return
+			goto continue
 		end
 
 
@@ -714,6 +716,8 @@ message_handlers = {
 			end
 			bytes_sent = bytes_sent + size
 		end
+
+		::continue::
 	end,
 	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, true)
