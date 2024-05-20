@@ -469,7 +469,7 @@ function TryHandleMessage(lobby_code, event, message, user, ignore)
 		if (lobby_gamemode ~= nil) then
 
 			if(event ~= "hm_timer_clear" and event ~= "ready")then
-				print(event)
+				--print(event)
 			end
 
 			local owner = steam.matchmaking.getLobbyOwner(lobby_code)
@@ -524,6 +524,7 @@ function TryHandleMessage(lobby_code, event, message, user, ignore)
 				steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
 			end
 
+			--print("ignore? "..tostring(ignore))
 
 			if (lobby_gamemode.received and not ignore) then
 				lobby_gamemode.received(lobby_code, event, message, user)
@@ -911,7 +912,7 @@ function OnWorldPreUpdate()
 
 						
 					end
-					ReceiveMessages(lobby_gamemode, not game_in_progress)
+					ReceiveMessages(not game_in_progress)
 				end
 			end
 		end
