@@ -702,7 +702,8 @@ local windows = {
 				
 
 						else
-							steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "spectate")
+							steam_utils.send("spectate", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 							
 							is_awaiting_spectate = true
 
@@ -755,10 +756,19 @@ local windows = {
 					if(GuiButton(menu_gui, NewID("lobby_start_button"), 0, 0, start_string ))then
 						gui_closed = not gui_closed
 						invite_menu_open = false
+
+						local start_data = {}
+
+						if(active_mode and active_mode.start_data)then
+							start_data = active_mode.start_data(lobby_code)
+						end
+
 						if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
-							steam.matchmaking.sendLobbyChatMsg(lobby_code, "restart")
+							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "restart")
+							steam_utils.send("restart", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 						else
-							steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
+							steam_utils.send("start", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 						end
 						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
 					end
@@ -1483,7 +1493,8 @@ local windows = {
 									mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 								end
 
-								steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
+								--steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
+								steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 
 								if(active_mode.load_preset)then
 									active_mode.load_preset(lobby_code, preset_info.data)
@@ -1880,7 +1891,7 @@ local windows = {
 							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 						end
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
-						steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
+						steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
 						mp_log:print("Updated name: "..tostring(edit_lobby_name))
 						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))

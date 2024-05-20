@@ -464,57 +464,117 @@ function FindGamemode(id)
 	return nil
 end
 
+function TryHandleMessage(lobby_code, event, message, user)
+	try(function()
+		if (lobby_gamemode ~= nil) then
 
-local function ReceiveMessages(gamemode, ignore)
+			local owner = steam.matchmaking.getLobbyOwner(lobby_code)
+	
+			local from_owner = user == owner
+	
+			if (from_owner and event == "start" or event == "restart") then
+
+				if(lobby_gamemode.apply_start_data)then
+					lobby_gamemode.apply_start_data(lobby_code, message)
+				end
+
+				if(owner == steam.user.getSteamID())then
+					StartGame()
+				else
+					Starting = 30
+				end
+			elseif (from_owner and event == "refresh") then
+	
+				if handleVersionCheck() and handleModCheck() then
+					if handleGamemodeVersionCheck(lobby_code) then
+						if (lobby_gamemode) then
+							--game_in_progress = false
+							--print("Refreshing lobby data in 30 frames")
+							delay.new(30, function()
+								for k, setting in ipairs(lobby_gamemode.settings or {}) do
+									gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
+										setting.id)
+								end
+			
+								if (lobby_gamemode.refresh) then
+									lobby_gamemode.refresh(lobby_code)
+								end
+							end, function(frames) end)
+	
+	
+						else
+							disconnect({
+								lobbyID = lobby_code,
+								message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))--"Gamemode missing: " .. tostring(lobby_gamemode.id)
+							})
+						end
+					end
+				end
+			elseif (owner == steam.user.getSteamID() and event == "spectate") then
+				print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
+				local spectating = steamutils.IsSpectator(lobby_code, user)
+				steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
+			end
+
+
+			if (lobby_gamemode.received) then
+				lobby_gamemode.received(lobby_code, event, message, user)
+			end
+		end
+	end).catch(function(ex)
+		exception_log:print(tostring(ex))
+		if(exceptions_in_logger)then
+			print(tostring(ex))
+		end
+	end)
+end
+
+function HandleMessage(v)
+		
+	if(is_awaiting_spectate)then
+		return
+	end
+
+	local data = steamutils.parseData(v.data)
+
+	bytes_received = bytes_received + v.msg_size
+
+	if (lobby_gamemode == nil) then
+		return
+	end
+
+	-- old api
+	if (lobby_gamemode.message) then
+		lobby_gamemode.message(lobby_code, data, v.user)
+	end
+	
+	if (data[1] and type(data[1]) == "string" and data[2]) then
+		if(bytes_received_per_type[data[1]] == nil)then
+			bytes_received_per_type[data[1]] = 0
+		end
+		bytes_received_per_type[data[1]] = bytes_received_per_type[data[1]] + v.msg_size
+		local event = data[1]
+		local message = data[2]
+		local frame = data[3]
+
+		if (data[3]) then
+			if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
+				member_message_frames[tostring(v.user)] = frame
+				TryHandleMessage(lobby_code, event, message, v.user)
+			end
+		else
+			TryHandleMessage(lobby_code, event, message, v.user)
+		end
+	end
+end
+
+local function ReceiveMessages(ignore)
 	local messages = steam.networking.pollMessages() or {}
 	if(ignore or is_awaiting_spectate)then
 		return
 	end
 	for k, v in ipairs(messages) do
-		
-		local data = steamutils.parseData(v.data)
-
-		bytes_received = bytes_received + v.msg_size
-
-		if (gamemode.message) then
-			gamemode.message(lobby_code, data, v.user)
-		end
-		
-		if (data[1] and type(data[1]) == "string" and data[2]) then
-			if(bytes_received_per_type[data[1]] == nil)then
-				bytes_received_per_type[data[1]] = 0
-			end
-			bytes_received_per_type[data[1]] = bytes_received_per_type[data[1]] + v.msg_size
-			local event = data[1]
-			local message = data[2]
-			local frame = data[3]
-
-			--print("Received event: "..event)
-
-			if (data[3]) then
-				-- check if frame is newer than member message frame
-				if (not member_message_frames[tostring(v.user)] or member_message_frames[tostring(v.user)] <= frame) then
-					member_message_frames[tostring(v.user)] = frame
-
-					--GamePrint("Received event: "..event)
-					if (gamemode.received) then
-						--[[if(event ~= "hm_timer_clear" and event ~= "handshake")then
-							print("Message received: " .. event)
-						end]]
-						gamemode.received(lobby_code, event, message, v.user)
-					end
-				--[[else
-					print("current_frame: " .. tostring(frame) .. " member_frame: " .. tostring(member_message_frames[tostring(v.user)]))
-					print("Message dropped: " .. event)]]
-				end
-			elseif (gamemode.received) then
-				--[[if(event ~= "hm_timer_clear" and event ~= "handshake")then
-					print("Message received 2: " .. event)
-				end]]
-				gamemode.received(lobby_code, event, message, v.user)
-			end
-		end
-
+		HandleMessage(v)
 	end
 end
 
@@ -1176,50 +1236,6 @@ function steam.matchmaking.onLobbyChatMsgReceived(data)
 		handleDisconnect(data)
 		handleChatMessage(data)
 
-		local owner = steam.matchmaking.getLobbyOwner(lobby_code)
-
-
-		if (data.fromOwner and data.message == "start" or data.message == "restart") then
-			if(owner == steam.user.getSteamID())then
-				StartGame()
-			else
-				Starting = 30
-			end
-		elseif (data.fromOwner and data.message == "refresh") then
-
-			if handleVersionCheck() and handleModCheck() then
-				if handleGamemodeVersionCheck(lobby_code) then
-					if (lobby_gamemode) then
-						--game_in_progress = false
-						--print("Refreshing lobby data in 30 frames")
-						delay.new(30, function()
-							for k, setting in ipairs(lobby_gamemode.settings or {}) do
-								gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_" ..
-									setting.id)
-							end
-		
-							if (lobby_gamemode.refresh) then
-								lobby_gamemode.refresh(lobby_code)
-							end
-						end, function(frames) end)
-
-
-					else
-						disconnect({
-							lobbyID = lobby_code,
-							message = string.format(GameTextGetTranslatedOrNot("$mp_gamemode_missing"), tostring(lobby_gamemode.id))--"Gamemode missing: " .. tostring(lobby_gamemode.id)
-						})
-					end
-				end
-			end
-		elseif (owner == steam.user.getSteamID() and data.message == "spectate") then
-			local user = data.userID
-			print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
-			local spectating = steamutils.IsSpectator(lobby_code, user)
-			steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
-			--steam_utils.sendToPlayer("enter_now", {}, user, true)
-			-- re_enter lobby
-		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
 		if(exceptions_in_logger)then
