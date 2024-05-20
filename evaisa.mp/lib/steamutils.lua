@@ -616,6 +616,11 @@ message_handlers = {
 			
 			local success, size = 0, 0
 
+			if(member.id == steam.user.getSteamID())then
+				HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
+				goto continue
+			end
+
 			if (reliable) then
 				success, size = steam.networking.sendString(member.id, data)
 			else
@@ -637,6 +642,8 @@ message_handlers = {
 				end
 				bytes_sent = bytes_sent + size
 			end
+
+			::continue::
 		end
 	end,
 	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event)
@@ -706,6 +713,14 @@ message_handlers = {
 		--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to Host")
 		local success, size = 0, 0
 
+		-- if we are the player hosting the lobby, send the message to ourselves
+
+		if(steam_utils.IsOwner(lobby))then
+			HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
+			goto continue
+		end
+
+
 		if (reliable) then
 			success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
 		else
@@ -726,6 +741,8 @@ message_handlers = {
 			end
 			bytes_sent = bytes_sent + size
 		end
+
+		::continue::
 	end,
 	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, true)
