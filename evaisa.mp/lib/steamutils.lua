@@ -116,6 +116,18 @@ function color_merge(r,g,b,a)
     return abgr_int
 end
 
+local steam_id = nil
+steam_utils.getSteamID = function()
+	if (steam_id == nil) then
+		steam_id = steam.user.getSteamID()
+	end
+	return steam_id
+end
+
+steam_utils.getNumLobbyMembers = function()
+	return total_lobby_members
+end
+
 local lfs = require("lfs")
 local fs = require("fs")
 
@@ -235,14 +247,14 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 		if(not is_spectator)then
 			table.insert(lobby_members_no_spectators[tostring(lobby_id)], {
 				id = h, 
-				name = steam_utils.getTranslatedPersonaName(h, h == steam.user.getSteamID()),
+				name = steam_utils.getTranslatedPersonaName(h, h == steam_utils.getSteamID()),
 				is_spectator = is_spectator
 			})
 		end
 
 		table.insert(lobby_members[tostring(lobby_id)], {
 			id = h, 
-			name = steam_utils.getTranslatedPersonaName(h, h == steam.user.getSteamID()),
+			name = steam_utils.getTranslatedPersonaName(h, h == steam_utils.getSteamID()),
 			is_spectator = is_spectator
 		})
 	end
@@ -299,15 +311,25 @@ steam_utils.getPlayerCount = function(lobby, include_spectators)
 	return #members
 end
 
-steam_utils.IsOwner = function(lobby_id, user)
+steam_utils.IsOwner = function(user)
 	if(user ~= nil)then
-		return steam.matchmaking.getLobbyOwner(lobby_id) == user
+		return steam_utils.getLobbyOwner() == user
 	end
-	return steam.matchmaking.getLobbyOwner(lobby_id) == steam.user.getSteamID()
+	return steam_utils.getLobbyOwner() == steam_utils.getSteamID()
+end
+
+steam_utils.getLobbyOwner = function()
+	if(lobby_code == nil)then
+		return nil
+	end
+	if(lobby_owner == nil)then
+		lobby_owner = steam.matchmaking.getLobbyOwner(lobby_code)
+	end
+	return lobby_owner
 end
 
 steam_utils.IsSpectator = function(lobby_id, player_id)
-	local spectating = steam.matchmaking.getLobbyData(lobby_id, tostring(player_id and player_id or steam.user.getSteamID()) .. "_spectator") ==
+	local spectating = steam.matchmaking.getLobbyData(lobby_id, tostring(player_id and player_id or steam_utils.getSteamID()) .. "_spectator") ==
 		"true"
 	return spectating
 end
@@ -426,7 +448,7 @@ steam_utils.AddLobbyFlag = function(lobby, flag)
 
 	print("Added flag: " .. flag)
 
-	steam.matchmaking.setLobbyData(lobby, "flags", flags)
+	steam_utils.TrySetLobbyData(lobby, "flags", flags)
 end
 
 steam_utils.RemoveLobbyFlag = function(lobby, flag)
@@ -444,7 +466,7 @@ steam_utils.RemoveLobbyFlag = function(lobby, flag)
 
 	print("Removed flag: " .. flag)
 
-	steam.matchmaking.setLobbyData(lobby, "flags", new_flags)
+	steam_utils.TrySetLobbyData(lobby, "flags", new_flags)
 end
 
 steam_utils.GetLobbyFlags = function(lobby)
@@ -474,6 +496,13 @@ steam_utils.HasLobbyFlag = function(lobby, flag)
 
 	print("Has flag: " .. tostring(has_flag))
 	return has_flag
+end
+
+steam_utils.TrySetLobbyData = function(lobby, key, value)
+	if(lobby_data_last_frame[key] == value)then
+		return
+	end
+	steam.matchmaking.setLobbyData(lobby, key, value)
 end
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
@@ -616,8 +645,8 @@ message_handlers = {
 			
 			local success, size = 0, 0
 
-			if(member.id == steam.user.getSteamID())then
-				HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
+			if(member.id == steam_utils.getSteamID())then
+				HandleMessage({msg_size = 0, user = steam_utils.getSteamID(), data = data})
 				goto continue
 			end
 
@@ -649,7 +678,7 @@ message_handlers = {
 	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
-			if (member.id ~= steam.user.getSteamID()) then
+			if (member.id ~= steam_utils.getSteamID()) then
 				--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				--print("Sending to " .. member.name)
 
@@ -681,7 +710,7 @@ message_handlers = {
 	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators, event)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
-			if (member.id ~= steam.user.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
+			if (member.id ~= steam_utils.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
 				--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				local success, size = 0, 0
 
@@ -715,8 +744,8 @@ message_handlers = {
 
 		-- if we are the player hosting the lobby, send the message to ourselves
 
-		if(steam_utils.IsOwner(lobby))then
-			HandleMessage({msg_size = 0, user = steam.user.getSteamID(), data = data})
+		if(steam_utils.IsOwner())then
+			HandleMessage({msg_size = 0, user = steam_utils.getSteamID(), data = data})
 			goto continue
 		end
 
@@ -748,7 +777,7 @@ message_handlers = {
 		local members = steamutils.getLobbyMembers(lobby, true)
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
-			if (member.id ~= steam.user.getSteamID() and spectating) then
+			if (member.id ~= steam_utils.getSteamID() and spectating) then
 				--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
 				local success, size = 0, 0
 

@@ -673,8 +673,8 @@ local windows = {
 						end
 					end
 					if(GuiButton(menu_gui, NewID("lobby_spectate_button"), 0, 0, spectating and GameTextGetTranslatedOrNot("$mp_spectator_mode_enabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "") or GameTextGetTranslatedOrNot("$mp_spectator_mode_disabled")..(active_mode.spectator_unfinished_warning and " [Unfinished]" or "")))then
-						if(owner == steam.user.getSteamID())then
-							steam.matchmaking.setLobbyData(lobby_code, tostring(steam.user.getSteamID()).."_spectator", spectating and "false" or "true")
+						if(owner == steam_utils.getSteamID())then
+							steam_utils.TrySetLobbyData(lobby_code, tostring(steam_utils.getSteamID()).."_spectator", spectating and "false" or "true")
 
 							if(lobby_gamemode and game_in_progress)then
 								in_game = true
@@ -746,7 +746,7 @@ local windows = {
 				GuiText(menu_gui, 0, -6, " ")
 
 
-				if(owner == steam.user.getSteamID())then
+				if(owner == steam_utils.getSteamID())then
 
 					local start_string = GameTextGetTranslatedOrNot("$mp_start_game")
 					if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
@@ -770,7 +770,7 @@ local windows = {
 							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
 							steam_utils.send("start", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 						end
-						steam.matchmaking.setLobbyData(lobby_code, "in_progress", "true")
+						steam_utils.TrySetLobbyData(lobby_code, "in_progress", "true")
 					end
 				end
 
@@ -846,7 +846,7 @@ local windows = {
 
 					GuiImage(menu_gui, NewID("lobby_player"), extra_x, 0, steam_utils.getUserAvatar(v.id), alpha, 10 / 32, 10 / 32, 0)
 
-					if(v.id ~= steam.user.getSteamID() and owner == steam.user.getSteamID())then
+					if(v.id ~= steam_utils.getSteamID() and owner == steam_utils.getSteamID())then
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, GameTextGetTranslatedOrNot("$mp_kick")))then
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_kick_notification"))
 						end
@@ -864,7 +864,7 @@ local windows = {
 									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_option_1"),
 									callback = function()
 										steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
-										steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
+										steam_utils.TrySetLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 										banned_members[tostring(v.id)] = true
 									end
 								},
@@ -872,7 +872,7 @@ local windows = {
 									text = GameTextGetTranslatedOrNot("$mp_blacklist_player_option_2"),
 									callback = function()
 										steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
-										steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
+										steam_utils.TrySetLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 										banned_members[tostring(v.id)] = true
 										steam_utils.BlacklistPlayer(v.id)
 									end
@@ -887,7 +887,7 @@ local windows = {
 
 							--[[
 							steam.matchmaking.kickUserFromLobby(lobby_code, v.id, GameTextGetTranslatedOrNot("$mp_ban_notification"))	
-							steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
+							steam_utils.TrySetLobbyData(lobby_code, "banned_"..tostring(v.id), "true")
 							banned_members[tostring(v.id)] = true
 							]]
 
@@ -1182,15 +1182,15 @@ local windows = {
 							GuiColorSetForNextWidget( menu_gui, 0.314, 1, 0, 0.8 )
 						end
 
-						if(steamutils.IsOwner(lobby_code))then
+						if(steamutils.IsOwner())then
 							if(GuiButton(menu_gui, NewID("mod_list"), 0, 0, required_text))then
-								steam.matchmaking.setLobbyData(lobby_code, "mod_required_"..v.id, tostring(not mod_required))
+								steam_utils.TrySetLobbyData(lobby_code, "mod_required_"..v.id, tostring(not mod_required))
 								if(not mod_required)then
 									local required_mods = (steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby_code, "required_mods")) or {}
 								
 									table.insert(required_mods, {v.id, v.name})
 
-									steam.matchmaking.setLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
+									steam_utils.TrySetLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
 								else
 									local required_mods = (steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= nil and steam.matchmaking.getLobbyData(lobby_code, "required_mods") ~= "") and bitser.loads(steam.matchmaking.getLobbyData(lobby_code, "required_mods")) or {}
 								
@@ -1201,7 +1201,7 @@ local windows = {
 										end
 									end
 
-									steam.matchmaking.setLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
+									steam_utils.TrySetLobbyData(lobby_code, "required_mods", bitser.dumps(required_mods))
 								end
 							end
 						else
@@ -1489,7 +1489,7 @@ local windows = {
 								--settings_changed = true
 
 								for k, setting in ipairs(active_mode.settings or {})do
-									steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+									steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
 									mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 								end
 
@@ -1561,7 +1561,7 @@ local windows = {
 				local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
 
 
-				edit_lobby_type = owner == steam.user.getSteamID() and (edit_lobby_type or 1) or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]
+				edit_lobby_type = owner == steam_utils.getSteamID() and (edit_lobby_type or 1) or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 	
@@ -1569,11 +1569,11 @@ local windows = {
 	
 				local default_max_players = 8
 
-				edit_lobby_max_players = steam.user.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
+				edit_lobby_max_players = steam_utils.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
 
-				edit_lobby_name = owner == steam.user.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
+				edit_lobby_name = owner == steam_utils.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
 
-				edit_lobby_seed = owner == steam.user.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
+				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
 
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -1582,7 +1582,7 @@ local windows = {
 
 					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type]))then
 						edit_lobby_type = edit_lobby_type + 1
-						if(edit_lobby_type > #lobby_types and owner == steam.user.getSteamID())then
+						if(edit_lobby_type > #lobby_types and owner == steam_utils.getSteamID())then
 							edit_lobby_type = 1
 							settings_changed = true
 						end
@@ -1595,7 +1595,7 @@ local windows = {
 						if(#gamemodes > 1)then
 							gamemode_settings = {}
 						end
-						if(edit_lobby_gamemode > #gamemodes and owner == steam.user.getSteamID())then
+						if(edit_lobby_gamemode > #gamemodes and owner == steam_utils.getSteamID())then
 							edit_lobby_gamemode = 1
 						end
 					end]]
@@ -1611,7 +1611,7 @@ local windows = {
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
 					end
-					if(lobby_name_value ~= edit_lobby_name and owner == steam.user.getSteamID())then
+					if(lobby_name_value ~= edit_lobby_name and owner == steam_utils.getSteamID())then
 						edit_lobby_name = lobby_name_value
 						name_change_frame = GameGetFrameNum()
 					end
@@ -1629,7 +1629,7 @@ local windows = {
 					max_player_change_frame = max_player_change_frame or nil
 
 					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
-					if(slider_value ~= edit_lobby_max_players and owner == steam.user.getSteamID())then
+					if(slider_value ~= edit_lobby_max_players and owner == steam_utils.getSteamID())then
 						edit_lobby_max_players = slider_value
 						max_player_change_frame = GameGetFrameNum()
 					end
@@ -1651,7 +1651,7 @@ local windows = {
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
 					end
-					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam.user.getSteamID())then
+					if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam_utils.getSteamID())then
 						edit_lobby_seed = edit_lobby_seed_value
 						seed_change_frame = GameGetFrameNum()
 					end
@@ -1678,7 +1678,7 @@ local windows = {
 					--print("displaying: "..json.stringify(gamemode_settings))
 					for k, setting in ipairs(active_mode.settings or {})do
 
-						if(owner ~= steam.user.getSteamID())then
+						if(owner ~= steam_utils.getSteamID())then
 							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
 						end
 
@@ -1882,12 +1882,12 @@ local windows = {
 					GuiLayoutEnd(menu_gui)
 					--GuiText(menu_gui, 2, 6, "--------------------")
 
-					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam.user.getSteamID())then
+					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam_utils.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
-						steam.matchmaking.setLobbyData(lobby_code, "name", edit_lobby_name)
-						steam.matchmaking.setLobbyData(lobby_code, "seed", edit_lobby_seed)
+						steam_utils.TrySetLobbyData(lobby_code, "name", edit_lobby_name)
+						steam_utils.TrySetLobbyData(lobby_code, "seed", edit_lobby_seed)
 						for k, setting in ipairs(active_mode.settings or {})do
-							steam.matchmaking.setLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+							steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
 							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 						end
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
@@ -2018,26 +2018,26 @@ local windows = {
 								if(gamemode_settings[setting.id] == nil)then
 									gamemode_settings[setting.id] = setting.default
 
-									steam.matchmaking.setLobbyData(code, "setting_"..setting.id, tostring(setting.default))
+									steam_utils.TrySetLobbyData(code, "setting_"..setting.id, tostring(setting.default))
 								end
 							end
 
 							for k, data in pairs(gamemodes[gamemode_index].default_data or {})do
-								steam.matchmaking.setLobbyData(code, k, data)
+								steam_utils.TrySetLobbyData(code, k, data)
 							end
 
-							steam.matchmaking.setLobbyData(code, "name", lobby_name)
-							steam.matchmaking.setLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
-							steam.matchmaking.setLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
-							steam.matchmaking.setLobbyData(code, "game_version", tostring(noita_version_hash))
-							steam.matchmaking.setLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
-							steam.matchmaking.setLobbyData(code, "seed", lobby_seed)
-							steam.matchmaking.setLobbyData(code, "version", tostring(MP_VERSION))
-							steam.matchmaking.setLobbyData(code, "in_progress", "false")
-							steam.matchmaking.setLobbyData(code, "allow_in_progress_joining", gamemodes[gamemode_index].allow_in_progress_joining ~= nil and tostring(gamemodes[gamemode_index].allow_in_progress_joining)  or "true")
+							steam_utils.TrySetLobbyData(code, "name", lobby_name)
+							steam_utils.TrySetLobbyData(code, "gamemode", tostring(gamemodes[gamemode_index].id))
+							steam_utils.TrySetLobbyData(code, "gamemode_version", tostring(gamemodes[gamemode_index].version))
+							steam_utils.TrySetLobbyData(code, "game_version", tostring(noita_version_hash))
+							steam_utils.TrySetLobbyData(code, "gamemode_name", tostring(gamemodes[gamemode_index].name))
+							steam_utils.TrySetLobbyData(code, "seed", lobby_seed)
+							steam_utils.TrySetLobbyData(code, "version", tostring(MP_VERSION))
+							steam_utils.TrySetLobbyData(code, "in_progress", "false")
+							steam_utils.TrySetLobbyData(code, "allow_in_progress_joining", gamemodes[gamemode_index].allow_in_progress_joining ~= nil and tostring(gamemodes[gamemode_index].allow_in_progress_joining)  or "true")
 
 							if(dev_mode)then
-								steam.matchmaking.setLobbyData(code, "System", "NoitaOnlineDev")
+								steam_utils.TrySetLobbyData(code, "System", "NoitaOnlineDev")
 							end
 
 							steam.friends.setRichPresence( "status", "Noita Online || "..tostring(gamemodes[gamemode_index].name).." - Waiting for players" )
@@ -2049,7 +2049,7 @@ local windows = {
 
 							local blacklisted_players = steam_utils.GetBlacklistedPlayers()
 							for i, player in ipairs(blacklisted_players)do
-								steam.matchmaking.setLobbyData(lobby_code, "banned_"..tostring(player), "true")
+								steam_utils.TrySetLobbyData(lobby_code, "banned_"..tostring(player), "true")
 								banned_members[tostring(player)] = true
 							end
 						end)

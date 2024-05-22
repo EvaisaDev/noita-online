@@ -128,7 +128,7 @@ function handleChatMessage(data)
 		for i = 1, #split_data do
 			if (i ~= 1) then
 
-				local msg = steam_utils.getTranslatedPersonaName(data.userID, data.userID == steam.user.getSteamID()) .. ": " .. split_data[i]
+				local msg = steam_utils.getTranslatedPersonaName(data.userID, data.userID == steam_utils.getSteamID()) .. ": " .. split_data[i]
 
 				local chunks = split_message(msg)
 

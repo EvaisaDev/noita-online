@@ -40,7 +40,7 @@ function handleDisconnect(data)
 
 	if (#split_data >= 3) then
 		if (split_data[1] == "disconnect") then
-			if (split_data[2] == tostring(steam.user.getSteamID())) then
+			if (split_data[2] == tostring(steam_utils.getSteamID())) then
 				msg.log("You were disconnected from the lobby.")
 				steam_utils.Leave(data.lobbyID)
 				invite_menu_open = false
@@ -532,7 +532,7 @@ function refreshLobbies()
 					local lobby_type = steam.matchmaking.getLobbyData(lobby, "LobbyType")
 
 					if (steam.matchmaking.getLobbyData(lobby, "System") ~= nil and steam.matchmaking.getLobbyData(lobby, "System") == activeSystem) then
-						local banned = steam.matchmaking.getLobbyData(lobby, "banned_" ..tostring(steam.user.getSteamID()))
+						local banned = steam.matchmaking.getLobbyData(lobby, "banned_" ..tostring(steam_utils.getSteamID()))
 						if ((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true") then
 							table.insert(lobbies.friend, lobby)
 							indexed_lobby[lobby] = true
@@ -553,7 +553,7 @@ function refreshLobbies()
 
 					if (steam.matchmaking.getLobbyData(lobby.lobbyID, "System") ~= nil and steam.matchmaking.getLobbyData(lobby.lobbyID, "System") == activeSystem) then
 						local banned = steam.matchmaking.getLobbyData(lobby.lobbyID,
-							"banned_" .. tostring(steam.user.getSteamID()))
+							"banned_" .. tostring(steam_utils.getSteamID()))
 						if ((lobby_type == "Public" or lobby_type == "FriendsOnly") and banned ~= "true") then
 							if (indexed_lobby[lobby.lobbyID] == nil) then
 								--indexed_lobby[lobby.lobbyID] = true
@@ -617,8 +617,8 @@ function StopGame()
 					lobby_gamemode.stop(lobby_code)
 				end
 
-				if(steamutils.IsOwner(lobby_code))then
-					steam.matchmaking.setLobbyData(lobby_code, "in_progress", "false")
+				if(steamutils.IsOwner())then
+					steam_utils.TrySetLobbyData(lobby_code, "in_progress", "false")
 				end
 
 				in_game = false

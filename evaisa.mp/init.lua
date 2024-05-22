@@ -2,14 +2,14 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 354
+MP_VERSION = 355
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = true
+disable_print = false
 
 -----------------------------------
 
@@ -484,7 +484,7 @@ function TryHandleMessage(lobby_code, event, message, user, ignore)
 					lobby_gamemode.apply_start_data(lobby_code, message)
 				end
 
-				if(owner == steam.user.getSteamID())then
+				if(owner == steam_utils.getSteamID())then
 					StartGame()
 				else
 					Starting = 30
@@ -518,10 +518,10 @@ function TryHandleMessage(lobby_code, event, message, user, ignore)
 						end
 					end
 				end
-			elseif (owner == steam.user.getSteamID() and event == "spectate") then
+			elseif (owner == steam_utils.getSteamID() and event == "spectate") then
 				print("Toggling spectator for " .. tostring(steamutils.getTranslatedPersonaName(user)))
 				local spectating = steamutils.IsSpectator(lobby_code, user)
-				steam.matchmaking.setLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
+				steam_utils.TrySetLobbyData(lobby_code, tostring(user) .. "_spectator", spectating and "false" or "true")
 			end
 
 			--print("ignore? "..tostring(ignore))
@@ -893,21 +893,6 @@ function OnWorldPreUpdate()
 					if (game_in_progress) then
 						--print("the hell??")
 
-						local owner = steam.matchmaking.getLobbyOwner(lobby_code)
-
-
-
-						--print("e")
-						if (owner == steam.user.getSteamID()) then
-							if (GameGetFrameNum() % 2 == 0) then
-								local seed = tostring(math.random(1, 1000000))
-
-								--print("f")
-
-								steam.matchmaking.setLobbyData(lobby_code, "update_seed", seed)
-							end
-						end
-
 						lobby_gamemode.update(lobby_code)
 
 						
@@ -1037,7 +1022,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		in_game = false
 		game_in_progress = false
 
-		local user = steam.user.getSteamID()
+		local user = steam_utils.getSteamID()
 
 		steamutils.getUserAvatar(user)
 
@@ -1095,10 +1080,14 @@ function steam.matchmaking.onLobbyEnter(data)
 	end)
 end
 
+lobby_owner = nil
+
 function steam.matchmaking.onLobbyDataUpdate(data)
+	print("Lobby data updated")
 	try(function()
 		if(lobby_code ~= nil)then
 			local current_lobby_data = {}
+			local any_updated = false
 			local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
 			for i = 1, lobby_data_count do
 				local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
@@ -1112,10 +1101,16 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 				--print("Lobby data: " .. data.key .. " = " .. data.value)
 				if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
 					lobby_data_updated_this_frame[data.key] = true
-					--print("Updated lobby data: " .. data.key .. " to " .. data.value)
+					print("Updated lobby data: " .. data.key .. " to " .. data.value)
+					any_updated = true
 				end
 			end
 			lobby_data_last_frame = current_lobby_data
+
+			if(not any_updated)then
+				-- try to update lobby owner
+				lobby_owner = steam.matchmaking.getLobbyOwner(lobby_code)
+			end
 		else
 			lobby_data_last_frame = {}
 			lobby_data_updated_this_frame = {}
@@ -1138,6 +1133,8 @@ ChatMemberStateChangeEnum = {
 	k_EChatMemberStateChangeBanned = 10,
 }
 
+total_lobby_members = 0
+
 function steam.matchmaking.onLobbyChatUpdate(data)
 	try(function()
 
@@ -1147,6 +1144,9 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 		if handleInProgressCheck(data.userChanged) then
 			return
 		end
+
+		lobby_owner = steam.matchmaking.getLobbyOwner(lobby_code)
+		total_lobby_members = steam.matchmaking.getNumLobbyMembers(lobby_code)
 		
 		if(lobby_code ~= nil)then
 			steam_utils.getLobbyMembers(lobby_code, true, true)
