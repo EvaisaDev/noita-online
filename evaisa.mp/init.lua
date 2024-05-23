@@ -1043,7 +1043,7 @@ function OnWorldPostUpdate()
 				-- add to profiler frames
 				
 
-				table.insert(frame, {label, time})
+				table.insert(frame, {label, time, calls})
 
 			end
 
@@ -1065,25 +1065,34 @@ function OnWorldPostUpdate()
 					for j, data in ipairs(v) do
 						local label = data[1]
 						local time = data[2]
+						local calls = data[3]
 
 						if(profiler_data[label] == nil)then
-							profiler_data[label] = {{}, {}}
+							profiler_data[label] = {{}, {}, {}}
 							table.insert(profiler_labels, label)
 						end
 
 						table.insert(profiler_data[label][1], curr_frame + i)
 						table.insert(profiler_data[label][2], time)
+						table.insert(profiler_data[label][3], calls)
 					end
 				end
 
 				-- sort labels by time
+
+				local ind = 2
+
+				if(use_calls)then
+					ind = 3
+				end
+				
 				table.sort(profiler_labels, function(a, b)
 					local a_time = 0
 					local b_time = 0
-					for i, v in ipairs(profiler_data[a][2]) do
+					for i, v in ipairs(profiler_data[a][ind]) do
 						a_time = a_time + v
 					end
-					for i, v in ipairs(profiler_data[b][2]) do
+					for i, v in ipairs(profiler_data[b][ind]) do
 						b_time = b_time + v
 					end
 					return a_time > b_time
@@ -1114,9 +1123,17 @@ function OnWorldPostUpdate()
 					auto_scroll_profiler = true
 				end
 
+				if(use_calls == nil)then
+					use_calls = false
+				end
+
 				-- checkbox
 				local _
 				_, auto_scroll_profiler = imgui.Checkbox("Auto scroll", auto_scroll_profiler)
+
+				imgui.SameLine()
+				_, use_calls = imgui.Checkbox("Use calls", use_calls)
+
 
 				imgui.SameLine()
 
@@ -1127,7 +1144,13 @@ function OnWorldPostUpdate()
 
 				if implot.BeginPlot("Profiler") then
 		
-					implot.SetupAxes("frame", "time", auto_scroll_profiler and implot.PlotAxisFlags.Lock or implot.PlotAxisFlags.None, (auto_scroll_profiler and implot.PlotAxisFlags.AutoFit or implot.PlotAxisFlags.None));
+					local label_y = "time"
+
+					if(use_calls)then
+						label_y = "calls"
+					end
+
+					implot.SetupAxes("frame", label_y, auto_scroll_profiler and implot.PlotAxisFlags.Lock or implot.PlotAxisFlags.None, (auto_scroll_profiler and implot.PlotAxisFlags.AutoFit or implot.PlotAxisFlags.None));
 					
 					
 
@@ -1140,15 +1163,20 @@ function OnWorldPostUpdate()
 					implot.SetupLegend(implot.PlotLocation.East, implot.PlotLegendFlags.Outside)
 
 					-- we need to defined them in time order
+					local ind = 2
+
+					if(use_calls)then
+						ind = 3
+					end
 
 					for _, tag in ipairs(profiler_labels) do
 						data = profiler_data[tag]
 						if(data == nil)then
-							data =  {{}, {}}
+							data =  {{}, {}, {}}
 							profiler_data[tag] = data
 						end
 						implot.SetNextMarkerStyle(implot.PlotMarker.Circle, 1);
-						implot.PlotLine(tag, data[1], data[2])
+						implot.PlotLine(tag, data[1], data[ind])
 					end
 					
 					implot.EndPlot()
