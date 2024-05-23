@@ -102,7 +102,7 @@ function profile.stop()
       lookup[id] = f
     end
   end
-  collectgarbage('collect')
+  --collectgarbage('collect')
 end
 
 --- Resets all collected data.
@@ -117,7 +117,7 @@ function profile.reset()
     _tcalled[f] = nil
   end
   --_csvindex = 0
-  collectgarbage('collect')
+  --collectgarbage('collect')
 end
 
 function profile.clear()
@@ -139,7 +139,7 @@ end
 -- @tparam function b Second function
 -- @treturn boolean True if "a" should rank higher than "b"
 function profile.comp(a, b)
-  local dt = _taverage[b] - _taverage[a]
+  local dt = _telapsed[b] - _telapsed[a]
   if dt == 0 then
     return _ncalls[b] < _ncalls[a]
   end

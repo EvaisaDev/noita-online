@@ -11,6 +11,7 @@ dev_mode = false
 debugging = false
 disable_print = false
 
+
 -----------------------------------
 
 
@@ -101,8 +102,12 @@ get_content = ModTextFileGetContent
 set_content = ModTextFileSetContent
 
 dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
+if(ModIsEnabled("NoitaDearImGui"))then
+	imgui = load_imgui({mod="noita-online", version="1.19"})
+	implot = imgui.implot
+end
 
-
+local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
 
 
 table.insert(package.loaders, 2, load)
@@ -226,7 +231,8 @@ if not os.rename(profiler_folder_name, profiler_folder_name) then
 	os.execute("mkdir \"" .. profiler_folder_name .. "\"")
 end
 
-local profiler_result_csv = nil
+local profiler_result_file = nil
+local profiler_result_content = ""
 
 
 debug_info:print("Build: " .. tostring(MP_VERSION))
@@ -613,6 +619,11 @@ local invalid_version_popup_open = false
 
 
 local did_frame = false
+local profiler_paused = false
+local profiler_frames = {}
+local profiler_data = {}
+local profiler_steps = 0
+local profiler_labels = {}
 
 function OnWorldPreUpdate()
 	try(function()
@@ -632,9 +643,18 @@ function OnWorldPreUpdate()
 			profile_next = not profile_next
 			if(profile_next)then
 				profile.clear()
-				profiler_result_csv = io.open(profiler_folder_name.."/"..os.date("%Y-%m-%d_%H-%M-%S")..".csv", "w+")
-				profiler_result_csv:write("Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n")
+				profiler_result_file = io.open(profiler_folder_name.."/"..os.date("%Y-%m-%d_%H-%M-%S")..".csv", "w+")
+				profiler_result_content = "Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n"
+
+				profiler_frames = {}
+				profiler_data = {}
+				profiler_steps = 0
+				profiler_labels = {}
 				print("Starting profiler")
+			else
+				profiler_result_file:write(profiler_result_content)
+				profiler_result_file:close()
+				print("Stopping profiler")
 			end
 		end 
 
@@ -959,6 +979,8 @@ function OnProjectileFiredPost(shooter_id, projectile_id, rng, position_x, posit
 	end)
 end
 
+
+
 function OnWorldPostUpdate()
 	try(function()
 		if steam then
@@ -989,13 +1011,153 @@ function OnWorldPostUpdate()
 			bindings:Update()
 		end
 
-		if(profile_next and did_frame)then
+
+
+		if(profile_next and did_frame and not profiler_paused)then
 			profile.stop()
 
-			profiler_result_csv:write(profile.csv(500))
+			--local profiler_data = profile.csv(150)
+
+			local frame = {}
+
+			local report = profile.query(500)
+
+			for i, row in ipairs(report) do
+				local rank = row[1]
+				local func = row[2]
+				local calls = row[3]
+				local time = row[4]
+				local avg_time = row[5]
+				local code = row[6]
+
+				local untruncated_func = func
+				local untruncated_code = code
+
+				-- truncate func after first space
+				func = string.match(func, "^[^ ]+")
+				code = string.match(code, "^[^ ]+")
+
+				local label = table.concat({code, " - ", func, "##", untruncated_func, untruncated_code}, "")
+
+
+				-- add to profiler frames
+				
+
+				table.insert(frame, {label, time})
+
+			end
+
+			table.insert(profiler_frames, frame)
+
+			profiler_steps = profiler_steps + 1
+
+			-- if profiler frames over 1000 then remove the first one
+			if(#profiler_frames > 1000)then
+				table.remove(profiler_frames, 1)
+			end
+
+			if(profiler_data == nil or GameGetFrameNum() % 60 == 0)then
+				profiler_data = {}
+				profiler_labels = {}
+				local curr_frame = profiler_steps - #profiler_frames
+				
+				for i, v in ipairs(profiler_frames) do
+					for j, data in ipairs(v) do
+						local label = data[1]
+						local time = data[2]
+
+						if(profiler_data[label] == nil)then
+							profiler_data[label] = {{}, {}}
+							table.insert(profiler_labels, label)
+						end
+
+						table.insert(profiler_data[label][1], curr_frame + i)
+						table.insert(profiler_data[label][2], time)
+					end
+				end
+
+				-- sort labels by time
+				table.sort(profiler_labels, function(a, b)
+					local a_time = 0
+					local b_time = 0
+					for i, v in ipairs(profiler_data[a][2]) do
+						a_time = a_time + v
+					end
+					for i, v in ipairs(profiler_data[b][2]) do
+						b_time = b_time + v
+					end
+					return a_time > b_time
+				end)
+			end
+
+
+
 			profile.reset()
 			
 		end
+
+		if(imgui ~= nil and profile_next)then
+			if imgui.Begin("Profiler") then
+				-- add checkbox for auto scrolling
+				-- add button for clearing data
+
+				if imgui.Button("Clear data") then
+					profile.clear()
+					profiler_data = {}
+					profiler_frames = {}
+					profiler_steps = 0
+				end
+
+				imgui.SameLine()
+				
+				if(auto_scroll_profiler == nil)then
+					auto_scroll_profiler = true
+				end
+
+				-- checkbox
+				local _
+				_, auto_scroll_profiler = imgui.Checkbox("Auto scroll", auto_scroll_profiler)
+
+				imgui.SameLine()
+
+				if imgui.Button(profiler_paused and "Unpause" or "Pause") then
+					profiler_paused = not profiler_paused
+				end
+
+
+				if implot.BeginPlot("Profiler") then
+		
+					implot.SetupAxes("frame", "time", auto_scroll_profiler and implot.PlotAxisFlags.Lock or implot.PlotAxisFlags.None, (auto_scroll_profiler and implot.PlotAxisFlags.AutoFit or implot.PlotAxisFlags.None));
+					
+					
+
+					if(auto_scroll_profiler)then
+						implot.SetupAxisLimits(implot.Axis.X1, math.max(profiler_steps - 500, 0), math.max(profiler_steps - 400, 100), implot.PlotCond.Always)
+					else
+						implot.SetupAxisLimits(implot.Axis.X1, 0, 100)
+					end
+
+					implot.SetupLegend(implot.PlotLocation.East, implot.PlotLegendFlags.Outside)
+
+					-- we need to defined them in time order
+
+					for _, tag in ipairs(profiler_labels) do
+						data = profiler_data[tag]
+						if(data == nil)then
+							data =  {{}, {}}
+							profiler_data[tag] = data
+						end
+						implot.SetNextMarkerStyle(implot.PlotMarker.Circle, 1);
+						implot.PlotLine(tag, data[1], data[2])
+					end
+					
+					implot.EndPlot()
+				end
+
+				imgui.End()
+			end
+		end
+
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
 		if(exceptions_in_logger)then
@@ -1123,7 +1285,6 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 	end)
 end
 
-local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
 
 ChatMemberStateChangeEnum = {
 	k_EChatMemberStateChangeEntered = 1,
