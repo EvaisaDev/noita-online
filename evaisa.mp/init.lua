@@ -1052,30 +1052,32 @@ function OnWorldPostUpdate()
 			profiler_steps = profiler_steps + 1
 
 			-- if profiler frames over 1000 then remove the first one
-			if(#profiler_frames > 1000)then
+			if(#profiler_frames > 300)then
 				table.remove(profiler_frames, 1)
 			end
 
 			if(profiler_data == nil or GameGetFrameNum() % 60 == 0)then
 				profiler_data = {}
-				profiler_labels = {}
-				local curr_frame = profiler_steps - #profiler_frames
-				
+				local temp_data = {}
 				for i, v in ipairs(profiler_frames) do
 					for j, data in ipairs(v) do
 						local label = data[1]
 						local time = data[2]
 						local calls = data[3]
 
-						if(profiler_data[label] == nil)then
-							profiler_data[label] = {{}, {}, {}}
-							table.insert(profiler_labels, label)
+						if(temp_data[label] == nil)then
+							temp_data[label] = {{}, {}, {}}
 						end
 
-						table.insert(profiler_data[label][1], curr_frame + i)
-						table.insert(profiler_data[label][2], time)
-						table.insert(profiler_data[label][3], calls)
+						table.insert(temp_data[label][1], i)
+						table.insert(temp_data[label][2], time)
+						table.insert(temp_data[label][3], calls)
 					end
+				end
+
+				-- loop through temp data and add to profiler data
+				for label, data in pairs(temp_data) do
+					table.insert(profiler_data, {label, data})
 				end
 
 				-- sort labels by time
@@ -1085,8 +1087,28 @@ function OnWorldPostUpdate()
 				if(use_calls)then
 					ind = 3
 				end
+
+				table.sort(profiler_data, function(a, b)
+					local a_time = 0
+					local b_time = 0
+					for i, v in ipairs(a[2][ind]) do
+						a_time = a_time + v
+					end
+					for i, v in ipairs(b[2][ind]) do
+						b_time = b_time + v
+					end
+					return a_time > b_time
+				end)
+
+				-- strip everything except the first 50
+				local new_table = {}
+				for i = 1, 50 do
+					table.insert(new_table, profiler_data[i])
+				end
+				profiler_data = new_table
 				
-				table.sort(profiler_labels, function(a, b)
+				
+				--[[table.sort(profiler_labels, function(a, b)
 					local a_time = 0
 					local b_time = 0
 					for i, v in ipairs(profiler_data[a][ind]) do
@@ -1096,7 +1118,7 @@ function OnWorldPostUpdate()
 						b_time = b_time + v
 					end
 					return a_time > b_time
-				end)
+				end)]]
 			end
 
 
@@ -1155,7 +1177,7 @@ function OnWorldPostUpdate()
 					
 
 					if(auto_scroll_profiler)then
-						implot.SetupAxisLimits(implot.Axis.X1, math.max(profiler_steps - 500, 0), math.max(profiler_steps - 400, 100), implot.PlotCond.Always)
+						implot.SetupAxisLimits(implot.Axis.X1, 0, 100, implot.PlotCond.Always)
 					else
 						implot.SetupAxisLimits(implot.Axis.X1, 0, 100)
 					end
@@ -1169,14 +1191,14 @@ function OnWorldPostUpdate()
 						ind = 3
 					end
 
-					for _, tag in ipairs(profiler_labels) do
-						data = profiler_data[tag]
-						if(data == nil)then
-							data =  {{}, {}, {}}
-							profiler_data[tag] = data
-						end
+					for i = 1, #profiler_data do
+						local p = profiler_data[i]
+						local label = p[1]
+						local data = p[2]
+
 						implot.SetNextMarkerStyle(implot.PlotMarker.Circle, 1);
-						implot.PlotLine(tag, data[1], data[ind])
+						implot.PlotLine(label, data[1], data[ind])
+		
 					end
 					
 					implot.EndPlot()

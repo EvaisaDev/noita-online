@@ -107,11 +107,7 @@ local screen_width, screen_height = GuiGetScreenDimensions( menu_gui );
 
 -- replace each letter in string with *
 function censorString(input)
-	local output = ""
-	for i = 1, string.len(input) do
-		output = output .. "X"
-	end
-	return output
+	return string.rep("X", #input)
 end
 
 
@@ -480,7 +476,7 @@ local windows = {
 	},
 	{
 		name = "Lobby",
-		func = function()
+		func 	= function()
 			local window_width = 200
 			local window_height = 180
 
