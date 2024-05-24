@@ -170,27 +170,36 @@ function HasRequiredMods(lobby)
 	return true
 end
 
+local cached_correct_lobbies = {}
 function IsCorrectVersion(lobby)
+	if (cached_correct_lobbies[lobby] ~= nil) then
+		return cached_correct_lobbies[lobby]
+	end
 	local version = steam.matchmaking.getLobbyData(lobby, "version")
 	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
 	local game_version = steam.matchmaking.getLobbyData(lobby, "game_version")
 	--local gamemode = steam.matchmaking.getLobbyData(lobby, "gamemode")
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby, "gamemode"))
 	if (version ~= tostring(MP_VERSION)) then
+		cached_correct_lobbies[lobby] = false
 		return false
 	end
 	if (game_version ~= tostring(noita_version_hash))then
+		cached_correct_lobbies[lobby] = false
 		return false
 	end
 	if (active_mode ~= nil and gamemode_version ~= nil) then
 
 		if (active_mode.version ~= tonumber(gamemode_version)) then
+			cached_correct_lobbies[lobby] = false
 			return false
 		end
 	else
+		cached_correct_lobbies[lobby] = false
 		return false
-
 	end
+
+	cached_correct_lobbies[lobby] = true
 	return true
 end
 
