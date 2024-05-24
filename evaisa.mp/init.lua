@@ -9,7 +9,7 @@ Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = false
+disable_print = true
 
 
 -----------------------------------
