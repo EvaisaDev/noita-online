@@ -56,6 +56,13 @@ local generate_profiler_data = function()
     table.sort(profiler_data, function(a, b)
         return label_indices[a[1]][sort_index] > label_indices[b[1]][sort_index]
     end)
+
+    -- remove all but top 50
+    if(#profiler_data > 50)then
+        for i = 51, #profiler_data do
+            profiler_data[i] = nil
+        end
+    end
 end
 
 profiler_ui.apply_profiler_rate = function()
