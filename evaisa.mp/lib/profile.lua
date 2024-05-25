@@ -80,7 +80,7 @@ end
 
 --- Stops collecting data.
 function profile.stop()
-  debug.sethook(nil, "crl")
+  debug.sethook()
   for f in pairs(_tcalled) do
     local dt = clock() - _tcalled[f]
     _telapsed[f] = _telapsed[f] + dt

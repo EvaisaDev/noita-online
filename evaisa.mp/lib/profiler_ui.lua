@@ -85,6 +85,7 @@ profiler_ui.pre_update = function()
             profiler_steps = 0
             print("Starting profiler")
         else
+            profile.clear()
             profiler_result_file:write(profiler_result_content)
             profiler_result_file:close()
             print("Stopping profiler")
