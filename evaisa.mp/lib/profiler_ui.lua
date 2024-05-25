@@ -71,7 +71,7 @@ end
 
 profiler_ui.pre_update = function()
 
-    if(profile_next and GameGetFrameNum() % profiler_rate == 0)then
+    if(not profiler_paused and profile_next and GameGetFrameNum() % profiler_rate == 0)then
         did_frame = true
         profile.start()
         --print("Profiling frame: "..GameGetFrameNum())
