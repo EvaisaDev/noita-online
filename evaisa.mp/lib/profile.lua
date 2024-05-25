@@ -71,16 +71,16 @@ end
 
 --- Starts collecting data.
 function profile.start()
-  if rawget(_G, 'jit') then
+  --[[if rawget(_G, 'jit') then
     jit.off()
     jit.flush()
-  end
+  end]]
   debug.sethook(profile.hooker, "crl")
 end
 
 --- Stops collecting data.
 function profile.stop()
-  debug.sethook()
+  debug.sethook(nil, "crl")
   for f in pairs(_tcalled) do
     local dt = clock() - _tcalled[f]
     _telapsed[f] = _telapsed[f] + dt
@@ -102,6 +102,11 @@ function profile.stop()
       lookup[id] = f
     end
   end
+
+  --[[if rawget(_G, 'jit') then
+    jit.on()
+    jit.flush()
+  end]]
   --collectgarbage('collect')
 end
 
