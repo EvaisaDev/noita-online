@@ -1052,80 +1052,54 @@ function OnWorldPostUpdate()
 			profiler_steps = profiler_steps + 1
 
 			-- if profiler frames over 1000 then remove the first one
-			if(#profiler_frames > 300)then
+			if(#profiler_frames > 1000)then
 				table.remove(profiler_frames, 1)
 			end
 
-			if(profiler_data == nil or GameGetFrameNum() % 60 == 0)then
-				profiler_data = {}
-				local temp_data = {}
-				for i, v in ipairs(profiler_frames) do
-					for j, data in ipairs(v) do
-						local label = data[1]
-						local time = data[2]
-						local calls = data[3]
-
-						if(temp_data[label] == nil)then
-							temp_data[label] = {imgui.as_vector_float({}), imgui.as_vector_float({}), imgui.as_vector_float({})}
-						end
-
-						--table.insert(temp_data[label][1], i)
-						--table.insert(temp_data[label][2], time)
-						--table.insert(temp_data[label][3], calls)
-
-						temp_data[label][1]:add(i)
-						temp_data[label][2]:add(time)
-						temp_data[label][3]:add(calls)
+			profiler_data = {}
+			local label_indices = {}
+			local curr_frame = profiler_steps - #profiler_frames
+			
+			for i = 1, #(profiler_frames) do
+				local v = profiler_frames[i]
+				for j = 1, #v do
+					local data = v[j]
+					local label = data[1]
+			
+					if label_indices[label] == nil then
+						label_indices[label] = #profiler_data + 1
+						profiler_data[label_indices[label]] = {label, {imgui.as_vector_float({}), imgui.as_vector_float({}), imgui.as_vector_float({})}}
 					end
+			
+					local entry = profiler_data[label_indices[label]][2]
+					entry[1]:add(curr_frame + i)
+					entry[2]:add(data[2])
+					entry[3]:add(data[3])
 				end
-
-				-- loop through temp data and add to profiler data
-				for label, data in pairs(temp_data) do
-					table.insert(profiler_data, {label, data})
-				end
-
-				-- sort labels by time
-
-				local ind = 2
-
-				if(use_calls)then
-					ind = 3
-				end
-
-				table.sort(profiler_data, function(a, b)
-					local a_time = 0
-					local b_time = 0
-					for i = 1, #(a[2][ind]) do
-						local v = a[2][ind][i]
-						a_time = a_time + v
-					end
-					for i = 1, #(b[2][ind]) do
-						local v = b[2][ind][i]
-						b_time = b_time + v
-					end
-					return a_time > b_time
-				end)
-
-				-- strip everything except the first 50
-				--[[local new_table = {}
-				for i = 1, 50 do
-					table.insert(new_table, profiler_data[i])
-				end
-				profiler_data = new_table]]
-				
-				
-				--[[table.sort(profiler_labels, function(a, b)
-					local a_time = 0
-					local b_time = 0
-					for i, v in ipairs(profiler_data[a][ind]) do
-						a_time = a_time + v
-					end
-					for i, v in ipairs(profiler_data[b][ind]) do
-						b_time = b_time + v
-					end
-					return a_time > b_time
-				end)]]
 			end
+
+			-- sort labels by time
+
+			local ind = 2
+
+			if(use_calls)then
+				ind = 3
+			end
+
+			table.sort(profiler_data, function(a, b)
+				local a_time = 0
+				local b_time = 0
+				for i = 1, #(a[2][ind]) do
+					local v = a[2][ind][i]
+					a_time = a_time + v
+				end
+				for i = 1, #(b[2][ind]) do
+					local v = b[2][ind][i]
+					b_time = b_time + v
+				end
+				return a_time > b_time
+			end)
+
 
 
 
@@ -1183,7 +1157,7 @@ function OnWorldPostUpdate()
 					
 
 					if(auto_scroll_profiler)then
-						implot.SetupAxisLimits(implot.Axis.X1, 0, 100, implot.PlotCond.Always)
+						implot.SetupAxisLimits(implot.Axis.X1, math.max(profiler_steps - 100, 0), math.max(profiler_steps, 100), implot.PlotCond.Always)
 					else
 						implot.SetupAxisLimits(implot.Axis.X1, 0, 100)
 					end
