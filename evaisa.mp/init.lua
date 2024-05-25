@@ -2,14 +2,14 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 355
+MP_VERSION = 356
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = true
+disable_print = false
 
 
 -----------------------------------
@@ -103,7 +103,7 @@ set_content = ModTextFileSetContent
 
 dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
 if(ModIsEnabled("NoitaDearImGui"))then
-	imgui = load_imgui({mod="noita-online", version="1.19"})
+	imgui = load_imgui({mod="noita-online", version="1.20"})
 	implot = imgui.implot
 end
 
@@ -1066,12 +1066,16 @@ function OnWorldPostUpdate()
 						local calls = data[3]
 
 						if(temp_data[label] == nil)then
-							temp_data[label] = {{}, {}, {}}
+							temp_data[label] = {imgui.as_vector_float({}), imgui.as_vector_float({}), imgui.as_vector_float({})}
 						end
 
-						table.insert(temp_data[label][1], i)
-						table.insert(temp_data[label][2], time)
-						table.insert(temp_data[label][3], calls)
+						--table.insert(temp_data[label][1], i)
+						--table.insert(temp_data[label][2], time)
+						--table.insert(temp_data[label][3], calls)
+
+						temp_data[label][1]:add(i)
+						temp_data[label][2]:add(time)
+						temp_data[label][3]:add(calls)
 					end
 				end
 
@@ -1091,21 +1095,23 @@ function OnWorldPostUpdate()
 				table.sort(profiler_data, function(a, b)
 					local a_time = 0
 					local b_time = 0
-					for i, v in ipairs(a[2][ind]) do
+					for i = 1, #(a[2][ind]) do
+						local v = a[2][ind][i]
 						a_time = a_time + v
 					end
-					for i, v in ipairs(b[2][ind]) do
+					for i = 1, #(b[2][ind]) do
+						local v = b[2][ind][i]
 						b_time = b_time + v
 					end
 					return a_time > b_time
 				end)
 
 				-- strip everything except the first 50
-				local new_table = {}
+				--[[local new_table = {}
 				for i = 1, 50 do
 					table.insert(new_table, profiler_data[i])
 				end
-				profiler_data = new_table
+				profiler_data = new_table]]
 				
 				
 				--[[table.sort(profiler_labels, function(a, b)

@@ -75,7 +75,7 @@ function profile.start()
     jit.off()
     jit.flush()
   end
-  debug.sethook(profile.hooker, "cr")
+  debug.sethook(profile.hooker, "crl")
 end
 
 --- Stops collecting data.
