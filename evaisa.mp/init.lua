@@ -1012,6 +1012,42 @@ function OnWorldPostUpdate()
 		end
 
 
+		local generate_profiler_data = function() 
+			profiler_data = {}
+			local label_indices = {}
+			local curr_frame = profiler_steps - #profiler_frames
+		
+			-- Precompute sums and organize data
+			for i = 1, #(profiler_frames) do
+				local v = profiler_frames[i]
+				for j = 1, #v do
+					local data = v[j]
+					local label = data[1]
+		
+					if label_indices[label] == nil then
+						label_indices[label] = {index = #profiler_data + 1, sum_calls = 0, sum_times = 0}
+						profiler_data[label_indices[label].index] = {label, {imgui.as_vector_float({}), imgui.as_vector_float({}), imgui.as_vector_float({})}}
+					end
+		
+					local entry = profiler_data[label_indices[label].index][2]
+					entry[1]:add(curr_frame + i)
+					entry[2]:add(data[2])
+					entry[3]:add(data[3])
+		
+					-- Precompute sums
+					label_indices[label].sum_times = label_indices[label].sum_times + data[2]
+					label_indices[label].sum_calls = label_indices[label].sum_calls + data[3]
+				end
+			end
+		
+			-- Choose the index for sorting based on use_calls flag
+			local sort_index = use_calls and "sum_calls" or "sum_times"
+		
+			-- Sort profiler_data based on precomputed sums
+			table.sort(profiler_data, function(a, b)
+				return label_indices[a[1]][sort_index] > label_indices[b[1]][sort_index]
+			end)
+		end
 
 		if(profile_next and did_frame and not profiler_paused)then
 			profile.stop()
@@ -1056,50 +1092,10 @@ function OnWorldPostUpdate()
 				table.remove(profiler_frames, 1)
 			end
 
-			profiler_data = {}
-			local label_indices = {}
-			local curr_frame = profiler_steps - #profiler_frames
-			
-			for i = 1, #(profiler_frames) do
-				local v = profiler_frames[i]
-				for j = 1, #v do
-					local data = v[j]
-					local label = data[1]
-			
-					if label_indices[label] == nil then
-						label_indices[label] = #profiler_data + 1
-						profiler_data[label_indices[label]] = {label, {imgui.as_vector_float({}), imgui.as_vector_float({}), imgui.as_vector_float({})}}
-					end
-			
-					local entry = profiler_data[label_indices[label]][2]
-					entry[1]:add(curr_frame + i)
-					entry[2]:add(data[2])
-					entry[3]:add(data[3])
-				end
+
+			if(profiler_steps % 100 == 0)then
+				generate_profiler_data()
 			end
-
-			-- sort labels by time
-
-			local ind = 2
-
-			if(use_calls)then
-				ind = 3
-			end
-
-			table.sort(profiler_data, function(a, b)
-				local a_time = 0
-				local b_time = 0
-				for i = 1, #(a[2][ind]) do
-					local v = a[2][ind][i]
-					a_time = a_time + v
-				end
-				for i = 1, #(b[2][ind]) do
-					local v = b[2][ind][i]
-					b_time = b_time + v
-				end
-				return a_time > b_time
-			end)
-
 
 
 
@@ -1134,7 +1130,12 @@ function OnWorldPostUpdate()
 				_, auto_scroll_profiler = imgui.Checkbox("Auto scroll", auto_scroll_profiler)
 
 				imgui.SameLine()
+				local old_use_calls = use_calls
 				_, use_calls = imgui.Checkbox("Use calls", use_calls)
+
+				if(old_use_calls ~= use_calls)then
+					generate_profiler_data()
+				end
 
 
 				imgui.SameLine()
