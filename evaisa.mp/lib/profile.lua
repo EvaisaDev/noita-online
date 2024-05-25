@@ -23,11 +23,21 @@ local _internal = {}
 -- csv index
 local _csvindex = 0
 
+local last_run_frame = 0
+local hook_runs = 0
+
 --- This is an internal function.
 -- @tparam string event Event type
 -- @tparam number line Line number
 -- @tparam[opt] table info Debug info table
 function profile.hooker(event, line, info)
+  --[[if GameGetFrameNum() == last_run_frame then
+    hook_runs = hook_runs + 1
+  else
+    print("Ran hooker " .. hook_runs .. " times")
+    hook_runs = 0
+    last_run_frame = GameGetFrameNum()
+  end]]
   info = info or debug.getinfo(2, 'fnS')
   local f = info.func
   -- ignore the profiler itself
@@ -75,7 +85,7 @@ function profile.start()
     jit.off()
     jit.flush()
   end]]
-  debug.sethook(profile.hooker, "crl")
+  debug.sethook(profile.hooker, "cr")
 end
 
 --- Stops collecting data.
@@ -126,6 +136,7 @@ function profile.reset()
 end
 
 function profile.clear()
+  debug.sethook()
   for f in pairs(_ncalls) do
     _ncalls[f] = 0
   end

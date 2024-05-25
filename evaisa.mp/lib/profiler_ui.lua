@@ -137,7 +137,7 @@ profiler_ui.end_profile = function()
     end
 
 
-    if(profiler_steps % 100 == 0)then
+    if(profiler_steps % 10 == 0)then
         generate_profiler_data()
     end
 
@@ -233,7 +233,7 @@ profiler_ui.draw = function()
 end
 
 profiler_ui.post_update = function()
-    if(profile_next and did_frame and not profiler_paused)then
+    if(did_frame)then
         profiler_ui.end_profile()
     end
 
