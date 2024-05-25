@@ -1,6 +1,7 @@
 local profile = dofile("mods/evaisa.mp/lib/profile.lua")
 
 local profile_next = false
+local profile_next_no_ui = false
 local profiler_rate = math.floor(ModSettingGet("evaisa.mp.profiler_rate") or 1)
 
 local profiler_folder_name = "noita_online_logs/profiler"
@@ -71,7 +72,7 @@ end
 
 profiler_ui.pre_update = function()
 
-    if(not profiler_paused and profile_next and GameGetFrameNum() % profiler_rate == 0)then
+    if(not profiler_paused and (profile_next or profile_next_no_ui) and GameGetFrameNum() % profiler_rate == 0)then
         did_frame = true
         profile.start()
         --print("Profiling frame: "..GameGetFrameNum())
@@ -81,6 +82,7 @@ profiler_ui.pre_update = function()
 
 
     if (input ~= nil and input:WasKeyPressed("f8")) then
+        profile_next_no_ui = false
         profile_next = not profile_next
         if(profile_next)then
             profile.clear()
@@ -98,6 +100,27 @@ profiler_ui.pre_update = function()
             print("Stopping profiler")
         end
     end 
+
+    if (input ~= nil and input:WasKeyPressed("f7")) then
+        profile_next = false
+        profile_next_no_ui = not profile_next_no_ui
+        if(profile_next_no_ui)then
+            profile.clear()
+            profiler_result_file = io.open(profiler_folder_name.."/"..os.date("%Y-%m-%d_%H-%M-%S")..".csv", "w+")
+            profiler_result_content = "Snapshot,Rank,Function,Calls,Time,Avg. Time,Code\n"
+
+            profiler_frames = {}
+            profiler_data = {}
+            profiler_steps = 0
+            print("Starting profiler without UI")
+        else
+            profile.clear()
+            profiler_result_file:write(profiler_result_content)
+            profiler_result_file:close()
+            print("Stopping profiler without UI")
+        end
+
+    end
 end
 
 profiler_ui.end_profile = function()

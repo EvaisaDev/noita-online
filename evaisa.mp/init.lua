@@ -765,7 +765,7 @@ function OnWorldPreUpdate()
 					dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
 					dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
 				end
-				if (GameGetFrameNum() % (60 * 10) == 0) then
+				if (GameGetFrameNum() % (600) == 0) then
 					steamutils.CheckLocalLobbyData()
 				end
 
