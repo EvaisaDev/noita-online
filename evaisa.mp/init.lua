@@ -677,7 +677,7 @@ function OnWorldPreUpdate()
 			
 			if(not laa_check_busy)then
 				if(not steam.user.loggedOn())then
-					if(GameGetFrameNum() % (60 * 5) == 0)then
+					if(GameGetFrameNum() % (300) == 0)then
 						GamePrint("Failed to connect to steam servers, are you logged into steam friends list?")
 					end
 					
@@ -796,7 +796,7 @@ function OnWorldPreUpdate()
 
 					--print("b")
 
-					if (GameGetFrameNum() % 60 == 0) then
+					if (GameGetFrameNum() % Random(59,61) == 0) then
 
 						steam_utils.updateCacheSpectators(lobby_code)
 						
