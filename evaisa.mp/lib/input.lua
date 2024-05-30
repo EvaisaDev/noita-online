@@ -127,6 +127,7 @@ SDL_PollEvent_hook = minhook.create_hook(SDL.SDL_PollEvent, function(event)
         end
 
         local ret = SDL_PollEvent_hook.original(event)
+
         if ret == 0 then
             input.frame_finished = true
             return 0

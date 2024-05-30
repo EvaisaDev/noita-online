@@ -176,6 +176,13 @@ local function GenerateDisplayName(id)
 end
 
 function ModSettingsGui(gui, in_main_menu)
+	last_gui_frame = last_gui_frame or GameGetFrameNum()
+
+	if(last_gui_frame ~= GameGetFrameNum() - 1)then
+		bindings = nil
+	end
+
+	last_gui_frame = GameGetFrameNum()
 	
 	if(bindings == nil and not in_main_menu)then
 		bindings = dofile_once("mods/evaisa.mp/lib/keybinds.lua")

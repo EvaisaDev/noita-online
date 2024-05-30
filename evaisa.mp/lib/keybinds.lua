@@ -31,6 +31,7 @@ local bindings = {
                 type = ModSettingGet("keybind."..category .. "." .. id .. ".type") or default_type,
                 was_down = false,
             }
+            print("registering binding: " .. id)
             table.insert(self._binding_order, id)
         end
 
@@ -47,6 +48,8 @@ local bindings = {
         local order_s = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
         local order = smallfolk.loads(order_s)
         self._binding_order = order
+
+        GameRemoveFlagRun("evaisa.mp.binding_being_set")
     end,
     IsJustDown = function(self, id)
         if(GameHasFlagRun("evaisa.mp.reload_bindings"))then
@@ -160,7 +163,8 @@ local bindings = {
     end,
     TrySet = function(self, id)
         local binding = self._bindings[id]
-        if binding ~= nil then
+        if binding ~= nil and not GameHasFlagRun("evaisa.mp.binding_being_set") then
+            GameAddFlagRun("evaisa.mp.binding_being_set")
             binding.being_set = true
         end
     end,
@@ -181,18 +185,33 @@ local bindings = {
                 end
 
                 if binding.being_set then
-                    
+
+                    print("binding still being set!!")
+               
                     local set = false
+                    -- if backspace is pressed, unbind
+                    if(InputIsKeyJustDown(inputs.key.Key_BACKSPACE))then
+                        binding.value = ""
+                        binding.being_set = false
+                        GameRemoveFlagRun("evaisa.mp.binding_being_set")
+                        ModSettingSet("keybind."..binding.category .. "." .. bind_id, "")
+                        ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "key")
+                        GameAddFlagRun("evaisa.mp.reload_bindings")
+                    end
+     
                     if(binding.allow_mouse)then
-                        for name, id in pairs(inputs.mouse)do
-                            if(InputIsMouseButtonJustDown(id))then
-                                binding.value = name
-                                binding.being_set = false
-                                ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
-                                binding.type = "mouse"
-                                ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "mouse"	)
-                                set = true
-                                break
+                        if(not set)then
+                            for name, id in pairs(inputs.mouse)do
+                                if(InputIsMouseButtonJustDown(id))then
+                                    binding.value = name
+                                    binding.being_set = false
+                                    GameRemoveFlagRun("evaisa.mp.binding_being_set")
+                                    ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
+                                    binding.type = "mouse"
+                                    ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "mouse")
+                                    set = true
+                                    break
+                                end
                             end
                         end
                     end
@@ -202,6 +221,7 @@ local bindings = {
                                 if(InputIsKeyJustDown(id))then
                                     binding.value = name
                                     binding.being_set = false
+                                    GameRemoveFlagRun("evaisa.mp.binding_being_set")
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
                                     binding.type = "key"
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "key")
@@ -217,6 +237,7 @@ local bindings = {
                                 if(InputIsJoystickButtonJustDown(0, id))then
                                     binding.value = name
                                     binding.being_set = false
+                                    GameRemoveFlagRun("evaisa.mp.binding_being_set")
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
                                     binding.type = "joy"    
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "joy")
@@ -232,6 +253,7 @@ local bindings = {
                                 if(InputGetJoystickAnalogStick(0, id) > 0.9 or InputGetJoystickAnalogStick(0, id) < -0.9)then
                                     binding.value = name
                                     binding.being_set = false
+                                    GameRemoveFlagRun("evaisa.mp.binding_being_set")
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
                                     binding.type = "axis"
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "axis")
@@ -247,6 +269,7 @@ local bindings = {
                                 if(InputGetJoystickAnalogButton(0, id) > 0.9)then
                                     binding.value = name
                                     binding.being_set = false
+                                    GameRemoveFlagRun("evaisa.mp.binding_being_set")
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id, name)
                                     binding.type = "axis_button"
                                     ModSettingSet("keybind."..binding.category .. "." .. bind_id .. ".type", "axis_button")
