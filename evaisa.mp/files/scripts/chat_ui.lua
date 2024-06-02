@@ -237,11 +237,16 @@ local LockPlayer = function()
 	end
 	local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
 	if (controls ~= nil) then
+		GameAddFlagRun("player_locked_chat")
 		ComponentSetValue2(controls, "enabled", false)
 	end
 end
 
 local UnlockPlayer = function()
+	if(not GameHasFlagRun("player_locked_chat"))then
+		return
+	end
+
 	local player = GetPlayer()
 	if (player == nil) then
 		return
@@ -250,6 +255,7 @@ local UnlockPlayer = function()
 	if (not GameHasFlagRun("player_locked")) then
 		local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
 		if (controls ~= nil) then
+			GameRemoveFlagRun("player_locked_chat")
 			ComponentSetValue2(controls, "enabled", true)
 		end
 	end
@@ -355,7 +361,7 @@ if (lobby_code ~= nil) then
 
 		if (not was_input_hovered and input_hovered) then
 			LockPlayer()
-		elseif (was_input_hovered and not input_hovered) then
+		elseif (not input_hovered) then
 			UnlockPlayer()
 		end
 
