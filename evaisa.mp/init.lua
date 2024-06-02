@@ -205,7 +205,16 @@ dofile_once("mods/evaisa.mp/files/scripts/gui_utils.lua")
 
 dofile("data/scripts/lib/coroutines.lua")
 nxml = dofile("mods/evaisa.mp/lib/nxml.lua")
-local utf8 = require 'lua-utf8'
+
+try(function()
+	require 'lua-utf8'
+end).catch(function(ex)
+	exception_log:print(tostring(ex))
+	if(exceptions_in_logger)then
+		print(tostring(ex))
+	end
+end)
+
 
 pngencoder = require("pngencoder")
 np = require("noitapatcher")
@@ -597,6 +606,18 @@ end
 
 ----------------------------------
 
+----- check if thingy is installed ------
+local failed_to_load = false
+try(function() 
+	local _ = ffi.load("msvcp140.dll")
+end).catch(function(ex)
+	print("Failed to load msvcp140.dll")
+	failed_to_load = true
+end)
+
+
+----------------------------------------
+
 local spawned_popup = false
 local init_cleanup = false
 local connection_popup_open = false
@@ -622,7 +643,7 @@ function OnWorldPreUpdate()
 		end
 
 
-		if steam and GameGetFrameNum() >= 60 then
+		if (not failed_to_load) and steam and GameGetFrameNum() >= 60 then
 
 
 			--[[if(not laa_check_done)then
@@ -1260,6 +1281,10 @@ function steam.networking.onSessionFailed(steamID, endReason, endDebug, connecti
 end
 
 function OnMagicNumbersAndWorldSeedInitialized()
+	if(failed_to_load)then
+		return
+	end
+
 
 	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_jp_regular_20.lua", "noto_sans_jp_regular_20.xml")
 	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_regular_20.lua", "noto_sans_regular_20.xml")
@@ -1389,6 +1414,28 @@ local fix_falsely_enabled_gamemodes = function()
 end
 
 function OnPlayerSpawned(player)
+
+	if(failed_to_load)then
+		popup.create("msvcp140_missing", GameTextGetTranslatedOrNot("$mp_msvcp140_missing"), {
+			{
+				text = GameTextGetTranslatedOrNot("$mp_msvcp140_missing_description"),
+				color = {217 / 255,52 / 255,52 / 255, 1}
+			},
+			{
+				text = GameTextGetTranslatedOrNot("$mp_msvcp140_missing_description_2"),
+				color = {217 / 255,52 / 255,52 / 255, 1}
+			},
+		}, {
+			{
+				text = GameTextGetTranslatedOrNot("$mp_msvcp140_install"),
+				callback = function()
+					os.execute("start explorer \"https://aka.ms/vs/17/release/vc_redist.x86.exe\"")
+				end
+			}
+		}, -6000)
+		return
+	end
+
 
 	-- make popup
 	local streaming, streaming_app = streaming.IsStreaming()

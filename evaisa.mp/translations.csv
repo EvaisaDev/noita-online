@@ -132,4 +132,7 @@ mp_spectator_hover,"This player is in spectator mode, they will not partake in t
 mp_game_version_mismatch,You are using a different version of Noita,,,,,,,,,,,,,
 mp_lobby_info_game_host_diff,The host is running a different version of Noita: %s ,,,,,,,,,,,,,
 mp_lobby_info_game_same_version,You are running the same version of Noita,,,,,,,,,,,,,
-mp_lobby_info_game_you_using,(You are running version %s),,,,,,,,,,,,,
+mp_msvcp140_missing,MSVCP140.dll Missing,,,,,,,,,,,,,
+mp_msvcp140_missing_description,MSVCP140.dll is required for Noita Online to work.,,,,,,,,,,,,,
+mp_msvcp140_missing_description_2,Please install it and restart the game.,,,,,,,,,,,,,
+mp_msvcp140_install,Download,,,,,,,,,,,,,
