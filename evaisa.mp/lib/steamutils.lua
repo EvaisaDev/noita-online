@@ -366,25 +366,6 @@ steam_utils.doesLobbyExist = function(lobby_id, callback)
 end
 
 
-steam_utils.GetLobbyData = function(key)
-	if(lobby_code == nil)then
-		return nil
-	end
-	local value = lobby_data_last_frame[key]
-	if (value == nil or value == "") then
-		-- run getLobbyData to make sure
-		local code = lobby_code
-		value = steam.matchmaking.getLobbyData(code, key)
-
-		-- cache the value
-		lobby_data_last_frame[key] = value
-
-		return value
-	end
-	return value
-end
-
-
 steam_utils.Leave = function(lobby_id)
 
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_id, "gamemode"))
@@ -393,6 +374,7 @@ steam_utils.Leave = function(lobby_id)
 	end
 
 	cached_lobby_data = {}
+	cached_lobby_user_data = {}
 	initial_refreshes = 10
 	delay.reset()
 	is_awaiting_spectate = false
@@ -498,14 +480,35 @@ steam_utils.HasLobbyFlag = function(lobby, flag)
 	return has_flag
 end
 
+cached_lobby_data = {}
+
+steam_utils.GetLobbyData = function(key)
+	if(lobby_code == nil)then
+		return nil
+	end
+	local value = cached_lobby_data[key]
+	if (value == nil or value == "") then
+		-- run getLobbyData to make sure
+		local code = lobby_code
+		value = steam.matchmaking.getLobbyData(code, key)
+
+		cached_lobby_data[key] = value
+
+		return value
+	end
+	return value
+end
+
+
 steam_utils.TrySetLobbyData = function(lobby, key, value)
-	if(lobby_data_last_frame[key] == value)then
+	if(cached_lobby_data[key] == value)then
 		return
 	end
 	try(function()
 		local result = steam.matchmaking.setLobbyData(lobby, key, value)
-		if(type(result) == "boolean" and result)then
-			lobby_data_last_frame[key] = value
+		-- if retult is boolean and true
+		if (type(result) == "boolean" and result) then
+			cached_lobby_data[key] = value
 		end
 	end).catch(function(err)
 		mp_log:print("Failed to set lobby data: " .. key .. " = " .. value)

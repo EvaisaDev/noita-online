@@ -1262,6 +1262,7 @@ function steam.matchmaking.onGameLobbyJoinRequested(data)
 		steam.matchmaking.joinLobby(data.lobbyID, function(e)
 			if (e.response == 2) then
 				cached_lobby_data = {}
+				cached_lobby_user_data = {}
 				steam_utils.Leave(e.lobbyID)
 				invite_menu_open = false
 				menu_status = status.main_menu

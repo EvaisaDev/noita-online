@@ -480,11 +480,11 @@ end
 
 
 
-cached_lobby_data = cached_lobby_data or {}
+cached_lobby_user_data = cached_lobby_user_data or {}
 
 function getLobbyUserData(lobby, userid, force)
-	if(cached_lobby_data[userid] ~= nil and force ~= true)then
-		return cached_lobby_data[userid]
+	if(cached_lobby_user_data[userid] ~= nil and force ~= true)then
+		return cached_lobby_user_data[userid]
 	end
 	if(lobby == nil) then
 		return nil
@@ -495,7 +495,7 @@ function getLobbyUserData(lobby, userid, force)
 	local player_mod_data = steam.matchmaking.getLobbyMemberData(lobby, userid, "mod_data")
 	if (player_mod_data ~= nil and player_mod_data ~= "") then
 		local data_received = DeserializeModData(player_mod_data)
-		cached_lobby_data[userid] = data_received
+		cached_lobby_user_data[userid] = data_received
 		return data_received
 	end
 	return nil

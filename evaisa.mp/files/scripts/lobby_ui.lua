@@ -1580,8 +1580,8 @@ local windows = {
 						edit_lobby_type = edit_lobby_type + 1
 						if(edit_lobby_type > #lobby_types and owner == steam_utils.getSteamID())then
 							edit_lobby_type = 1
-							settings_changed = true
 						end
+						settings_changed = true
 					end
 	
 					--print(tostring(edit_lobby_gamemode))
@@ -1597,7 +1597,7 @@ local windows = {
 					end]]
 					
 					--GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(active_mode.name))
-					GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
+					--GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
 	
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
@@ -1888,8 +1888,8 @@ local windows = {
 							steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
 							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
 						end
+						print("Updating lobby type: "..internal_types[edit_lobby_type])
 						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
-						steam_utils.TrySetLobbyData(lobby_code, "LobbyType", internal_types[edit_lobby_type])
 						steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
 						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
 						mp_log:print("Updated name: "..tostring(edit_lobby_name))
@@ -2013,12 +2013,6 @@ local windows = {
 						CreateLobby(internal_types[lobby_type], lobby_max_players, function (code) 
 							msg.log("Created new lobby!")
 							print("Created new lobby!")
-
-							steam_utils.TrySetLobbyData(code, "LobbyType", internal_types[lobby_type]) 
-						
-							
-							
-							print("Parsing default settings")
 
 							for k, setting in ipairs(gamemodes[gamemode_index].settings or {})do
 								if(gamemode_settings[setting.id] == nil)then
