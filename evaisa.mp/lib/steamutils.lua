@@ -502,7 +502,15 @@ steam_utils.TrySetLobbyData = function(lobby, key, value)
 	if(lobby_data_last_frame[key] == value)then
 		return
 	end
-	steam.matchmaking.setLobbyData(lobby, key, value)
+	try(function()
+		local result = steam.matchmaking.setLobbyData(lobby, key, value)
+		if(type(result) == "boolean" and result)then
+			lobby_data_last_frame[key] = value
+		end
+	end).catch(function(err)
+		mp_log:print("Failed to set lobby data: " .. key .. " = " .. value)
+		mp_log:print(err)
+	end)
 end
 
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
