@@ -1557,7 +1557,7 @@ local windows = {
 				local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
 
 
-				edit_lobby_type = owner == steam_utils.getSteamID() and (edit_lobby_type or 1) or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]
+				edit_lobby_type = internal_type_map[lobby_data_last_frame["LobbyType"]]
 
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 	
@@ -1565,11 +1565,11 @@ local windows = {
 	
 				local default_max_players = 8
 
-				edit_lobby_max_players = steam_utils.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
+				edit_lobby_max_players = steam.matchmaking.getLobbyMemberLimit(lobby_code)
 
-				edit_lobby_name = owner == steam_utils.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
+				edit_lobby_name = lobby_data_last_frame["name"]
 
-				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
+				edit_lobby_seed = lobby_data_last_frame["seed"]
 
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -1624,7 +1624,7 @@ local windows = {
 
 					max_player_change_frame = max_player_change_frame or nil
 
-					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
+					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 1, true_max, default_max_players, 1, " $0", 120)
 					if(slider_value ~= edit_lobby_max_players and owner == steam_utils.getSteamID())then
 						edit_lobby_max_players = slider_value
 						max_player_change_frame = GameGetFrameNum()
@@ -1990,7 +1990,7 @@ local windows = {
 					
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot("$mp_max_players")..": ")
-					local slider_value = GuiSlider(menu_gui, NewID("CreateLobby"), 0, 4, "", lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
+					local slider_value = GuiSlider(menu_gui, NewID("CreateLobby"), 0, 4, "", lobby_max_players, 1, true_max, default_max_players, 1, " $0", 120)
 					if(slider_value ~= lobby_max_players)then
 						lobby_max_players = slider_value
 					end

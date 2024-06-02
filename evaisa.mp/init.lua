@@ -1001,6 +1001,10 @@ end
 
 function steam.matchmaking.onLobbyEnter(data)
 	try(function()
+
+		print(tostring(data.response))
+
+
 		clear_avatar_cache()
 		for k, v in pairs(active_members) do
 			active_members[k] = nil
@@ -1020,7 +1024,7 @@ function steam.matchmaking.onLobbyEnter(data)
 		steamutils.getUserAvatar(user)
 
 
-		if (data.response ~= 2) then
+		if (data.response == 1) then
 			lobby_code = data.lobbyID
 			mp_log:print("Code set to: " .. tostring(lobby_code) .. "[" .. type(lobby_code) .. "]")
 			ModSettingSet("last_lobby_code", tostring(lobby_code))
@@ -1063,7 +1067,37 @@ function steam.matchmaking.onLobbyEnter(data)
 				end
 			end	
 		else
-			msg.log("Invalid lobby ID")
+
+			--[[
+				k_EChatRoomEnterResponseSuccess	1	Success.
+				k_EChatRoomEnterResponseDoesntExist	2	Chat doesn't exist (probably closed).
+				k_EChatRoomEnterResponseNotAllowed	3	General Denied - You don't have the permissions needed to join the chat.
+				k_EChatRoomEnterResponseFull	4	Chat room has reached its maximum size.
+				k_EChatRoomEnterResponseError	5	Unexpected Error.
+				k_EChatRoomEnterResponseBanned	6	You are banned from this chat room and may not join.
+				k_EChatRoomEnterResponseLimited	7	Joining this chat is not allowed because you are a limited user (no value on account).
+				k_EChatRoomEnterResponseClanDisabled	8	Attempt to join a clan chat when the clan is locked or disabled.
+				k_EChatRoomEnterResponseCommunityBan	9	Attempt to join a chat when the user has a community lock on their account.
+				k_EChatRoomEnterResponseMemberBlockedYou	10	Join failed - a user that is in the chat has blocked you from joining.
+				k_EChatRoomEnterResponseYouBlockedMember	11	Join failed - you have blocked a user that is already in the chat.
+				k_EChatRoomEnterResponseRatelimitExceeded	15	Join failed - too many join attempts in a very short period of time.
+			]]
+
+			local responses = {
+				[2] = "$lobby_error_doesnt_exist", -- Lobby code doesn't exist
+				[3] = "$lobby_error_no_permissions", -- You don't have permission to join the lobby
+				[4] = "$lobby_error_full", -- Lobby is full
+				[5] = "$lobby_error_unexpected", -- Unexpected error
+				[6] = "$lobby_error_banned", -- You are banned from this lobby
+				[7] = "$lobby_error_limited", -- Joining this lobby is not allowed because you are a limited user
+				[8] = "$lobby_error_clan_disabled", -- Attempt to join a clan lobby when the clan is locked or disabled
+				[9] = "$lobby_error_community_ban", -- Attempt to join a lobby when the user has a community lock on their account
+				[10] = "$lobby_error_member_blocked_you", -- Join failed - a user that is in the lobby has blocked you from joining
+				[11] = "$lobby_error_you_blocked_member", -- Join failed - you have blocked a user that is already in the lobby
+				[15] = "$lobby_error_ratelimit_exceeded", -- Join failed - too many join attempts in a very short period of time
+			}
+
+			msg.log(GameTextGetTranslatedOrNot(responses[data.response] or "$lobby_error_unexpected"))
 		end
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
