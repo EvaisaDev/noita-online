@@ -1880,6 +1880,7 @@ local windows = {
 
 					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam_utils.getSteamID())then
 						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
+						steam_utils.TrySetLobbyData(code, "max_players", tostring(edit_lobby_max_players))
 						steam_utils.TrySetLobbyData(lobby_code, "name", edit_lobby_name)
 						
 						steam_utils.TrySetLobbyData(lobby_code, "seed", edit_lobby_seed)
@@ -2042,11 +2043,12 @@ local windows = {
 							steam_utils.TrySetLobbyData(code, "version", tostring(MP_VERSION))
 							steam_utils.TrySetLobbyData(code, "in_progress", "false")
 							steam_utils.TrySetLobbyData(code, "allow_in_progress_joining", gamemodes[gamemode_index].allow_in_progress_joining ~= nil and tostring(gamemodes[gamemode_index].allow_in_progress_joining)  or "true")
+							steam_utils.TrySetLobbyData(code, "max_players", tostring(lobby_max_players))
 
-							edit_lobby_type = lobby_type
-							edit_lobby_max_players = lobby_max_players
-							edit_lobby_name = lobby_name
-							edit_lobby_seed = lobby_seed
+							edit_lobby_type = lobby_type -- steam.matchmaking.getLobbyData(code, "LobbyType")
+							edit_lobby_max_players = lobby_max_players  --  steam.matchmaking.getLobbyMemberLimit(code)"MaxPlayers"
+							edit_lobby_name = lobby_name -- steam.matchmaking.getLobbyData(code, "name")
+							edit_lobby_seed = lobby_seed -- steam.matchmaking.getLobbyData(code, "seed")
 			
 
 							if(dev_mode)then

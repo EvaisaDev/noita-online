@@ -1084,17 +1084,17 @@ function steam.matchmaking.onLobbyEnter(data)
 			]]
 
 			local responses = {
-				[2] = "$lobby_error_doesnt_exist", -- Lobby code doesn't exist
-				[3] = "$lobby_error_no_permissions", -- You don't have permission to join the lobby
-				[4] = "$lobby_error_full", -- Lobby is full
-				[5] = "$lobby_error_unexpected", -- Unexpected error
-				[6] = "$lobby_error_banned", -- You are banned from this lobby
-				[7] = "$lobby_error_limited", -- Joining this lobby is not allowed because you are a limited user
-				[8] = "$lobby_error_clan_disabled", -- Attempt to join a clan lobby when the clan is locked or disabled
-				[9] = "$lobby_error_community_ban", -- Attempt to join a lobby when the user has a community lock on their account
-				[10] = "$lobby_error_member_blocked_you", -- Join failed - a user that is in the lobby has blocked you from joining
-				[11] = "$lobby_error_you_blocked_member", -- Join failed - you have blocked a user that is already in the lobby
-				[15] = "$lobby_error_ratelimit_exceeded", -- Join failed - too many join attempts in a very short period of time
+				[2] = 	"$lobby_error_doesnt_exist", 		-- Lobby code doesn't exist
+				[3] = 	"$lobby_error_no_permissions", 		-- You don't have permission to join the lobby
+				[4] = 	"$lobby_error_full", 				-- Lobby is full
+				[5] = 	"$lobby_error_unexpected", 			-- Unexpected error
+				[6] = 	"$lobby_error_banned", 				-- You are banned from this lobby
+				[7] = 	"$lobby_error_limited", 			-- Joining this lobby is not allowed because you are a limited user
+				[8] = 	"$lobby_error_clan_disabled", 		-- Attempt to join a clan lobby when the clan is locked or disabled
+				[9] = 	"$lobby_error_community_ban", 		-- Attempt to join a lobby when the user has a community lock on their account
+				[10] = 	"$lobby_error_member_blocked_you", 	-- Join failed - a user that is in the lobby has blocked you from joining
+				[11] = 	"$lobby_error_you_blocked_member", 	-- Join failed - you have blocked a user that is already in the lobby
+				[15] = 	"$lobby_error_ratelimit_exceeded", 	-- Join failed - too many join attempts in a very short period of time
 			}
 
 			msg.log(GameTextGetTranslatedOrNot(responses[data.response] or "$lobby_error_unexpected"))
@@ -1129,6 +1129,23 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 				if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
 					lobby_data_updated_this_frame[data.key] = true
 					print("Updated lobby data: " .. data.key .. " to " .. data.value)
+
+					-- handle special case update
+					--edit_lobby_type = lobby_type -- steam.matchmaking.getLobbyData(code, "LobbyType")
+					--edit_lobby_max_players = lobby_max_players  --  steam.matchmaking.getLobbyMemberLimit(code)"MaxPlayers"
+					--edit_lobby_name = lobby_name -- steam.matchmaking.getLobbyData(code, "name")
+					--edit_lobby_seed = lobby_seed -- steam.matchmaking.getLobbyData(code, "seed")
+
+					if(data.key == "LobbyType")then
+						edit_lobby_type = data.value
+					elseif(data.key == "max_players")then
+						edit_lobby_max_players = data.value
+					elseif(data.key == "name")then
+						edit_lobby_name = data.value
+					elseif(data.key == "seed")then
+						edit_lobby_seed = data.value
+					end
+
 					any_updated = true
 				end
 			end
