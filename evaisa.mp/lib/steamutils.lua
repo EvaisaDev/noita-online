@@ -162,6 +162,8 @@ steam_utils.getUserAvatar = function(user_id)
 		return cached_avatars[user_id]
 	end
 
+	steam.friends.requestUserInformation(user_id, false)
+
 	local handle = steam.friends.getSmallFriendAvatar(user_id)
 	if(handle == nil)then
 		cached_avatars[user_id] = "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
