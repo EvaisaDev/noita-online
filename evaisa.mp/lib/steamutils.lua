@@ -482,8 +482,6 @@ steam_utils.HasLobbyFlag = function(lobby, flag)
 	return has_flag
 end
 
-cached_lobby_data = {}
-
 steam_utils.GetLobbyData = function(key)
 	if(lobby_code == nil)then
 		return nil

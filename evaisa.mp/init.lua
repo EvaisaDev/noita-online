@@ -240,6 +240,8 @@ in_game = false
 Spawned = false
 Starting = nil
 
+cached_lobby_data = {}
+
 lobby_gamemode = nil
 
 
@@ -1125,6 +1127,10 @@ function steam.matchmaking.onLobbyDataUpdate(data)
 					steamutils.getLobbyMembers(lobby_code, true, true)
 				end
 				
+				if(cached_lobby_data[data.key] ~= data.value)then
+					cached_lobby_data[data.key] = data.value
+				end
+
 				--print("Lobby data: " .. data.key .. " = " .. data.value)
 				if(not lobby_data_last_frame[data.key] or lobby_data_last_frame[data.key] ~= data.value)then
 					lobby_data_updated_this_frame[data.key] = true
