@@ -9,7 +9,7 @@ Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = true
+disable_print = false
 
 
 -----------------------------------
@@ -488,8 +488,12 @@ function TryHandleMessage(lobby_code, event, message, user, ignore)
 					lobby_gamemode.apply_start_data(lobby_code, message)
 				end
 
+				if(event == "restart")then
+					StopGame()
+				end
+
 				if(owner == steam_utils.getSteamID())then
-					StartGame()
+					Starting = 5
 				else
 					Starting = 30
 				end

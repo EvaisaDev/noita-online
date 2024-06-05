@@ -525,6 +525,47 @@ steam_utils.TrySetLobbyData = function(lobby, key, value)
 	end)
 end
 
+steam_utils.CleanLobbyData = function(callback)
+	if(lobby_code == nil)then
+		return nil
+	end
+
+	if(callback == nil)then
+		callback = function(key, value)
+			return true
+		end
+	end
+
+	try(function()
+		-- loop through all keys and remove them
+		local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
+		local keys_to_remove = {}
+		for i = 1, lobby_data_count do
+			local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
+			local key = data.key
+			local value = data.value
+			
+			local result = callback(key, value)
+
+			if(result)then
+				table.insert(keys_to_remove, key)
+			end
+		end
+		
+		for i = 1, #keys_to_remove do
+			local key = keys_to_remove[i]
+			steam.matchmaking.deleteLobbyData(lobby_code, key))
+			print("Removed lobby data: " .. key)
+		end
+
+
+	end).catch(function(err)
+		mp_log:print("Failed to clear lobby data")
+		mp_log:print(err)
+	end)
+
+end
+
 steam_utils.SetLocalLobbyData = function(lobby, key, value)
 	if (key == "time_updated") then
 		mp_log:print("Illegal lobby key: time_updated")
