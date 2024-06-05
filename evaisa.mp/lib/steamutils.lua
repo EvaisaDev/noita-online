@@ -525,10 +525,26 @@ steam_utils.TrySetLobbyData = function(lobby, key, value)
 	end)
 end
 
+steam_utils.DeleteLobbyData = function(lobby, key)
+	if(cached_lobby_data[key] == nil)then
+		return
+	end
+	try(function()
+		steam.matchmaking.deleteLobbyData(lobby, key)
+		cached_lobby_data[key] = nil
+	end).catch(function(err)
+		mp_log:print("Failed to delete lobby data: " .. key)
+		mp_log:print(err)
+	end)
+end
+
 steam_utils.CleanLobbyData = function(callback)
+	print("Cleaning lobby data")
 	if(lobby_code == nil)then
 		return nil
 	end
+
+	print("Cleaning lobby data for lobby: " .. tostring(lobby_code))
 
 	if(callback == nil)then
 		callback = function(key, value)
@@ -536,10 +552,13 @@ steam_utils.CleanLobbyData = function(callback)
 		end
 	end
 
+	print("Callback found")
+
 	try(function()
 		-- loop through all keys and remove them
 		local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
 		local keys_to_remove = {}
+		print("Data count: " .. lobby_data_count)
 		for i = 1, lobby_data_count do
 			local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
 			local key = data.key
@@ -554,7 +573,7 @@ steam_utils.CleanLobbyData = function(callback)
 		
 		for i = 1, #keys_to_remove do
 			local key = keys_to_remove[i]
-			steam.matchmaking.deleteLobbyData(lobby_code, key))
+			steam_utils.DeleteLobbyData(lobby_code, key)
 			print("Removed lobby data: " .. key)
 		end
 
