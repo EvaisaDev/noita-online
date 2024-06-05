@@ -9,7 +9,7 @@ Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = false
-disable_print = false
+disable_print = true
 
 
 -----------------------------------
@@ -1035,6 +1035,9 @@ function steam.matchmaking.onLobbyEnter(data)
 			if handleVersionCheck() and handleModCheck() then
 				if handleGamemodeVersionCheck(lobby_code) then
 					if (lobby_gamemode) then
+						steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "false")
+
+
 						defineLobbyUserData(lobby_code)
 						
 						delay.new(30, function()
@@ -1111,12 +1114,25 @@ end
 
 lobby_owner = nil
 
-function steam.matchmaking.onLobbyDataUpdate(data)
+local last_user_in_game_states = {}
+
+function steam.matchmaking.onLobbyDataUpdate(update_data)
 	print("Lobby data updated")
 	try(function()
 		if(lobby_code ~= nil)then
 			local current_lobby_data = {}
 			local any_updated = false
+
+
+			if(update_data.userID ~= update_data.lobbyID)then
+				local in_game_state = steam.matchmaking.getLobbyMemberData(lobby_code, update_data.userID, "in_game")
+				if(last_user_in_game_states[update_data.userID] ~= in_game_state)then
+					print("User in game state changed")
+					last_user_in_game_states[update_data.userID] = in_game_state
+					steamutils.getLobbyMembers(lobby_code, true, true)
+				end
+			end
+
 			local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
 			for i = 1, lobby_data_count do
 				local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )

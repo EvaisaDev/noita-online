@@ -246,6 +246,10 @@ steam_utils.getLobbyMembers = function(lobby_id, include_spectators, update_cach
 		-- if spectator
 		local is_spectator = steam.matchmaking.getLobbyData(lobby_id, tostring(h) .. "_spectator") == "true"
 
+		if(steam.matchmaking.getLobbyMemberData(lobby_code, h, "in_game") == "false")then
+			is_spectator = true
+		end
+
 		if(not is_spectator)then
 			table.insert(lobby_members_no_spectators[tostring(lobby_id)], {
 				id = h, 
@@ -487,15 +491,20 @@ steam_utils.GetLobbyData = function(key)
 		return nil
 	end
 	local value = cached_lobby_data[key]
-	if (value == nil or value == "") then
-		-- run getLobbyData to make sure
-		local code = lobby_code
-		value = steam.matchmaking.getLobbyData(code, key)
+	try(function()
+		if (value == nil or value == "") then
+			-- run getLobbyData to make sure
+			local code = lobby_code
+			value = steam.matchmaking.getLobbyData(code, key)
 
-		cached_lobby_data[key] = value
+			cached_lobby_data[key] = value
 
-		return value
-	end
+			return value
+		end
+	end).catch(function(err)
+		mp_log:print("Failed to get lobby data: " .. key)
+		mp_log:print(err)
+	end)
 	return value
 end
 

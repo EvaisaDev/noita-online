@@ -675,6 +675,8 @@ local windows = {
 							if(lobby_gamemode and game_in_progress)then
 								in_game = true
 								game_in_progress = true
+
+								steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "true")
 								
 								gui_closed = true
 				
@@ -709,6 +711,9 @@ local windows = {
 								is_awaiting_spectate = false
 								if(lobby_gamemode and game_in_progress)then
 									in_game = true
+
+									steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "true")
+
 									game_in_progress = true
 									
 									gui_closed = true
@@ -775,6 +780,7 @@ local windows = {
 				--print(tostring(spectating))
 
 				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+				
 				local custom_enter_check = true
 				local custom_enter_string = ""
 				if(active_mode and active_mode.custom_enter_check)then
@@ -791,6 +797,8 @@ local windows = {
 							if(active_mode)then
 
 								in_game = true
+								steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "true")
+
 								game_in_progress = true
 								
 								gui_closed = true
@@ -1557,9 +1565,9 @@ local windows = {
 				local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
 
 
-				edit_lobby_type = owner == steam_utils.getSteamID() and (edit_lobby_type or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]) or internal_type_map[steam.matchmaking.getLobbyData(lobby_code, "LobbyType")]
+				edit_lobby_type = internal_type_map[steam_utils.GetLobbyData("LobbyType")]
 
-				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+				local active_mode = FindGamemode(steam_utils.GetLobbyData("gamemode"))
 	
 				local true_max = 32
 	
@@ -1567,9 +1575,9 @@ local windows = {
 
 				edit_lobby_max_players = steam_utils.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
 
-				edit_lobby_name = owner == steam_utils.getSteamID() and (edit_lobby_name or steam.matchmaking.getLobbyData(lobby_code, "name"))  or steam.matchmaking.getLobbyData(lobby_code, "name")
+				edit_lobby_name = owner == steam_utils.getSteamID() and (edit_lobby_name or steam_utils.GetLobbyData("name"))  or steam_utils.GetLobbyData("name")
 
-				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam.matchmaking.getLobbyData(lobby_code, "seed")) or steam.matchmaking.getLobbyData(lobby_code, "seed")
+				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam_utils.GetLobbyData("seed")) or steam_utils.GetLobbyData("seed")
 
 				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)

@@ -602,6 +602,8 @@ function StartGame()
 					end
 				end
 
+				steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "true")
+
 				in_game = true
 				game_in_progress = true
 
