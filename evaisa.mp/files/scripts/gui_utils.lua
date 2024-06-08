@@ -194,6 +194,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	--print(tostring(identifier))
 
 	h = h - 12
+	w = w + 12
 	if(centered)then
 		x, y = GetCenterPosition(x, y, w, h)
 	end
@@ -213,7 +214,6 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 		GuiText(gui, x, bar_y, " "..title)
 	end
 
-	w = w + 12
 
 	if(close_callback ~= nil)then
 		GuiLayoutBeginLayer( gui )

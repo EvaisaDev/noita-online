@@ -147,3 +147,6 @@ lobby_error_community_ban,Attempt to join a lobby when the user has a community 
 lobby_error_member_blocked_you,Join failed - a user that is in the lobby has blocked you from joining,,,,,,,,,,,,,
 lobby_error_you_blocked_member,Join failed - you have blocked a user that is already in the lobby,,,,,,,,,,,,,
 lobby_error_ratelimit_exceeded,Join failed - too many join attempts in a very short period of time,,,,,,,,,,,,,
+mp_preset_default,This is a default lobby preset.,,,,,,,,,,,,,
+mp_preset_corrupt,This preset was corrupted.,,,,,,,,,,,,,
+mp_preset_outdated,This preset file was made on an older version.,,,,,,,,,,,,,

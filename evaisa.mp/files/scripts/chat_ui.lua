@@ -276,7 +276,7 @@ if (lobby_code ~= nil) then
 	end
 
 
-	if (bindings:IsJustDown("chat_open") and not GameHasFlagRun("chat_bind_disabled")) then
+	if (bindings:IsJustDown("chat_open_kb") and not GameHasFlagRun("chat_bind_disabled")) then
 		if (chat_open == false) then
 			chat_open = true
 			chat_opened_with_bind = true

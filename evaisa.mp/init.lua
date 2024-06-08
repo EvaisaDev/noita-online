@@ -2,14 +2,15 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 358
+MP_VERSION = 359
+MP_PRESET_VERSION = 2
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
-dev_mode = true
-debugging = true
-disable_print = false
+dev_mode = false
+debugging = false
+disable_print = true
 
 
 -----------------------------------
@@ -471,11 +472,6 @@ end
 function TryHandleMessage(lobby_code, event, message, user, ignore)
 	try(function()
 		if (lobby_gamemode ~= nil) then
-
-			if(event ~= "hm_timer_clear" and event ~= "ready")then
-				--print(event)
-			end
-
 			local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 	
 			local from_owner = user == owner
@@ -746,8 +742,8 @@ function OnWorldPreUpdate()
 					-- keyboards bindings
 					bindings:RegisterBinding("chat_submit", "Noita Online [keyboard]", "Chat Send", "Key_RETURN", "key", false, true, false, false)
 					bindings:RegisterBinding("chat_submit2", "Noita Online [keyboard]", "Chat Send Alt", "Key_KP_ENTER", "key", false, true, false, false)
-					bindings:RegisterBinding("chat_open", "Noita Online [keyboard]", "Open Chat", "Key_t", "key", false, true, false, false)
-					bindings:RegisterBinding("lobby_menu_open", "Noita Online [keyboard]", "Open Lobby Menu", "Key_y", "key", false, true, false, false)
+					bindings:RegisterBinding("chat_open_kb", "Noita Online [keyboard]", "Open Chat", "", "key", false, true, false, false)
+					bindings:RegisterBinding("lobby_menu_open_kb", "Noita Online [keyboard]", "Open Lobby Menu", "", "key", false, true, false, false)
 				
 					-- gamepad bindings
 					bindings:RegisterBinding("chat_submit_gp", "Noita Online [gamepad]", "Chat Send", "", "button", false, false, true, false, true)

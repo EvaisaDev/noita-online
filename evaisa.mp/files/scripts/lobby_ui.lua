@@ -478,7 +478,7 @@ local windows = {
 		name = "Lobby",
 		func 	= function()
 			local window_width = 200
-			local window_height = 180
+			local window_height = 280
 
 			function string_to_number(str)
 				local num = 0
@@ -560,7 +560,7 @@ local windows = {
 					--GuiText(menu_gui, 0, 0, "Show Code")
 					GuiZSetForNextWidget(menu_gui, -5110)
 					GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_copy_tooltip"))
-				end, -5100, -150, -20)
+				end, -5100, -180, -20)
 				
 			end, true, function(window_x, window_y, window_width, window_height)
 				
@@ -640,9 +640,32 @@ local windows = {
 
 				--GamePrint("relative_offset: "..tostring(relative_offset).."; current_button_height: "..tostring(current_button_height))
 
+				local tw, th = GuiGetTextDimensions(menu_gui, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+				local extra_offset = 0
+				if(active_mode and active_mode.enable_spectator)then
+					extra_offset = extra_offset + th
+				end
+				
+				if(owner == steam_utils.getSteamID())then
+					extra_offset = extra_offset + th
+				end
+
+				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+				
+				if(lobby_in_progress and not in_game)then
+					extra_offset = extra_offset + th
+				end
+
+
 				local offset = 0
 				if(current_button_height > relative_offset)then
 					offset = current_button_height
+					if(extra_offset < current_button_height - relative_offset)then
+						offset = offset - extra_offset
+					else
+						offset = relative_offset
+					end
 				else
 					offset = relative_offset
 				end
@@ -779,8 +802,7 @@ local windows = {
 
 				--print(tostring(spectating))
 
-				local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
-				
+
 				local custom_enter_check = true
 				local custom_enter_string = ""
 				if(active_mode and active_mode.custom_enter_check)then
@@ -981,7 +1003,7 @@ local windows = {
 					game_info = {},
 				}
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (150 / 2) - 18, screen_height / 2, 150, window_height, "Friends", true, function()
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, "Friends", true, function()
 					local do_update = GameGetFrameNum() % 60 == 0
 					
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -1067,7 +1089,7 @@ local windows = {
 			if(selected_player ~= nil)then
 				local selected_player_name = steamutils.getTranslatedPersonaName(selected_player)
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 308, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 					
 					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
@@ -1239,22 +1261,29 @@ local windows = {
 					presets = presets or {}
 					reserved_preset_names = reserved_preset_names or {}
 
-					local preset_version = 2
 					local function GenerateDefaultPreset()
 						local default_name = GameTextGetTranslatedOrNot("$mp_default_preset_name")
-						local preset_data = {version = preset_version, settings = {}}
+						local preset_data = {version = MP_PRESET_VERSION, settings = {}}
 						for k, v in ipairs(active_mode.settings)do
 							preset_data.settings[v.id] = v.default
 						end
 						reserved_preset_names[default_name] = true
-						table.insert(presets, 1, {name=default_name, data=preset_data})
+						table.insert(presets, 1, {name=default_name, data=preset_data, default=true})
 					end
 
 					local function AddGamemodePresets()
 						if(active_mode.default_presets ~= nil)then
 							for name, data in pairs(active_mode.default_presets)do
 								reserved_preset_names[name] = true
-								table.insert(presets, 1, {name=name, data=data})
+								table.insert(presets, 1, {name=name, data=data, default=true})
+							end
+						end
+
+						if(active_mode.preset_registry ~= nil)then
+							local data_table = active_mode.preset_registry()
+							for _, data in ipairs(data_table)do
+								data.default = true
+								table.insert(presets, 1, data)
 							end
 						end
 					end
@@ -1288,7 +1317,7 @@ local windows = {
 										table.insert(presets, {name = filename, extension = ".mp_preset", data = preset_data})
 									else
 										table.insert(presets, {name = filename, extension = ".mp_preset",	corrupt = true, data = {
-											version = preset_version,
+											version = MP_PRESET_VERSION,
 											settings = {}
 										}})
 									end
@@ -1305,7 +1334,7 @@ local windows = {
 										table.insert(presets, {name = filename, extension = ".json", data = preset_data})
 									else
 										table.insert(presets, {name = filename, extension = ".json", corrupt = true, data = {
-											version = preset_version,
+											version = MP_PRESET_VERSION,
 											settings = {}
 										}})
 									end
@@ -1320,7 +1349,7 @@ local windows = {
 					local function SavePreset(name)
 						if(not reserved_preset_names[name])then
 
-							local settings_data = {version = preset_version, settings = gamemode_settings}
+							local settings_data = {version = MP_PRESET_VERSION, settings = gamemode_settings}
 
 							if(active_mode.save_preset)then
 								settings_data = active_mode.save_preset(lobby_code, settings_data)
@@ -1357,7 +1386,7 @@ local windows = {
 						RefreshPresets()
 					end
 
-					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
+					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 308, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
 						GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
 						preset_name = preset_name or ("Preset_"..tostring(Random(1, 1000000)))
@@ -1406,7 +1435,7 @@ local windows = {
 						end
 						--[[if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
 							local table_string = "[\""..preset_name.."\"] = {\n"
-							table_string = table_string .. "\t[\"version\"] = "..tostring(preset_version)..",\n"
+							table_string = table_string .. "\t[\"version\"] = "..tostring(MP_PRESET_VERSION)..",\n"
 							table_string = table_string .. "\t[\"settings\"] = {\n"
 							for k, v in pairs(gamemode_settings)do
 								local value = v
@@ -1431,7 +1460,32 @@ local windows = {
 						
 						for i, preset in ipairs(presets) do
 							GuiLayoutBeginHorizontal(menu_gui, 0, 0)
-							if(GuiButton(menu_gui, NewID("remove_preset_"..tostring(preset.name)), 0, 0, GameTextGetTranslatedOrNot("$mp_remove_preset")))then
+							
+							if(preset.default)then
+								GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1.0 )
+								if(GuiButton(menu_gui, NewID(), 0, 0, "[?]"))then
+									-- nothing here
+								end
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_default"), "")
+							end
+
+							if(preset.corrupt)then
+								GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+								if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
+									-- nothing here
+								end
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_corrupt"), "")
+							end
+
+							if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
+								GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+								if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
+									-- nothing here
+								end
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_outdated"), "")
+							end
+							
+							if((not preset.default) and GuiButton(menu_gui, NewID("remove_preset_"..tostring(preset.name)), 0, 0, GameTextGetTranslatedOrNot("$mp_remove_preset")))then
 								popup.create("delete_preset_prompt", string.format(GameTextGetTranslatedOrNot("$mp_delete_preset_confirm"), preset.name),{
 									{
 										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_description"),
@@ -1457,10 +1511,11 @@ local windows = {
 								RefreshPresets()
 								]]
 							end
+
 							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
 								
 								local preset_info = preset
-								if(preset.data.version == nil or preset.data.version == 1)then
+								if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
 									preset_info = {
 										outdated = true,
 										name = preset.name,
@@ -1504,6 +1559,7 @@ local windows = {
 									active_mode.load_preset(lobby_code, preset_info.data)
 								end
 							end
+							
 							GuiLayoutEnd(menu_gui)
 						end
 						
@@ -1517,12 +1573,16 @@ local windows = {
 				was_lobby_presets_open = false
 			end
 
+			if(lobby_code == nil)then
+				active_custom_menu = nil
+			end
+
 			if(active_custom_menu ~= nil)then
 				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
 					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
 						if(lobby_menu.id == active_custom_menu)then
-							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 293, screen_height / 2, 150, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
+							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 308, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
 								get_widget_info = function()
 									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
 									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
@@ -1610,7 +1670,7 @@ local windows = {
 					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
 					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
 					name_change_frame = name_change_frame or nil
-					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 120, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
+					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 110, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
@@ -1632,7 +1692,7 @@ local windows = {
 
 					max_player_change_frame = max_player_change_frame or nil
 
-					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 120)
+					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 110)
 					if(slider_value ~= edit_lobby_max_players and owner == steam_utils.getSteamID())then
 						edit_lobby_max_players = slider_value
 						max_player_change_frame = GameGetFrameNum()
@@ -1650,7 +1710,7 @@ local windows = {
 					
 					seed_change_frame = seed_change_frame or nil
 					
-					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 120, 10, "1234567890")
+					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 110, 10, "1234567890")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
@@ -2286,7 +2346,7 @@ if (GameGetIsGamepadConnected()) then
 end
 
 if (not GameHasFlagRun("chat_input_hovered")) then
-	if ((bindings:IsJustDown("lobby_menu_open") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
+	if ((bindings:IsJustDown("lobby_menu_open_kb") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
 		gui_closed = not gui_closed
 		invite_menu_open = false
 		selected_player = nil
