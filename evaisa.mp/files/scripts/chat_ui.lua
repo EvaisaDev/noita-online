@@ -376,7 +376,7 @@ if (lobby_code ~= nil) then
 					local command_name, args = input_text:match("([%w_]+)%s*(.*)")
 
 					if(command_name == nil)then
-						local username = steamutils.getTranslatedPersonaName()
+						local username = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 						local message = username .. ": " .. input_text
 	
 						local message_final = "chat;" .. message
@@ -390,7 +390,7 @@ if (lobby_code ~= nil) then
 							if(active_mode ~= nil and active_mode.commands and active_mode.commands[command_name])then
 								active_mode.commands[command_name](command_name, args)
 							elseif(active_mode ~= nil )then
-								--local username = steamutils.getTranslatedPersonaName()
+								--local username = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 								local message = input_text
 			
 								local message_final = "chat;" .. message
@@ -401,7 +401,7 @@ if (lobby_code ~= nil) then
 					end
 				else
 
-					--local username = steamutils.getTranslatedPersonaName()
+					--local username = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 					local message = input_text
 
 					local message_final = "chat;" .. message

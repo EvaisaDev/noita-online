@@ -2000,7 +2000,7 @@ local windows = {
 
 			lobby_max_players = lobby_max_players or default_max_players
 
-			local default_lobby_name = steamutils.getTranslatedPersonaName()
+			local default_lobby_name = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 
 			-- if default lobby name ends with "s" add ' otherwise add 's
 
