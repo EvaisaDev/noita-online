@@ -1036,6 +1036,17 @@ function steam.matchmaking.onLobbyEnter(data)
 			ModSettingSet("last_lobby_code", tostring(lobby_code))
 			lobby_gamemode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
 
+			local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
+			for i = 1, lobby_data_count do
+				local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
+				
+				if(cached_lobby_data[data.key] ~= data.value)then
+					cached_lobby_data[data.key] = data.value
+				end
+				print("Lobby Data: ["..tostring(data.key).."] = "..tostring(data.value))
+			end
+
+
 			if handleVersionCheck() and handleModCheck() then
 				if handleGamemodeVersionCheck(lobby_code) then
 					if (lobby_gamemode) then
