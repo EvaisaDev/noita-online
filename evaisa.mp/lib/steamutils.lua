@@ -26,15 +26,11 @@ end
 steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
 
 	if(steam_id == nil)then
-		steam_id = steam_utils.getSteamID()
-	end
-
-	if(steam_id == nil)then
 		no_streamer_mode = true
 	end
 
 	local name = "Unknown"
-	if(not (steam_id ~= nil and tonumber(tostring(steam_id)) == nil))then
+	if(steam_id ~= nil and tonumber(tostring(steam_id)) ~= nil)then
 
 		local language = GameTextGetTranslatedOrNot("$current_language")
 
