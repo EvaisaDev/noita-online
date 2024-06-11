@@ -24,7 +24,11 @@ end
 
 
 steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
-	
+
+	if(steam_id == nil)then
+		steam_id = steam_utils.getSteamID()
+	end
+
 	if(steam_id == nil)then
 		no_streamer_mode = true
 	end
@@ -44,12 +48,7 @@ steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
 			goto continue
 		end
 		
-		if(steam_id == nil)then
-			name = steam.friends.getPersonaName()
-			steam_id = 0
-		else
-			name = steam.friends.getFriendPersonaName(steam_id)
-		end
+		name = steam.friends.getFriendPersonaName(steam_id)
 
 		local supported = check_string(name)
 

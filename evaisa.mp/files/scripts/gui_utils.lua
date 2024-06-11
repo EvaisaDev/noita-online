@@ -274,19 +274,15 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	for k, v in pairs(old_window_stack)do
 		if(mouse_x > v.x and mouse_x < v.x + v.render_w and mouse_y > v.y and mouse_y < v.y + v.h)then
 			table.insert(hovered_windows, v)
-			print("Hovered window: " .. v.identifier)
 		end
 		total_windows = total_windows + 1
 	end
-	
-	print("last hovered window: "..tostring(last_hovered_window))
-
 
 	if(last_hovered_window == identifier)then
 		disable_scroll = false
 	else
 		if(#hovered_windows > 0)then
-			print("whuhh??")
+
 			-- check z index, lower z is higher up
 			local highest_z = 9999
 			local highest_window = nil
@@ -320,7 +316,6 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	-- check if render_w is bigger than w
 	local had_scroll_bar = false
 
-	print(tostring(last_render_width) .. " > " .. tostring(w))
 	if(last_render_width > w)then
 		had_scroll_bar = true
 	end
@@ -345,8 +340,6 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	GuiZSet( gui, 0 )
 	GuiEndScrollContainer( gui )
 	
-
-	print("Draw width: " .. tostring(draw_w) .. " Render width: " .. tostring(render_w))
 
 	window_stack[identifier] = {
 		identifier = identifier,
