@@ -9,8 +9,8 @@ noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
-debugging = false
-disable_print = true
+debugging = true
+disable_print = false
 
 
 -----------------------------------
@@ -894,6 +894,10 @@ function OnWorldPreUpdate()
 
 						
 					end
+
+					lobby_gamemode.lobby_update(lobby_code)
+
+
 					ReceiveMessages(not game_in_progress)
 				end
 			end
