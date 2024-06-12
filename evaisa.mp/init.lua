@@ -2,7 +2,7 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 361
+MP_VERSION = 362
 MP_PRESET_VERSION = 2
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
@@ -1046,7 +1046,7 @@ function steam.matchmaking.onLobbyEnter(data)
 				print("Lobby Data: ["..tostring(data.key).."] = "..tostring(data.value))
 			end
 
-
+			
 			if handleVersionCheck() and handleModCheck() then
 				if handleGamemodeVersionCheck(lobby_code) then
 					if (lobby_gamemode) then

@@ -1017,7 +1017,7 @@ local windows = {
 					game_info = {},
 				}
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, "Friends", true, function()
+				DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) - (188 / 2) - 10, screen_height / 2, 188, window_height, "Friends", true, function()
 					local do_update = GameGetFrameNum() % 60 == 0
 					
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
@@ -1103,7 +1103,7 @@ local windows = {
 			if(selected_player ~= nil)then
 				local selected_player_name = steamutils.getTranslatedPersonaName(selected_player)
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 300, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
+				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 					
 					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
@@ -1400,7 +1400,7 @@ local windows = {
 						RefreshPresets()
 					end
 
-					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 300, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
+					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
 						GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 
 						preset_name = preset_name or ("Preset_"..tostring(Random(1, 1000000)))
@@ -1528,7 +1528,15 @@ local windows = {
 
 							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
 								
+								local data_copy_str = bitser.dumps(preset)
+								local data_copy = bitser.loads(data_copy_str)
+
+								preset = data_copy
+
 								local preset_info = preset
+
+								
+
 								if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
 									preset_info = {
 										outdated = true,
@@ -1596,7 +1604,7 @@ local windows = {
 				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
 					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
 						if(lobby_menu.id == active_custom_menu)then
-							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 300, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
+							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
 								get_widget_info = function()
 									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
 									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
@@ -1653,7 +1661,7 @@ local windows = {
 
 				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam_utils.GetLobbyData("seed")) or steam_utils.GetLobbyData("seed")
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) - (180 / 2) - 18, screen_height / 2, 180, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
+				DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) - (188 / 2) - 10, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 	
 
