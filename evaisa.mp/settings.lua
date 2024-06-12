@@ -243,6 +243,17 @@ function ModSettingsGui(gui, in_main_menu)
 					bindings._bindings[setting.id].being_set = false
 				end,
 				handler_callback = function(mod_id, setting)
+
+					if(bindings._bindings == nil)then
+						print("bindings._bindings is nil")
+						return "[Error]"
+					end
+
+					if(bindings._bindings[setting.id] == nil)then
+						print("bindings._bindings[setting.id] is nil")
+						return "[Error]"
+					end
+
 					if(bindings._bindings[setting.id].being_set)then
 						return "[...]"
 					end

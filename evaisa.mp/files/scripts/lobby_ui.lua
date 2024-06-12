@@ -133,7 +133,18 @@ if(initial_refreshes > 0)then
 end
 
 
-
+function custom_menu_close_callback()
+	if(lobby_code ~= nil and active_custom_menu ~= nil)then
+		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+		if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
+			for i, lobby_menu in ipairs(active_mode.lobby_menus)do
+				if(lobby_menu.id == active_custom_menu)then
+					lobby_menu.close() 
+				end
+			end
+		end
+	end
+end
 
 local windows = {
 	{
@@ -583,8 +594,8 @@ local windows = {
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 				if(GuiButton(menu_gui, NewID("lobby_presets_button"), button_x_position, 0, lobby_presets_button_text))then
 					lobby_presets_open = not lobby_presets_open
+					custom_menu_close_callback()
 					active_custom_menu = nil
-					invite_menu_open = false
 					selected_player = nil
 				end
 				--current_button_offset = current_button_offset + text_height
@@ -599,13 +610,14 @@ local windows = {
 							current_button_height = current_button_height + text_height
 							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), button_x_position, 0, button_text))then
 								if(active_custom_menu == lobby_menu.id)then
+									custom_menu_close_callback()
 									active_custom_menu = nil
 								else
+									custom_menu_close_callback()
 									active_custom_menu = lobby_menu.id
 								end
 
 								lobby_presets_open = false
-								invite_menu_open = false
 								selected_player = nil
 							end
 							--current_button_offset = current_button_offset + text_height
@@ -934,6 +946,7 @@ local windows = {
 						end
 						if(GuiButton(menu_gui, NewID("lobby_player"), -5, 0, tostring(v.name)))then
 							lobby_presets_open = false
+							custom_menu_close_callback()
 							active_custom_menu = nil
 							if(selected_player == v.id)then
 								selected_player = nil
@@ -950,6 +963,7 @@ local windows = {
 
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, tostring(v.name)))then
 							lobby_presets_open = false
+							custom_menu_close_callback()
 							active_custom_menu = nil
 							if(selected_player == v.id)then
 								selected_player = nil
@@ -1611,7 +1625,7 @@ local windows = {
 							end, function() 
 								active_custom_menu = nil
 								lobby_menu.close() 
-							end, lobby_menu.id)	
+							end, lobby_menu.id, nil, nil, nil, true)	
 						end
 					end
 				end

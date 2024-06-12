@@ -188,7 +188,7 @@ function CustomButton(gui, identifier, x, y, z, scale, image, r, g, b, alpha)
 	return clicked
 end
 
-function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_callback, identifier, margin_x, margin_y, alignment)
+function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_callback, identifier, margin_x, margin_y, alignment, no_close_button)
 
 	margin_x = margin_x or 2
 	margin_y = margin_y or 2
@@ -237,7 +237,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	end
 
 
-	if(close_callback ~= nil)then
+	if(close_callback ~= nil and not no_close_button)then
 		GuiLayoutBeginLayer( gui )
 		GuiLayoutBeginHorizontal( gui, 0, 0, true, 0, 0)
 		if(CustomButton(gui, "sagsadshds", x + (last_render_width - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then

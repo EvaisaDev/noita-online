@@ -303,8 +303,8 @@ if (lobby_code ~= nil) then
 
 		local window_text = GameTextGetTranslatedOrNot("$mp_chat")
 		--GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
-		DrawWindow(chat_gui, 0, 10 + (window_width / 2), screen_height - ((window_height / 2) + 30), window_width,
-			window_height, window_text, true, function()
+		DrawWindow(chat_gui, -7000, 4, screen_height - (window_height + 28), window_width,
+			window_height, window_text, false, function()
 				GuiLayoutBeginVertical(chat_gui, 0, 0, true, 0, 0)
 				for k, v in ipairs(chat_log) do
 					GuiText(chat_gui, 2, 0, v)
