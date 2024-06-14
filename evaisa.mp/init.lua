@@ -2,15 +2,15 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 362
+MP_VERSION = 363
 MP_PRESET_VERSION = 2
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
-dev_mode = false
-debugging = false
-disable_print = true
+dev_mode = true
+debugging = true
+disable_print = false
 
 
 -----------------------------------
@@ -404,7 +404,7 @@ function OnPausedChanged(paused, is_wand_pickup)
 end
 
 function IsPaused()
-	return GameHasFlagRun("game_paused")
+	return steam_overlay_open or GameHasFlagRun("game_paused")
 end
 
 --[[
@@ -633,6 +633,12 @@ function OnWorldPreUpdate()
 			return
 		end
 
+		-- this code handles unpausing the mod after closing steam overlay
+		--[[if(steam_overlay_closed and GameGetFrameNum() > steam_overlay_closed_frame + 60)then
+			steam_overlay_closed = false
+			steam_overlay_open = false
+		end]]
+
 		profiler_ui.pre_update()
 
 		--input:Update()
@@ -784,10 +790,10 @@ function OnWorldPreUpdate()
 				ResetIDs()
 				ResetWindowStack()
 
-				if (not IsPaused()) then
-					dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
-					dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
-				end
+				
+				dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
+				dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
+		
 				if (GameGetFrameNum() % (600) == 0) then
 					steamutils.CheckLocalLobbyData()
 				end
@@ -1079,10 +1085,15 @@ function steam.matchmaking.onLobbyEnter(data)
 							local member_count = steam.matchmaking.getNumLobbyMembers(lobby_code)
 				
 							steam.friends.setRichPresence( "steam_player_group_size", tostring(member_count) )
-				
+							active_mode = lobby_gamemode
+							get_preset_folder_name()
+							generate_lobby_menus_list()
+							lobby_gamemode.enter(lobby_code)
 						end
 
-						lobby_gamemode.enter(lobby_code)
+						
+						
+						
 					end
 				end
 			end	
@@ -1366,6 +1377,23 @@ function steam.networking.onSessionFailed(steamID, endReason, endDebug, connecti
 			tostring(steamutils.getTranslatedPersonaName(steamID)) .. "]: " .. tostring(endReason))
 		mp_log:print("Debug: " .. tostring(endDebug))
 		mp_log:print("Connection description: " .. tostring(connectionDescription))
+	end
+end
+
+steam_overlay_open = false
+
+function steam.friends.onGameOverlayActivated(data)
+
+	-- print data
+	--print(inspect(data))
+
+
+	if (not data.active) then
+		--print("Overlay closed")
+		steam_overlay_open = false
+	else
+		--print("Overlay opened")
+		steam_overlay_open = true
 	end
 end
 

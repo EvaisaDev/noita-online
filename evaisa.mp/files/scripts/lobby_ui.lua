@@ -27,40 +27,49 @@ local lobby_types = {
 local function split_message(msg, max_width)
 	local words = {}
 	local index = 1
-	for word in string.gmatch(msg, "%S+") do
 
-		-- split word into chunks of 200 pixels or less
+	-- split string by \n
+	for line in string.gmatch(msg, "[^\n]+") do
+		for word in string.gmatch(line, "%S+") do
 
-		local width, height = GuiGetTextDimensions(chat_gui, word)
-
-		if (width > max_width) then
-			local chunks = {}
-			local chunk = ""
-			for i = 1, #word do
-				local char = word:sub(i, i)
-				local char_width, char_height = GuiGetTextDimensions(chat_gui, chunk .. char)
-				if (char_width <= max_width) then
-					chunk = chunk .. char
-				else
-					table.insert(chunks, chunk)
-					chunk = char
+			-- split word into chunks of 200 pixels or less
+	
+			local width, height = GuiGetTextDimensions(menu_gui, word)
+	
+			if (width > max_width) then
+				local chunks = {}
+				local chunk = ""
+				for i = 1, #word do
+					local char = word:sub(i, i)
+					local char_width, char_height = GuiGetTextDimensions(menu_gui, chunk .. char)
+					if (char_width <= max_width) then
+						chunk = chunk .. char
+					else
+						table.insert(chunks, chunk)
+						chunk = char
+					end
 				end
+				table.insert(chunks, chunk)
+	
+				for i, chunk in ipairs(chunks) do
+					table.insert(words, chunk)
+				end
+			else
+				table.insert(words, word)
 			end
-			table.insert(chunks, chunk)
-
-			for i, chunk in ipairs(chunks) do
-				table.insert(words, chunk)
-			end
-		else
-			table.insert(words, word)
+	
+	
+			index = index + 1
 		end
-
-
-		index = index + 1
+		table.insert(words, "\n")
 	end
+
+
+
 
 	local chunks = {}
 	local chunk = ""
+	local last_word
 	for i, word in ipairs(words) do
 		local width, height = GuiGetTextDimensions(chat_gui, chunk .. " " .. word)
 
@@ -68,16 +77,41 @@ local function split_message(msg, max_width)
 			if chunk == "" then
 				chunk = word
 			else
-				chunk = chunk .. " " .. word
+				if(last_word ~= "\n")then
+					chunk = chunk .. " " .. word
+				else
+					chunk = chunk .. word
+				end
 			end
 		else
 			table.insert(chunks, chunk)
 			chunk = word
 		end
+		last_word = word
 	end
 	table.insert(chunks, chunk)
 
 	return chunks
+end
+
+local function get_split_string(str, max_width)
+	local chunks = split_message(str, max_width)
+
+	-- combine with \n
+	local result = table.concat(chunks, "\n")
+
+
+	return result, #chunks
+end
+
+presets = presets or {}
+reserved_preset_names = reserved_preset_names or {}
+
+function get_preset_folder_name()
+	presets_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") .. "\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_presets"
+	gamemode_preset_folder_name = presets_folder_name .. "\\"..active_mode.id
+
+	return presets_folder_name, gamemode_preset_folder_name
 end
 
 
@@ -101,7 +135,10 @@ if(is_in_lobby)then
 	menu_status = status.lobby
 end
 
-active_custom_menu = active_custom_menu or nil
+active_lobby_menu_right = active_lobby_menu_right or nil
+active_lobby_menu_left = active_lobby_menu_left or nil
+
+active_mode = active_mode or nil
 
 local screen_width, screen_height = GuiGetScreenDimensions( menu_gui );
 
@@ -124,6 +161,158 @@ function CreateLobby(type, max_players, callback)
 end
 
 
+local function GenerateDefaultPreset()
+	local default_name = GameTextGetTranslatedOrNot("$mp_default_preset_name")
+	local preset_data = {version = MP_PRESET_VERSION, settings = {}}
+	for k, v in ipairs(active_mode.settings)do
+		preset_data.settings[v.id] = v.default
+	end
+	reserved_preset_names[default_name] = true
+	table.insert(presets, 1, {name=default_name, data=preset_data, default=true})
+end
+
+local function AddGamemodePresets()
+	if(active_mode.default_presets ~= nil)then
+		for name, data in pairs(active_mode.default_presets)do
+			reserved_preset_names[name] = true
+			table.insert(presets, 1, {name=name, data=data, default=true})
+		end
+	end
+
+	if(active_mode.preset_registry ~= nil)then
+		local data_table = active_mode.preset_registry()
+		for _, data in ipairs(data_table)do
+			data.default = true
+			table.insert(presets, 1, data)
+		end
+	end
+end
+
+local function RefreshPresets()
+	-- create folder if doesn't exist
+	if not os.rename(presets_folder_name, presets_folder_name) then
+		os.execute("mkdir \"" .. presets_folder_name .. "\"")
+	end
+	
+	if not os.rename(gamemode_preset_folder_name, gamemode_preset_folder_name) then
+		os.execute("mkdir \"" .. gamemode_preset_folder_name .. "\"")
+	end
+
+	presets = {}
+
+	-- loop through files in folder, without luafilesystem
+	local pfile = io.popen([[dir "]] .. gamemode_preset_folder_name .. [[" /b]])
+	for filename in pfile:lines() do
+
+		-- if filename ends in .mp_preset
+		if(filename:sub(-10) == ".mp_preset")then
+			local preset_data = {}
+			local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
+			if(file ~= nil)then
+				local data = file:read("*all")
+				file:close()
+				filename = filename:gsub(".mp_preset", "")
+				local valid, preset_data = pcall(bitser.loads, data)
+				if(valid and preset_data ~= nil)then
+					table.insert(presets, {name = filename, extension = ".mp_preset", data = preset_data})
+				else
+					table.insert(presets, {name = filename, extension = ".mp_preset",	corrupt = true, data = {
+						version = MP_PRESET_VERSION,
+						settings = {}
+					}})
+				end
+			end
+		elseif(filename:sub(-5) == ".json")then
+			local preset_data = {}
+			local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
+			if(file ~= nil)then
+				local data = file:read("*all")
+				file:close()
+				filename = filename:gsub(".json", "")
+				local valid, preset_data = pcall(json.parse, data)
+				if(valid and preset_data ~= nil)then
+					table.insert(presets, {name = filename, extension = ".json", data = preset_data})
+				else
+					table.insert(presets, {name = filename, extension = ".json", corrupt = true, data = {
+						version = MP_PRESET_VERSION,
+						settings = {}
+					}})
+				end
+			end
+		end
+	end
+
+	AddGamemodePresets()
+	GenerateDefaultPreset()
+end
+
+local function SavePreset(name)
+	if(not reserved_preset_names[name])then
+
+		local settings_data = {version = MP_PRESET_VERSION, settings = gamemode_settings}
+
+		if(active_mode.save_preset)then
+			settings_data = active_mode.save_preset(lobby_code, settings_data)
+		end
+
+		local serialized_data = nil
+		local extension = ""
+		if(ModSettingGet("evaisa.mp.presets_as_json"))then
+			serialized_data = json.stringify(settings_data)
+			extension = ".json"
+		else
+			serialized_data = bitser.dumps(settings_data)
+			extension = ".mp_preset"
+		end
+		--print(json.stringify(settings_data))
+		local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. extension, "w")
+		if(file ~= nil)then
+			file:write(serialized_data)
+			file:close()
+		end
+	else
+		print("Preset name is reserved")
+		GamePrint("Preset name is reserved")
+	end
+end
+
+local function RemovePreset(name, extension)
+	if(name ~= " " and name ~= "_" and #name > 0)then
+		os.remove(gamemode_preset_folder_name .. "\\" .. name .. extension)
+	end
+end
+
+
+local function GetMenuSettings(location)
+	if(location == "center")then
+
+		width = 220
+
+
+		local x = screen_width / 2
+
+
+		return width, x
+	elseif(location == "left")then
+		-- 10 pixels to the left of center
+		-- if right is closed, but left is open, 300 pixels wide
+		local width = 188
+
+		local center_width, center_x = GetMenuSettings("center")
+		local x = center_x - (center_width / 2) - (width / 2) - 10
+		return width, x
+	elseif(location == "right")then
+		-- 10 pixels to the right of center
+		-- if left is closed, but right is open, 300 pixels wide
+		local width = 188
+
+		local center_width, center_x = GetMenuSettings("center")
+		local x = center_x + (center_width / 2) + (width / 2) + 10
+		return width, x
+	end
+
+end
+
 
 initial_refreshes = initial_refreshes or 10
 
@@ -132,14 +321,574 @@ if(initial_refreshes > 0)then
 	initial_refreshes = initial_refreshes - 1
 end
 
+local default_lobby_menus = {
+	{
+		id = "lobby_settings",
+		name = "$mp_lobby_settings",
+		button_text = "$mp_lobby_settings",
+		menu_left = true,
+		draw = function(lobby, gui, new_id)
+			local owner = steam.matchmaking.getLobbyOwner(lobby_code)
 
-function custom_menu_close_callback()
-	if(lobby_code ~= nil and active_custom_menu ~= nil)then
-		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-		if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
-			for i, lobby_menu in ipairs(active_mode.lobby_menus)do
-				if(lobby_menu.id == active_custom_menu)then
-					lobby_menu.close() 
+			local internal_types = { "Public", "Private", "FriendsOnly"}
+			local internal_type_map = { Public = 1, Private = 2, FriendsOnly = 3 }
+
+
+			edit_lobby_type = internal_type_map[steam_utils.GetLobbyData("LobbyType")]
+
+			local true_max = 32
+
+			local default_max_players = 8
+
+			edit_lobby_max_players = steam_utils.getSteamID() and (edit_lobby_max_players or steam.matchmaking.getLobbyMemberLimit(lobby_code)) or steam.matchmaking.getLobbyMemberLimit(lobby_code)
+
+			edit_lobby_name = owner == steam_utils.getSteamID() and (edit_lobby_name or steam_utils.GetLobbyData("name"))  or steam_utils.GetLobbyData("name")
+
+			edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam_utils.GetLobbyData("seed")) or steam_utils.GetLobbyData("seed")
+		
+			local current_y = 0
+			local box_w = 180
+
+			-- Lobby Type Field
+			local lobby_type_string = get_split_string(GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type], 150)
+
+			local chunks = select(2, lobby_type_string:gsub('\n', '\n'))
+
+			local last_w, last_h = GuiGetTextDimensions(menu_gui, lobby_type_string)
+			local box_h = last_h + (chunks <= 1 and 2 or 0)
+			
+			Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, 0, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+
+			if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, 2, lobby_type_string, -5600, 1))then
+				edit_lobby_type = edit_lobby_type + 1
+				if(edit_lobby_type > #lobby_types and owner == steam_utils.getSteamID())then
+					edit_lobby_type = 1
+				end
+				settings_changed = true
+			end
+
+			current_y = current_y + box_h + 2
+
+			-- Lobby name field
+			local lobby_name_string = GameTextGetTranslatedOrNot("$mp_lobby_name")..": "
+			local last_w, last_h = GuiGetTextDimensions(menu_gui, lobby_name_string)
+			local box_h = last_h + 18
+			Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+			GuiText(menu_gui, 4, current_y + 2, lobby_name_string)
+			name_change_frame = name_change_frame or nil
+			local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 4, current_y + last_h + 2, edit_lobby_name, 156, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
+			local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+			
+			if(hover)then
+				GameAddFlagRun("chat_bind_disabled")
+			end
+			if(lobby_name_value ~= edit_lobby_name and owner == steam_utils.getSteamID())then
+				edit_lobby_name = lobby_name_value
+				name_change_frame = GameGetFrameNum()
+			end
+		
+			if(name_change_frame and GameGetFrameNum() - name_change_frame > 30)then
+				settings_changed = true
+				name_change_frame = nil
+			end
+
+			current_y = current_y + box_h + 2
+
+			-- lobby max players field
+			local max_player_string = GameTextGetTranslatedOrNot("$mp_max_players")..": "
+			local last_w, last_h = GuiGetTextDimensions(menu_gui, max_player_string)
+			local box_h = last_h + 16
+			Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+			GuiText(menu_gui, 4, current_y + 2, max_player_string)
+			max_player_change_frame = max_player_change_frame or nil
+			local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " ", 146)
+			
+			GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
+			local value_text = tostring(math.floor(slider_value))
+			GuiText(menu_gui, 153, current_y + last_h + 1, value_text)
+			
+			if(slider_value ~= edit_lobby_max_players and owner == steam_utils.getSteamID())then
+				edit_lobby_max_players = slider_value
+				max_player_change_frame = GameGetFrameNum()
+			end
+
+			if(max_player_change_frame and GameGetFrameNum() - max_player_change_frame > 30)then
+				settings_changed = true
+				max_player_change_frame = nil
+			end
+
+			current_y = current_y + box_h + 2
+
+			-- world seed field
+			local seed_string = GameTextGetTranslatedOrNot("$mp_world_seed")..": "
+			local last_w, last_h = GuiGetTextDimensions(menu_gui, seed_string)
+			local box_h = last_h + 18
+			Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+			GuiText(menu_gui, 4, current_y + 2, seed_string)
+			seed_change_frame = seed_change_frame or nil
+			local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 4, current_y + last_h + 2, edit_lobby_seed, 156, 25, "1234567890")
+			local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+			if(hover)then
+				GameAddFlagRun("chat_bind_disabled")
+			end
+			if(edit_lobby_seed_value ~= edit_lobby_seed and owner == steam_utils.getSteamID())then
+				edit_lobby_seed = edit_lobby_seed_value
+				seed_change_frame = GameGetFrameNum()
+			end
+		
+			if(seed_change_frame and GameGetFrameNum() - seed_change_frame > 30)then
+				settings_changed = true
+				seed_change_frame = nil
+			end
+
+			current_y = current_y + box_h + 2
+
+			for k, setting in ipairs(active_mode.settings or {})do
+				if(owner ~= steam_utils.getSteamID())then
+					gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
+				end
+		
+				if(gamemode_settings[setting.id] == nil)then
+					gamemode_settings[setting.id] = setting.default
+					print("Setting "..setting.id.." to default: "..tostring(setting.default))
+					--settings_changed = true
+					--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.default))
+				else
+					
+					if(setting.type == "bool" and type(gamemode_settings[setting.id]) == "string")then
+						if(gamemode_settings[setting.id] == "true")then
+							gamemode_settings[setting.id] = true
+						else
+							gamemode_settings[setting.id] = false
+						end
+					elseif(setting.type == "slider" and type(gamemode_settings[setting.id]) == "string")then
+						gamemode_settings[setting.id] = tonumber(gamemode_settings[setting.id])
+					end
+				end
+		
+				if(gamemode_settings[setting.id] ~= nil)then
+					local setting_next = GlobalsGetValue("setting_next_"..setting.id)
+					if(setting_next ~= nil)then
+						if(setting_next ~= tostring(gamemode_settings[setting.id]))then
+							GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+						end
+					end
+				end
+
+				if(setting.require == nil or setting.require(setting))then
+					--print(setting.id.."; "..tostring(setting.require).."; "..(setting.require and tostring(setting.require(setting)) or "nil"))
+					if(setting.type == "enum")then
+						local selected_name = ""
+						local selected_index = nil
+		
+						local selected_value = gamemode_settings[setting.id]
+						--print("Selected value: "..tostring(selected_value))
+						if(selected_value == nil)then
+							selected_value = setting.default
+							gamemode_settings[setting.id] = setting.default
+							settings_changed = true
+						end
+						
+						for k, v in ipairs(setting.options)do
+							if(v[1] == selected_value)then
+								selected_name = v[2]
+								selected_index = k
+							end
+						end
+		
+						-- if selected index is nil, reset to default
+						if(selected_index == nil)then
+							for k, v in ipairs(setting.options)do
+								if(v[1] == setting.default)then
+									selected_name = v[2]
+									selected_index = k
+									settings_changed = true
+									gamemode_settings[setting.id] = setting.default
+								end
+							end
+						end
+
+						local enum_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..": "..GameTextGetTranslatedOrNot(selected_name or ""), 150)
+						local chunks = select(2, enum_string:gsub('\n', '\n'))
+						local last_w, last_h = GuiGetTextDimensions(menu_gui, enum_string)
+						local box_h = last_h + (chunks <= 1 and 2 or 0)
+
+						Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+						if(setting.options[selected_index][3] ~= nil)then
+							local info = setting.options[selected_index][3]
+							local info_name = "???"
+							local info_desc = ""
+							if(type(info) == "function")then
+								info_name, info_desc = info()
+							elseif(type(info) == "table")then
+								info_name, info_desc = info[1], info[2]
+							else
+								info_name = info
+							end
+		
+							if(info_name ~= nil)then
+								GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+								GuiText(menu_gui, 0, 0, "[?]")
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(info_name or ""), GameTextGetTranslatedOrNot(info_desc or ""))
+							end
+						end
+						
+						if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, current_y + 2, enum_string, -5600, 1, nil, nil, nil, nil, nil, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or "")) end))then
+							selected_index = selected_index + 1
+							if(selected_index > #setting.options)then
+								selected_index = 1
+							end
+							gamemode_settings[setting.id] = setting.options[selected_index][1]
+							settings_changed = true
+						end
+
+						
+
+						current_y = current_y + box_h + 2
+					elseif(setting.type == "bool")then
+						local bool_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..":"..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled")), 170)
+						local chunks = select(2, bool_string:gsub('\n', '\n'))
+						local last_w, last_h = GuiGetTextDimensions(menu_gui, bool_string)
+						local box_h = last_h + (chunks <= 1 and 2 or 0)
+						Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+						
+						local r, g, b, a = 1, 1, 1, 1
+
+						-- split bool string by :
+						local str1, str2 = bool_string:match("([^,]+:)([^,]+)")
+						
+						if(gamemode_settings[setting.id])then
+							r, g, b, a = 0.4, 1, 0.4, 1
+						else
+							r, g, b, a = 1, 0.4, 0.4, 1
+						end
+						
+
+						if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, current_y + 2, {
+							{
+								text = str1,
+								color = {1, 1, 1, 1}
+							},
+							{
+								text = str2,
+								color = {r, g, b, a}
+							}
+						}, -5600, 1, r, g, b, a, 170, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or "")) end))then
+							gamemode_settings[setting.id] = not gamemode_settings[setting.id]
+							settings_changed = true
+						end
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or ""))
+						current_y = current_y + box_h + 2
+					elseif(setting.type == "slider")then
+
+						setting.display_multiplier = setting.display_multiplier or 1
+						setting.formatting_string = setting.formatting_string or " $0"
+						setting.formatting_func = setting.formatting_func or function(value) return value end
+						setting.modifier = setting.modifier
+
+						if(setting.modifier == nil)then
+							setting.modifier = function(value) return value end
+						end
+
+						setting.display_fractions = setting.display_fractions or false
+						
+						local slider_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..": ", 150)
+
+						local chunks = select(2, slider_string:gsub('\n', '\n'))
+
+						local last_w, last_h = GuiGetTextDimensions(menu_gui, slider_string)
+						local box_h = last_h + 16
+						Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+						GuiTextMultiline(menu_gui, 4, current_y + 2, slider_string, -5600, 1, 1, 1, 1, 1, 170, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description)) end)
+						
+
+						local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", 146)
+						slider_value = setting.modifier(slider_value)
+						local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description))
+
+						-- take setting.formatting_string, replace $0 with slider_value, take display multiplier into account
+						GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
+						local value_text = string.gsub(setting.formatting_string, "$0", tostring(setting.display_fractions and (slider_value * setting.display_multiplier) or math.floor(slider_value * setting.display_multiplier)))
+						value_text = setting.formatting_func(value_text)
+						GuiText(menu_gui, 150, current_y + last_h + 1, value_text)
+
+						was_slider_changed = was_slider_changed or {}
+
+						if(tostring(slider_value) ~= tostring(gamemode_settings[setting.id]))then
+		
+							gamemode_settings[setting.id] = slider_value
+							was_slider_changed[setting.id] = GameGetFrameNum()
+						end
+		
+						if(was_slider_changed[setting.id] and (GameGetFrameNum() - was_slider_changed[setting.id]) > 30)then
+						
+							settings_changed = true
+							was_slider_changed[setting.id] = nil
+		
+							--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
+						end
+		
+						current_y = current_y + box_h + 2
+					end
+				end
+
+				if(settings_changed and owner == steam_utils.getSteamID())then
+					steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
+					steam_utils.TrySetLobbyData(code, "max_players", tostring(edit_lobby_max_players))
+					steam_utils.TrySetLobbyData(lobby_code, "name", edit_lobby_name)
+					
+					steam_utils.TrySetLobbyData(lobby_code, "seed", edit_lobby_seed)
+					for k, setting in ipairs(active_mode.settings or  {})do
+						steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+						mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
+					end
+					print("Updating lobby type: "..internal_types[edit_lobby_type])
+					steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
+					steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
+					mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
+					mp_log:print("Updated name: "..tostring(edit_lobby_name))
+					mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
+					settings_changed = false
+					--print("lobby settings changed!")
+				end				
+
+			end
+
+		end,
+	},
+	{
+		id = "lobby_presets",
+		name = "$mp_lobby_presets",
+		button_text = "$mp_lobby_presets",
+		draw = function()
+
+			
+
+			if(active_mode ~= nil)then
+
+
+
+				if(not was_lobby_presets_open)then
+					RefreshPresets()
+				end
+
+				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
+
+				preset_name = preset_name or ("Preset_"..tostring(Random(1, 1000000)))
+				GuiLayoutBeginHorizontal(menu_gui, 0, 0)
+				GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_preset_name"))
+				preset_name = GuiTextInput(menu_gui, NewID("save_preset_name"), 0, 0, preset_name, 90, 15)
+
+				local illegal_chars = {
+					"/",
+					"\\",
+					":",
+					"*",
+					"?",
+					"\"",
+					"<",
+					">",
+					"|",
+				}
+
+				for i, char in ipairs(illegal_chars)do
+					preset_name = preset_name:gsub(char, "")
+				end
+
+				-- remove control characters
+				preset_name = preset_name:gsub("%c", "")
+
+
+				local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+
+				if(hover)then
+					GameAddFlagRun("chat_bind_disabled")
+				end
+
+				
+				GuiLayoutEnd(menu_gui)
+
+				if(GuiButton(menu_gui, NewID("save_preset"), 0, 0, GameTextGetTranslatedOrNot("$mp_save_preset")))then
+					if(preset_name ~= " " and preset_name ~= "_" and #preset_name > 0)then
+						SavePreset(preset_name)
+						RefreshPresets()
+					end
+				end
+
+				if(GuiButton(menu_gui, NewID("open_presets_folder"), 0, 10, GameTextGetTranslatedOrNot("$mp_open_preset_folder")))then
+					os.execute("explorer \"" .. gamemode_preset_folder_name .. "\"")
+				end
+
+				if(GuiButton(menu_gui, NewID("refresh_presets"), 0, 0, GameTextGetTranslatedOrNot("$mp_refresh_presets")))then
+					RefreshPresets()
+				end
+				
+				GuiText(menu_gui, 0, 0, "--------------------")
+				
+				for i, preset in ipairs(presets) do
+					GuiLayoutBeginHorizontal(menu_gui, 0, 0)
+					
+					if(preset.default)then
+						GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1.0 )
+						if(GuiButton(menu_gui, NewID(), 0, 0, "[?]"))then
+							-- nothing here
+						end
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_default"), "")
+					end
+
+					if(preset.corrupt)then
+						GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+						if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
+							-- nothing here
+						end
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_corrupt"), "")
+					end
+
+					if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
+						GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
+						if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
+							-- nothing here
+						end
+						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_outdated"), "")
+					end
+					
+					if((not preset.default) and GuiButton(menu_gui, NewID("remove_preset_"..tostring(preset.name)), 0, 0, GameTextGetTranslatedOrNot("$mp_remove_preset")))then
+						popup.create("delete_preset_prompt", string.format(GameTextGetTranslatedOrNot("$mp_delete_preset_confirm"), preset.name),{
+							{
+								text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_description"),
+								color = {214 / 255, 60 / 255, 60 / 255, 1}
+							},
+						}, {
+							{
+								text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_delete"),
+								callback = function()
+									RemovePreset(preset.name, preset.extension)
+									RefreshPresets()
+								end
+							},
+							{
+								text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_cancel"),
+								callback = function()
+								end
+							}
+						}, -6000)
+						
+						--[[
+						RemovePreset(preset.name)
+						RefreshPresets()
+						]]
+					end
+
+					if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
+						
+						local data_copy_str = bitser.dumps(preset)
+						local data_copy = bitser.loads(data_copy_str)
+
+						preset = data_copy
+
+						local preset_info = preset
+
+						
+
+						if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
+							preset_info = {
+								outdated = true,
+								name = preset.name,
+								data = {
+									version = preset.data.version or 1,
+									settings = preset.data
+								}
+							}
+						end
+
+						
+
+
+						gamemode_settings = preset_info.data.settings
+
+						-- loop through 
+						for k, setting in ipairs(active_mode.settings or {})do
+							if(gamemode_settings[setting.id] == nil)then
+								gamemode_settings[setting.id] = setting.default
+								print("Setting "..setting.id.." to default: "..tostring(setting.default))
+							end
+						end
+
+
+						print("loaded: "..json.stringify(gamemode_settings))
+
+
+
+						preset_name = preset_info.name
+						--settings_changed = true
+
+						for k, setting in ipairs(active_mode.settings or {})do
+							steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
+						end
+
+						--steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
+						steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
+
+						if(active_mode.load_preset)then
+							active_mode.load_preset(lobby_code, preset_info.data)
+						end
+					end
+					
+					GuiLayoutEnd(menu_gui)
+				end
+				
+
+				GuiLayoutEnd(menu_gui)
+		
+			end
+			was_lobby_presets_open = true
+
+		end,
+		close = function()
+			was_lobby_presets_open = false
+		end
+	}
+}
+lobby_menus = lobby_menus or {}
+
+function generate_lobby_menus_list()
+	local new_lobby_menus = {}
+
+	for i, v in ipairs(default_lobby_menus)do
+		table.insert(new_lobby_menus, v)
+	end
+
+	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+	if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
+		for i, lobby_menu in ipairs(active_mode.lobby_menus)do
+			table.insert(new_lobby_menus, lobby_menu)
+		end
+	end
+
+	lobby_menus = new_lobby_menus
+end
+
+
+function custom_menu_close_callback_right()
+	if(lobby_code ~= nil and active_lobby_menu_right ~= nil)then
+		for i, lobby_menu in ipairs(lobby_menus)do
+			if(lobby_menu.id == active_lobby_menu_right)then
+				if(lobby_menu.close ~= nil)then
+					lobby_menu.close()
+				end
+			end
+		end
+	end
+end
+
+function custom_menu_close_callback_left()
+	if(lobby_code ~= nil and active_lobby_menu_left ~= nil)then
+		for i, lobby_menu in ipairs(lobby_menus)do
+			if(lobby_menu.id == active_lobby_menu_left)then
+				if(lobby_menu.close ~= nil)then
+					lobby_menu.close()
 				end
 			end
 		end
@@ -490,6 +1239,7 @@ local windows = {
 		func 	= function()
 			local window_width = 200
 			local window_height = 280
+			
 
 			function string_to_number(str)
 				local num = 0
@@ -518,7 +1268,9 @@ local windows = {
 				return;
 			end
 
-			DrawWindow(menu_gui, -5000, screen_width / 2, screen_height / 2, window_width, window_height, function() 
+			local window_width, x_pos = GetMenuSettings("center")
+
+			DrawWindow(menu_gui, -5000, x_pos, screen_height / 2, window_width, window_height, function() 
 
 				GuiColorSetForNextWidget( menu_gui, 0, 0, 0, 0.3 )
 				GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_lobby").." - ("..((not show_lobby_code) and censorString(steam.utils.compressSteamID(lobby_code)) or steam.utils.compressSteamID(lobby_code))..")")
@@ -585,40 +1337,63 @@ local windows = {
 
 				local current_button_height = 0
 
+				-- old presets stuff
 		
-				local lobby_presets_translation = GameTextGetTranslatedOrNot("$mp_lobby_presets")
-				local lobby_presets_button_text = lobby_presets_open and lobby_presets_translation.." >" or lobby_presets_translation.." <"
-				local text_width, text_height = GuiGetTextDimensions(menu_gui, lobby_presets_button_text)
-				current_button_height = current_button_height + text_height
-				local button_x_position = window_width - text_width
+				--local lobby_presets_translation = GameTextGetTranslatedOrNot("$mp_lobby_presets")
+				--local lobby_presets_button_text = lobby_presets_open and lobby_presets_translation.." >" or lobby_presets_translation.." <"
+				--local text_width, text_height = GuiGetTextDimensions(menu_gui, lobby_presets_button_text)
+				--current_button_height = current_button_height + text_height
+				--local button_x_position = window_width - text_width
 				GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
-				if(GuiButton(menu_gui, NewID("lobby_presets_button"), button_x_position, 0, lobby_presets_button_text))then
+				--[[if(GuiButton(menu_gui, NewID("lobby_presets_button"), button_x_position, 0, lobby_presets_button_text))then
 					lobby_presets_open = not lobby_presets_open
 					custom_menu_close_callback()
-					active_custom_menu = nil
+					active_lobby_menu_right = nil
 					selected_player = nil
-				end
+				end]]
+
+
 				--current_button_offset = current_button_offset + text_height
 
-				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
-					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
-						if(lobby_menu.button_location == nil or lobby_menu.button_location == "main_window")then
-							local button_text = active_custom_menu == lobby_menu.id and GameTextGetTranslatedOrNot(lobby_menu.button_text).." >" or GameTextGetTranslatedOrNot(lobby_menu.button_text).." <"
+				if(lobby_menus ~= nil)then
+					for i, lobby_menu in ipairs(lobby_menus)do
+						if((lobby_menu.button_location == nil or lobby_menu.button_location == "main_window") and not lobby_menu.menu_left)then
+							local button_string = GameTextGetTranslatedOrNot(lobby_menu.button_text)
+
+							local truncate_chars = 20
+							local truncate_string = button_string
+							if(#button_string > truncate_chars)then
+								truncate_string = utf8.sub(button_string, 1, truncate_chars).."..."
+							end
+							
+							local actual_string = button_string
+							if(last_button_hovered ~= lobby_menu.id)then
+								actual_string = truncate_string
+							end
+							
+
+							local button_text = active_lobby_menu_right == lobby_menu.id and actual_string.." >" or actual_string.." <"
+	
 							local text_width, text_height = GuiGetTextDimensions(menu_gui, button_text)
 							button_x_position = window_width - text_width
 							current_button_height = current_button_height + text_height
 							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), button_x_position, 0, button_text))then
-								if(active_custom_menu == lobby_menu.id)then
-									custom_menu_close_callback()
-									active_custom_menu = nil
+								if(active_lobby_menu_right == lobby_menu.id)then
+									custom_menu_close_callback_right()
+									active_lobby_menu_right = nil
 								else
-									custom_menu_close_callback()
-									active_custom_menu = lobby_menu.id
+									custom_menu_close_callback_right()
+									active_lobby_menu_right = lobby_menu.id
 								end
 
 								lobby_presets_open = false
 								selected_player = nil
+							end
+
+							local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+							if(hover)then
+								--print("Hovering over: "..lobby_menu.id)
+								last_button_hovered = lobby_menu.id
 							end
 							--current_button_offset = current_button_offset + text_height
 						end
@@ -636,16 +1411,45 @@ local windows = {
 
 
 				local invite_translation = GameTextGetTranslatedOrNot("$mp_invite_players")
-				if(GuiButton(menu_gui, NewID("lobby_invite_button"), 0, 0, invite_menu_open and "< "..invite_translation or "> "..invite_translation))then
-					invite_menu_open = not invite_menu_open
-					lobby_settings_open = false
+				if(GuiButton(menu_gui, NewID("lobby_invite_button"), 0, 0, invite_translation) and GameGetFrameNum() > (last_frame_overlay or 0) + 80)then
+					-- need to delay this or noita gets angry??
+					--steam.friends.activateGameOverlayInviteDialog(lobby_code)
+					delay.new(5, function()
+						steam.friends.activateGameOverlay("friends")
+					end) 
+					last_frame_overlay = GameGetFrameNum()
+					print("Opening invite menu")
 				end
 
+				if(lobby_menus ~= nil)then
+					for i, lobby_menu in ipairs(lobby_menus)do
+						if((lobby_menu.button_location == nil or lobby_menu.button_location == "main_window") and lobby_menu.menu_left)then
+							local button_text = active_lobby_menu_left == lobby_menu.id and "< "..GameTextGetTranslatedOrNot(lobby_menu.button_text) or "> "..GameTextGetTranslatedOrNot(lobby_menu.button_text)
+							local text_width, text_height = GuiGetTextDimensions(menu_gui, button_text)
+							current_button_height = current_button_height + text_height
+							if(GuiButton(menu_gui, NewID("lobby_menu_"..lobby_menu.id), 0, 0, button_text))then
+								if(active_lobby_menu_left == lobby_menu.id)then
+									custom_menu_close_callback_left()
+									active_lobby_menu_left = nil
+								else
+									custom_menu_close_callback_left()
+									active_lobby_menu_left = lobby_menu.id
+								end
+
+								selected_player = nil
+							end
+							--current_button_offset = current_button_offset + text_height
+						end
+					end
+				end
+
+				--[[
 				local lobby_settings_translation = GameTextGetTranslatedOrNot("$mp_lobby_settings")
 				if(GuiButton(menu_gui, NewID("lobby_settings_button"), 0, 0, lobby_settings_open and "< "..lobby_settings_translation or "> "..lobby_settings_translation))then
 					lobby_settings_open = not lobby_settings_open
 					invite_menu_open = false
 				end
+				]]
 
 				-- calculate relative offset from window_y
 				local relative_offset = 33
@@ -946,8 +1750,8 @@ local windows = {
 						end
 						if(GuiButton(menu_gui, NewID("lobby_player"), -5, 0, tostring(v.name)))then
 							lobby_presets_open = false
-							custom_menu_close_callback()
-							active_custom_menu = nil
+							custom_menu_close_callback_right()
+							active_lobby_menu_right = nil
 							if(selected_player == v.id)then
 								selected_player = nil
 							else
@@ -963,8 +1767,8 @@ local windows = {
 
 						if(GuiButton(menu_gui, NewID("lobby_player"), 2, 0, tostring(v.name)))then
 							lobby_presets_open = false
-							custom_menu_close_callback()
-							active_custom_menu = nil
+							custom_menu_close_callback_right()
+							active_lobby_menu_right = nil
 							if(selected_player == v.id)then
 								selected_player = nil
 							else
@@ -1266,345 +2070,19 @@ local windows = {
 		
 			end
 
-			if(lobby_presets_open)then
-				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-
-				if(active_mode ~= nil)then
-					local presets_folder_name = os.getenv('APPDATA'):gsub("\\Roaming", "") .. "\\LocalLow\\Nolla_Games_Noita\\save00\\evaisa.mp_presets"
-					local gamemode_preset_folder_name = presets_folder_name .. "\\"..active_mode.id
-					presets = presets or {}
-					reserved_preset_names = reserved_preset_names or {}
-
-					local function GenerateDefaultPreset()
-						local default_name = GameTextGetTranslatedOrNot("$mp_default_preset_name")
-						local preset_data = {version = MP_PRESET_VERSION, settings = {}}
-						for k, v in ipairs(active_mode.settings)do
-							preset_data.settings[v.id] = v.default
-						end
-						reserved_preset_names[default_name] = true
-						table.insert(presets, 1, {name=default_name, data=preset_data, default=true})
-					end
-
-					local function AddGamemodePresets()
-						if(active_mode.default_presets ~= nil)then
-							for name, data in pairs(active_mode.default_presets)do
-								reserved_preset_names[name] = true
-								table.insert(presets, 1, {name=name, data=data, default=true})
-							end
-						end
-
-						if(active_mode.preset_registry ~= nil)then
-							local data_table = active_mode.preset_registry()
-							for _, data in ipairs(data_table)do
-								data.default = true
-								table.insert(presets, 1, data)
-							end
-						end
-					end
-
-					local function RefreshPresets()
-						-- create folder if doesn't exist
-						if not os.rename(presets_folder_name, presets_folder_name) then
-							os.execute("mkdir \"" .. presets_folder_name .. "\"")
-						end
-						
-						if not os.rename(gamemode_preset_folder_name, gamemode_preset_folder_name) then
-							os.execute("mkdir \"" .. gamemode_preset_folder_name .. "\"")
-						end
-
-						presets = {}
-
-						-- loop through files in folder, without luafilesystem
-						local pfile = io.popen([[dir "]] .. gamemode_preset_folder_name .. [[" /b]])
-						for filename in pfile:lines() do
-
-							-- if filename ends in .mp_preset
-							if(filename:sub(-10) == ".mp_preset")then
-								local preset_data = {}
-								local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
-								if(file ~= nil)then
-									local data = file:read("*all")
-									file:close()
-									filename = filename:gsub(".mp_preset", "")
-									local valid, preset_data = pcall(bitser.loads, data)
-									if(valid and preset_data ~= nil)then
-										table.insert(presets, {name = filename, extension = ".mp_preset", data = preset_data})
-									else
-										table.insert(presets, {name = filename, extension = ".mp_preset",	corrupt = true, data = {
-											version = MP_PRESET_VERSION,
-											settings = {}
-										}})
-									end
-								end
-							elseif(filename:sub(-5) == ".json")then
-								local preset_data = {}
-								local file = io.open(gamemode_preset_folder_name .. "\\" .. filename, "r")
-								if(file ~= nil)then
-									local data = file:read("*all")
-									file:close()
-									filename = filename:gsub(".json", "")
-									local valid, preset_data = pcall(json.parse, data)
-									if(valid and preset_data ~= nil)then
-										table.insert(presets, {name = filename, extension = ".json", data = preset_data})
-									else
-										table.insert(presets, {name = filename, extension = ".json", corrupt = true, data = {
-											version = MP_PRESET_VERSION,
-											settings = {}
-										}})
-									end
-								end
-							end
-						end
-
-						AddGamemodePresets()
-						GenerateDefaultPreset()
-					end
-
-					local function SavePreset(name)
-						if(not reserved_preset_names[name])then
-
-							local settings_data = {version = MP_PRESET_VERSION, settings = gamemode_settings}
-
-							if(active_mode.save_preset)then
-								settings_data = active_mode.save_preset(lobby_code, settings_data)
-							end
-
-							local serialized_data = nil
-							local extension = ""
-							if(ModSettingGet("evaisa.mp.presets_as_json"))then
-								serialized_data = json.stringify(settings_data)
-								extension = ".json"
-							else
-								serialized_data = bitser.dumps(settings_data)
-								extension = ".mp_preset"
-							end
-							--print(json.stringify(settings_data))
-							local file = io.open(gamemode_preset_folder_name .. "\\" .. name .. extension, "w")
-							if(file ~= nil)then
-								file:write(serialized_data)
-								file:close()
-							end
-						else
-							print("Preset name is reserved")
-							GamePrint("Preset name is reserved")
-						end
-					end
-
-					local function RemovePreset(name, extension)
-						if(name ~= " " and name ~= "_" and #name > 0)then
-							os.remove(gamemode_preset_folder_name .. "\\" .. name .. extension)
-						end
-					end
-
-					if(not was_lobby_presets_open)then
-						RefreshPresets()
-					end
-
-					DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_lobby_presets"), true, function()
-						GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
-
-						preset_name = preset_name or ("Preset_"..tostring(Random(1, 1000000)))
-						GuiLayoutBeginHorizontal(menu_gui, 0, 0)
-						GuiText(menu_gui, 0, 0, GameTextGetTranslatedOrNot("$mp_preset_name"))
-						preset_name = GuiTextInput(menu_gui, NewID("save_preset_name"), 0, 0, preset_name, 90, 15)
-
-						local illegal_chars = {
-							"/",
-							"\\",
-							":",
-							"*",
-							"?",
-							"\"",
-							"<",
-							">",
-							"|",
-						}
-
-						for i, char in ipairs(illegal_chars)do
-							preset_name = preset_name:gsub(char, "")
-						end
-
-						-- remove control characters
-						preset_name = preset_name:gsub("%c", "")
-
-
-						local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
-
-						if(hover)then
-							GameAddFlagRun("chat_bind_disabled")
-						end
-
-						
-						GuiLayoutEnd(menu_gui)
-
-						if(GuiButton(menu_gui, NewID("save_preset"), 0, 0, GameTextGetTranslatedOrNot("$mp_save_preset")))then
-							if(preset_name ~= " " and preset_name ~= "_" and #preset_name > 0)then
-								SavePreset(preset_name)
-								RefreshPresets()
-							end
-						end
-
-						if(GuiButton(menu_gui, NewID("open_presets_folder"), 0, 10, GameTextGetTranslatedOrNot("$mp_open_preset_folder")))then
-							os.execute("explorer \"" .. gamemode_preset_folder_name .. "\"")
-						end
-						--[[if(GuiButton(menu_gui, NewID("generate_preset_table"), 0, 10, "[Debug] Generate Preset Table"))then
-							local table_string = "[\""..preset_name.."\"] = {\n"
-							table_string = table_string .. "\t[\"version\"] = "..tostring(MP_PRESET_VERSION)..",\n"
-							table_string = table_string .. "\t[\"settings\"] = {\n"
-							for k, v in pairs(gamemode_settings)do
-								local value = v
-								--print("["..type(v).."] "..tostring(v))
-
-								if(type(v) == "string")then
-									value = "\"" .. v .. "\""
-								end
-								table_string = table_string .. "\t\t[\"" .. k .. "\"] = " .. tostring(value) .. ",\n"
-							end
-							table_string = table_string .. "\t},\n"
-							table_string = table_string .. "}"
-							steam.utils.setClipboard(table_string)
-							print("Copied preset table to clipboard")
-							GamePrint("Copied preset table to clipboard")
-						end]]
-						if(GuiButton(menu_gui, NewID("refresh_presets"), 0, 0, GameTextGetTranslatedOrNot("$mp_refresh_presets")))then
-							RefreshPresets()
-						end
-						
-						GuiText(menu_gui, 0, 0, "--------------------")
-						
-						for i, preset in ipairs(presets) do
-							GuiLayoutBeginHorizontal(menu_gui, 0, 0)
-							
-							if(preset.default)then
-								GuiColorSetForNextWidget( menu_gui, 0.5, 0.5, 0.5, 1.0 )
-								if(GuiButton(menu_gui, NewID(), 0, 0, "[?]"))then
-									-- nothing here
-								end
-								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_default"), "")
-							end
-
-							if(preset.corrupt)then
-								GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
-								if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
-									-- nothing here
-								end
-								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_corrupt"), "")
-							end
-
-							if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
-								GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
-								if(GuiButton(menu_gui, NewID(), 0, 0, "[!]"))then
-									-- nothing here
-								end
-								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_preset_outdated"), "")
-							end
-							
-							if((not preset.default) and GuiButton(menu_gui, NewID("remove_preset_"..tostring(preset.name)), 0, 0, GameTextGetTranslatedOrNot("$mp_remove_preset")))then
-								popup.create("delete_preset_prompt", string.format(GameTextGetTranslatedOrNot("$mp_delete_preset_confirm"), preset.name),{
-									{
-										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_description"),
-										color = {214 / 255, 60 / 255, 60 / 255, 1}
-									},
-								}, {
-									{
-										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_delete"),
-										callback = function()
-											RemovePreset(preset.name, preset.extension)
-											RefreshPresets()
-										end
-									},
-									{
-										text = GameTextGetTranslatedOrNot("$mp_delete_preset_confirm_cancel"),
-										callback = function()
-										end
-									}
-								}, -6000)
-								
-								--[[
-								RemovePreset(preset.name)
-								RefreshPresets()
-								]]
-							end
-
-							if(GuiButton(menu_gui, NewID("load_preset_"..tostring(preset.name)), 0, 0, ((preset.corrupt and "[invalid]") or "") .. preset.name))then
-								
-								local data_copy_str = bitser.dumps(preset)
-								local data_copy = bitser.loads(data_copy_str)
-
-								preset = data_copy
-
-								local preset_info = preset
-
-								
-
-								if(preset.data.version == nil or preset.data.version < MP_PRESET_VERSION)then
-									preset_info = {
-										outdated = true,
-										name = preset.name,
-										data = {
-											version = preset.data.version or 1,
-											settings = preset.data
-										}
-									}
-								end
-
-								
-
-
-								gamemode_settings = preset_info.data.settings
-
-								-- loop through 
-								for k, setting in ipairs(active_mode.settings or {})do
-									if(gamemode_settings[setting.id] == nil)then
-										gamemode_settings[setting.id] = setting.default
-										print("Setting "..setting.id.." to default: "..tostring(setting.default))
-									end
-								end
-
-
-								print("loaded: "..json.stringify(gamemode_settings))
-
-
-
-								preset_name = preset_info.name
-								--settings_changed = true
-
-								for k, setting in ipairs(active_mode.settings or {})do
-									steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
-									mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
-								end
-
-								--steam.matchmaking.sendLobbyChatMsg(lobby_code, "refresh")
-								steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
-
-								if(active_mode.load_preset)then
-									active_mode.load_preset(lobby_code, preset_info.data)
-								end
-							end
-							
-							GuiLayoutEnd(menu_gui)
-						end
-						
-
-						GuiLayoutEnd(menu_gui)
-					end, nil, "lobby_presets_gui")	
-
-				end
-				was_lobby_presets_open = true
-			else
-				was_lobby_presets_open = false
-			end
-
 			if(lobby_code == nil)then
-				active_custom_menu = nil
+				active_lobby_menu_right = nil
+				active_lobby_menu_left = nil
 			end
 
-			if(active_custom_menu ~= nil)then
-				local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-				if(active_mode ~= nil and active_mode.lobby_menus ~= nil)then
-					for i, lobby_menu in ipairs(active_mode.lobby_menus)do
-						if(lobby_menu.id == active_custom_menu)then
-							DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
+			if(active_lobby_menu_right ~= nil)then
+				if(lobby_menus ~= nil)then
+					for i, lobby_menu in ipairs(lobby_menus)do
+						if(lobby_menu.id == active_lobby_menu_right)then
+
+							local menu_width, pos_x = GetMenuSettings("right")
+
+							DrawWindow(menu_gui, -5500 , pos_x, screen_height / 2, menu_width, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
 								get_widget_info = function()
 									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
 									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
@@ -1631,7 +2109,7 @@ local windows = {
 									lobby_menu.draw(lobby_code, menu_gui, function(id, force) return NewID(id or lobby_menu.id, force) end)
 								end
 							end, function() 
-								active_custom_menu = nil
+								active_lobby_menu_right = nil
 								lobby_menu.close() 
 							end, lobby_menu.id, nil, nil, nil, true)	
 						end
@@ -1639,6 +2117,48 @@ local windows = {
 				end
 			end
 
+			
+			if(active_lobby_menu_left ~= nil)then
+				if(lobby_menus ~= nil)then
+					for i, lobby_menu in ipairs(lobby_menus)do
+						if(lobby_menu.id == active_lobby_menu_left)then
+							local menu_width, pos_x = GetMenuSettings("left")
+							DrawWindow(menu_gui, -5500 , pos_x, screen_height / 2, menu_width, window_height, GameTextGetTranslatedOrNot(lobby_menu.name), true, function(win_x, win_y, win_w, win_h)
+								get_widget_info = function()
+									local clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height = GuiGetPreviousWidgetInfo(menu_gui)
+									local window_y = ((screen_height / 2) - (window_height / 2)) + 12
+									local window_height = window_height
+									
+									--[[GuiLayoutBeginLayer(menu_gui)
+									GuiText(menu_gui, 0, window_y, "------------------")
+									GuiText(menu_gui, 0, window_y + window_height, "------------------")
+									GuiLayoutEndLayer(menu_gui)]]
+
+									local mouse_x, mouse_y = input:GetUIMousePos(menu_gui)
+
+							
+
+									if(mouse_x < win_x or mouse_x > win_x + win_w or mouse_y < win_y or mouse_y > win_y + win_h + 5)then
+										hovered = false
+										right_clicked = false
+										clicked = false
+									end
+
+									return (y + height > window_y and y < window_y + window_height), clicked, right_clicked, hovered, x, y, width, height, draw_x, draw_y, draw_width, draw_height
+								end
+								if(lobby_menu.draw)then
+									lobby_menu.draw(lobby_code, menu_gui, function(id, force) return NewID(id or lobby_menu.id, force) end)
+								end
+							end, function() 
+								active_lobby_menu_left = nil
+								lobby_menu.close() 
+							end, lobby_menu.id, nil, nil, nil, true)	
+						end
+					end
+				end
+			end
+
+			--[[
 			if(lobby_settings_open and lobby_code ~= nil)then
 				
 				local owner = steam.matchmaking.getLobbyOwner(lobby_code)
@@ -1662,38 +2182,39 @@ local windows = {
 				edit_lobby_seed = owner == steam_utils.getSteamID() and (edit_lobby_seed or steam_utils.GetLobbyData("seed")) or steam_utils.GetLobbyData("seed")
 
 				DrawWindow(menu_gui, -5500 ,((screen_width / 2) - (window_width / 2)) - (188 / 2) - 10, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_lobby_settings"), true, function()
-					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
-	
+					local current_y = 0
+					local box_w = 180
 
+					-- Lobby Type Field
+					local lobby_type_string = get_split_string(GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type], 150)
 
-					if(GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_lobby_type")..": "..lobby_types[edit_lobby_type]))then
+					local chunks = select(2, lobby_type_string:gsub('\n', '\n'))
+
+					local last_w, last_h = GuiGetTextDimensions(menu_gui, lobby_type_string)
+					local box_h = last_h + (chunks <= 1 and 2 or 0)
+					
+					Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, 0, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+
+					if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, 2, lobby_type_string, -5600, 1))then
 						edit_lobby_type = edit_lobby_type + 1
 						if(edit_lobby_type > #lobby_types and owner == steam_utils.getSteamID())then
 							edit_lobby_type = 1
 						end
 						settings_changed = true
 					end
-	
-					--print(tostring(edit_lobby_gamemode))
 
-					--[[if(GuiButton(menu_gui, NewID("EditLobby"), 2, 1, "Gamemode: "..gamemodes[edit_lobby_gamemode].name))then
-						edit_lobby_gamemode = edit_lobby_gamemode + 1
-						if(#gamemodes > 1)then
-							gamemode_settings = {}
-						end
-						if(edit_lobby_gamemode > #gamemodes and owner == steam_utils.getSteamID())then
-							edit_lobby_gamemode = 1
-						end
-					end]]
-					
-					--GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_gamemode")..": "..GameTextGetTranslatedOrNot(active_mode.name))
-					--GuiTooltip(menu_gui, GameTextGetTranslatedOrNot("$mp_cannot_change_mode_in_lobby"), "")
-	
-					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 1, GameTextGetTranslatedOrNot("$mp_lobby_name")..": ")
+					current_y = current_y + box_h + 2
+
+					-- Lobby name field
+					local lobby_name_string = GameTextGetTranslatedOrNot("$mp_lobby_name")..": "
+					local last_w, last_h = GuiGetTextDimensions(menu_gui, lobby_name_string)
+					local box_h = last_h + 18
+					Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+					GuiText(menu_gui, 4, current_y + 2, lobby_name_string)
 					name_change_frame = name_change_frame or nil
-					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 1, edit_lobby_name, 110, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
+					local lobby_name_value = GuiTextInput(menu_gui, NewID("EditLobby"), 4, current_y + last_h + 2, edit_lobby_name, 156, 25, "qwertyuiopasdfghjklzxcvbnm1234567890QWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()_' ")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
+					
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
 					end
@@ -1701,20 +2222,27 @@ local windows = {
 						edit_lobby_name = lobby_name_value
 						name_change_frame = GameGetFrameNum()
 					end
-
+				
 					if(name_change_frame and GameGetFrameNum() - name_change_frame > 30)then
 						settings_changed = true
 						name_change_frame = nil
 					end
 
-					GuiLayoutEnd(menu_gui)
-					
-					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 3, GameTextGetTranslatedOrNot("$mp_max_players")..": ")
+					current_y = current_y + box_h + 2
 
+					-- lobby max players field
+					local max_player_string = GameTextGetTranslatedOrNot("$mp_max_players")..": "
+					local last_w, last_h = GuiGetTextDimensions(menu_gui, max_player_string)
+					local box_h = last_h + 16
+					Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+					GuiText(menu_gui, 4, current_y + 2, max_player_string)
 					max_player_change_frame = max_player_change_frame or nil
-
-					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 4, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " $0", 110)
+					local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " ", 146)
+					
+					GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
+					local value_text = tostring(math.floor(slider_value))
+					GuiText(menu_gui, 153, current_y + last_h + 1, value_text)
+					
 					if(slider_value ~= edit_lobby_max_players and owner == steam_utils.getSteamID())then
 						edit_lobby_max_players = slider_value
 						max_player_change_frame = GameGetFrameNum()
@@ -1725,14 +2253,16 @@ local windows = {
 						max_player_change_frame = nil
 					end
 
-					GuiLayoutEnd(menu_gui)
+					current_y = current_y + box_h + 2
 
-					GuiLayoutBeginHorizontal(menu_gui, 0, 0, true, 0, 0)
-					GuiText(menu_gui, 2, 4, GameTextGetTranslatedOrNot("$mp_world_seed")..": ")
-					
+					-- world seed field
+					local seed_string = GameTextGetTranslatedOrNot("$mp_world_seed")..": "
+					local last_w, last_h = GuiGetTextDimensions(menu_gui, seed_string)
+					local box_h = last_h + 18
+					Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+					GuiText(menu_gui, 4, current_y + 2, seed_string)
 					seed_change_frame = seed_change_frame or nil
-					
-					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 2, 4, edit_lobby_seed, 110, 10, "1234567890")
+					local edit_lobby_seed_value = GuiTextInput(menu_gui, NewID("EditLobby"), 4, current_y + last_h + 2, edit_lobby_seed, 156, 25, "1234567890")
 					local _, _, hover = GuiGetPreviousWidgetInfo(menu_gui)
 					if(hover)then
 						GameAddFlagRun("chat_bind_disabled")
@@ -1741,33 +2271,19 @@ local windows = {
 						edit_lobby_seed = edit_lobby_seed_value
 						seed_change_frame = GameGetFrameNum()
 					end
-
+				
 					if(seed_change_frame and GameGetFrameNum() - seed_change_frame > 30)then
 						settings_changed = true
 						seed_change_frame = nil
 					end
 
-					GuiLayoutEnd(menu_gui)
+					current_y = current_y + box_h + 2
 
-					local previous_type = "text_input"
-					
-					local global_offset = 1
-
-					local extra_offset = 5
-					if(active_mode.settings and #active_mode.settings > 0 and active_mode.settings[1].type == "slider")then
-						extra_offset = 7
-					end
-
-					GuiLayoutBeginVertical(menu_gui, 0, extra_offset, true, 0, 0)
-
-
-					--print("displaying: "..json.stringify(gamemode_settings))
 					for k, setting in ipairs(active_mode.settings or {})do
-
 						if(owner ~= steam_utils.getSteamID())then
 							gamemode_settings[setting.id] = steam.matchmaking.getLobbyData(lobby_code, "setting_"..setting.id)
 						end
-
+				
 						if(gamemode_settings[setting.id] == nil)then
 							gamemode_settings[setting.id] = setting.default
 							print("Setting "..setting.id.." to default: "..tostring(setting.default))
@@ -1785,7 +2301,7 @@ local windows = {
 								gamemode_settings[setting.id] = tonumber(gamemode_settings[setting.id])
 							end
 						end
-
+				
 						if(gamemode_settings[setting.id] ~= nil)then
 							local setting_next = GlobalsGetValue("setting_next_"..setting.id)
 							if(setting_next ~= nil)then
@@ -1795,13 +2311,12 @@ local windows = {
 							end
 						end
 
-
 						if(setting.require == nil or setting.require(setting))then
 							--print(setting.id.."; "..tostring(setting.require).."; "..(setting.require and tostring(setting.require(setting)) or "nil"))
 							if(setting.type == "enum")then
 								local selected_name = ""
 								local selected_index = nil
-
+				
 								local selected_value = gamemode_settings[setting.id]
 								--print("Selected value: "..tostring(selected_value))
 								if(selected_value == nil)then
@@ -1816,7 +2331,7 @@ local windows = {
 										selected_index = k
 									end
 								end
-
+				
 								-- if selected index is nil, reset to default
 								if(selected_index == nil)then
 									for k, v in ipairs(setting.options)do
@@ -1829,36 +2344,12 @@ local windows = {
 									end
 								end
 
+								local enum_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..": "..GameTextGetTranslatedOrNot(selected_name or ""), 150)
+								local chunks = select(2, enum_string:gsub('\n', '\n'))
+								local last_w, last_h = GuiGetTextDimensions(menu_gui, enum_string)
+								local box_h = last_h + (chunks <= 1 and 2 or 0)
 
-								local offset = global_offset
-
-								--[[if(previous_type == "text_input")then
-									offset = 5
-								end]]
-
-								--[[if(previous_type == "slider")then
-									offset = offset + 1
-								elseif(previous_type == "enum" or previous_type == "bool")then
-									offset = offset - 4
-								end   ]]      
-
-								GuiLayoutBeginHorizontal(menu_gui, 2, offset, true)
-								if(GuiButton(menu_gui, NewID("EditLobby"), 0, 0, GameTextGetTranslatedOrNot(setting.name)..": "..GameTextGetTranslatedOrNot(selected_name)))then
-									selected_index = selected_index + 1
-									if(selected_index > #setting.options)then
-										selected_index = 1
-									end
-									gamemode_settings[setting.id] = setting.options[selected_index][1]
-									settings_changed = true
-									--GlobalsSetValue("setting_next_"..setting.id, tostring(setting.options[selected_index][1]))
-								end
-
-								local _, _, _, _, _, w, h = GuiGetPreviousWidgetInfo(menu_gui)
-
-								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
-
-
-
+								Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
 								if(setting.options[selected_index][3] ~= nil)then
 									local info = setting.options[selected_index][3]
 									local info_name = "???"
@@ -1870,55 +2361,61 @@ local windows = {
 									else
 										info_name = info
 									end
-
+				
 									if(info_name ~= nil)then
 										GuiColorSetForNextWidget( menu_gui, 1, 0.4, 0.4, 1.0 )
 										GuiText(menu_gui, 0, 0, "[?]")
-										GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(info_name), GameTextGetTranslatedOrNot(info_desc))
+										GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(info_name or ""), GameTextGetTranslatedOrNot(info_desc or ""))
 									end
 								end
-
-								GuiLayoutEnd(menu_gui)
-
-								previous_type = "enum"
 								
+								if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, current_y + 2, enum_string, -5600, 1, nil, nil, nil, nil, nil, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or "")) end))then
+									selected_index = selected_index + 1
+									if(selected_index > #setting.options)then
+										selected_index = 1
+									end
+									gamemode_settings[setting.id] = setting.options[selected_index][1]
+									settings_changed = true
+								end
+
+								
+
+								current_y = current_y + box_h + 2
 							elseif(setting.type == "bool")then
+								local bool_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..":"..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled")), 170)
+								local chunks = select(2, bool_string:gsub('\n', '\n'))
+								local last_w, last_h = GuiGetTextDimensions(menu_gui, bool_string)
+								local box_h = last_h + (chunks <= 1 and 2 or 0)
+								Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+								
+								local r, g, b, a = 1, 1, 1, 1
 
-								local offset = global_offset
+								-- split bool string by :
+								local str1, str2 = bool_string:match("([^,]+:)([^,]+)")
+								
+								if(gamemode_settings[setting.id])then
+									r, g, b, a = 0.4, 1, 0.4, 1
+								else
+									r, g, b, a = 1, 0.4, 0.4, 1
+								end
+								
 
-								--[[if(previous_type == "text_input")then
-									offset = 5
-								end]]
-								--[[if(previous_type == "slider")then
-									offset = offset + 1
-								elseif(previous_type == "enum" or previous_type == "bool")then
-									offset = offset - 4
-								end   ]]      
-
-								if(GuiButton(menu_gui, NewID("EditLobby"), 2, offset, GameTextGetTranslatedOrNot(setting.name)..": "..(gamemode_settings[setting.id] and GameTextGetTranslatedOrNot("$mp_setting_enabled") or GameTextGetTranslatedOrNot("$mp_setting_disabled"))))then
+								if(GuiTextButton(menu_gui, function() return NewID("EditLobby") end, 4, current_y + 2, {
+									{
+										text = str1,
+										color = {1, 1, 1, 1}
+									},
+									{
+										text = str2,
+										color = {r, g, b, a}
+									}
+								}, -5600, 1, r, g, b, a, 170, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or "")) end))then
 									gamemode_settings[setting.id] = not gamemode_settings[setting.id]
 									settings_changed = true
-									--print(tostring(gamemode_settings[setting.id]))
-									--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
 								end
-								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
-
-								previous_type = "bool"
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name or ""), GameTextGetTranslatedOrNot(setting.description or ""))
+								current_y = current_y + box_h + 2
 							elseif(setting.type == "slider")then
-								local offset = global_offset
-					
-								GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 0, 0)
-
-								local text_width, text_height = GuiGetTextDimensions(menu_gui, GameTextGetTranslatedOrNot(setting.name)..": ")
-
-								GuiText(menu_gui, 2, -1, GameTextGetTranslatedOrNot(setting.name)..": ")
-								GuiTooltip(menu_gui, "", GameTextGetTranslatedOrNot(setting.description))
-
-								local container_size = setting.width or 100
-
-								if(container_size + text_width > 150)then
-									container_size = 150 - text_width
-								end
 
 								setting.display_multiplier = setting.display_multiplier or 1
 								setting.formatting_string = setting.formatting_string or " $0"
@@ -1928,79 +2425,76 @@ local windows = {
 								if(setting.modifier == nil)then
 									setting.modifier = function(value) return value end
 								end
-								setting.display_fractions = setting.display_fractions or false
 
-								--GuiLayoutBeginHorizontal(menu_gui, 0, offset, true, 1, 1)
-								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 0, 0, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", container_size)
+								setting.display_fractions = setting.display_fractions or false
+								
+								local slider_string = get_split_string(GameTextGetTranslatedOrNot(setting.name or "")..": ", 150)
+
+								local chunks = select(2, slider_string:gsub('\n', '\n'))
+
+								local last_w, last_h = GuiGetTextDimensions(menu_gui, slider_string)
+								local box_h = last_h + 16
+								Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
+								GuiTextMultiline(menu_gui, 4, current_y + 2, slider_string, -5600, 1, 1, 1, 1, 1, 170, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description)) end)
+								
+
+								local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", 146)
 								slider_value = setting.modifier(slider_value)
 								local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
+								GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description))
+
 								-- take setting.formatting_string, replace $0 with slider_value, take display multiplier into account
 								GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
 								local value_text = string.gsub(setting.formatting_string, "$0", tostring(setting.display_fractions and (slider_value * setting.display_multiplier) or math.floor(slider_value * setting.display_multiplier)))
 								value_text = setting.formatting_func(value_text)
-								GuiText(menu_gui, 0, 0, value_text)
-								--GuiLayoutEnd(menu_gui)
+								GuiText(menu_gui, 150, current_y + last_h + 1, value_text)
 
 								was_slider_changed = was_slider_changed or {}
 
 								if(tostring(slider_value) ~= tostring(gamemode_settings[setting.id]))then
-		
+				
 									gamemode_settings[setting.id] = slider_value
 									was_slider_changed[setting.id] = GameGetFrameNum()
 								end
-
+				
 								if(was_slider_changed[setting.id] and (GameGetFrameNum() - was_slider_changed[setting.id]) > 30)then
 								
 									settings_changed = true
 									was_slider_changed[setting.id] = nil
-	
+				
 									--GlobalsSetValue("setting_next_"..setting.id, tostring(gamemode_settings[setting.id]))
 								end
-			
-
-								GuiLayoutEnd(menu_gui)
-
-								previous_type = "slider"
+				
+								current_y = current_y + box_h + 2
 							end
 						end
+
+						if(settings_changed and owner == steam_utils.getSteamID())then
+							steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
+							steam_utils.TrySetLobbyData(code, "max_players", tostring(edit_lobby_max_players))
+							steam_utils.TrySetLobbyData(lobby_code, "name", edit_lobby_name)
+							
+							steam_utils.TrySetLobbyData(lobby_code, "seed", edit_lobby_seed)
+							for k, setting in ipairs(active_mode.settings or  {})do
+								steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
+								mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
+							end
+							print("Updating lobby type: "..internal_types[edit_lobby_type])
+							steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
+							steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
+							mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
+							mp_log:print("Updated name: "..tostring(edit_lobby_name))
+							mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
+							settings_changed = false
+							--print("lobby settings changed!")
+						end				
+
 					end
 
-					GuiLayoutEnd(menu_gui)
-					--GuiText(menu_gui, 2, 6, "--------------------")
-
-					if(--[[GuiButton(menu_gui, NewID("EditLobby"), 2, 0, GameTextGetTranslatedOrNot("$mp_update_settings"))]] settings_changed and owner == steam_utils.getSteamID())then
-						steam.matchmaking.setLobbyMemberLimit(lobby_code, edit_lobby_max_players)
-						steam_utils.TrySetLobbyData(code, "max_players", tostring(edit_lobby_max_players))
-						steam_utils.TrySetLobbyData(lobby_code, "name", edit_lobby_name)
-						
-						steam_utils.TrySetLobbyData(lobby_code, "seed", edit_lobby_seed)
-						for k, setting in ipairs(active_mode.settings or {})do
-							steam_utils.TrySetLobbyData(lobby_code, "setting_"..setting.id, tostring(gamemode_settings[setting.id]))
-							mp_log:print("Updated gamemode setting: "..setting.id.." to "..tostring(gamemode_settings[setting.id]))
-						end
-						print("Updating lobby type: "..internal_types[edit_lobby_type])
-						steam.matchmaking.setLobbyType(lobby_code, internal_types[edit_lobby_type])
-						steam_utils.send("refresh", {}, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
-						mp_log:print("Updated limit: "..tostring(edit_lobby_max_players))
-						mp_log:print("Updated name: "..tostring(edit_lobby_name))
-						mp_log:print("Updated type: "..tostring(internal_types[edit_lobby_type]))
-						settings_changed = false
-						--print("lobby settings changed!")
-					end
-
-					GuiText(menu_gui, 2, 0, " ")
-
-					--[[
-					for i = 1, 40 do
-						GuiText(menu_gui, 2, 0, " ")
-					end
-					]]
-		
-
-					GuiLayoutEnd(menu_gui)
+					
 				end, nil, "lobby_settings_gui", 2, 2, true)	
 			
-			end
+			end]]
 		end
 	},
 	{
@@ -2367,36 +2861,38 @@ if (GameGetIsGamepadConnected()) then
 	GuiOptionsAddForNextWidget(menu_gui, GUI_OPTION.NonInteractive)
 end
 
-if (not GameHasFlagRun("chat_input_hovered")) then
-	if ((bindings:IsJustDown("lobby_menu_open_kb") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
+if (not IsPaused()) then
+	if (not GameHasFlagRun("chat_input_hovered")) then
+		if ((bindings:IsJustDown("lobby_menu_open_kb") or bindings:IsJustDown("lobby_menu_open_gp")) and not GameHasFlagRun("chat_bind_disabled")) then
+			gui_closed = not gui_closed
+			invite_menu_open = false
+			selected_player = nil
+			GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+		end
+	end
+
+	if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/menu.png"))then
 		gui_closed = not gui_closed
-		invite_menu_open = false
+		invite_menu_open = false 
 		selected_player = nil
 		GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 	end
-end
 
-if(GuiImageButton(menu_gui, NewID("MenuButton"), screen_width - 20, screen_height - 20, "", "mods/evaisa.mp/files/gfx/ui/menu.png"))then
-	gui_closed = not gui_closed
-	invite_menu_open = false 
-	selected_player = nil
-	GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
-end
-
-if(not gui_closed)then
-	local version_string = "Noita Online (build "..tostring(MP_VERSION).." "..GameTextGetTranslatedOrNot(VERSION_FLAVOR_TEXT)..")"
-	if(lobby_code ~= nil)then
-		local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
-		if(active_mode ~= nil)then
-			version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name or "").." (build "..tostring(active_mode.version or "").." "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text or "")..")"
-			if(active_mode.version_display)then
-				version_string = active_mode.version_display(version_string)
+	if(not gui_closed)then
+		local version_string = "Noita Online (build "..tostring(MP_VERSION).." "..GameTextGetTranslatedOrNot(VERSION_FLAVOR_TEXT)..")"
+		if(lobby_code ~= nil)then
+			local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby_code, "gamemode"))
+			if(active_mode ~= nil)then
+				version_string = version_string.." - "..GameTextGetTranslatedOrNot(active_mode.name or "").." (build "..tostring(active_mode.version or "").." "..GameTextGetTranslatedOrNot(active_mode.version_flavor_text or "")..")"
+				if(active_mode.version_display)then
+					version_string = active_mode.version_display(version_string)
+				end
 			end
 		end
+		local text_width, text_height = GuiGetTextDimensions(menu_gui, version_string)
+		GuiZSetForNextWidget(menu_gui, 100)
+		GuiText(menu_gui, screen_width / 2 - text_width / 2, screen_height - text_height, version_string)
+		--print(version_string)
+		windows[menu_status].func()
 	end
-	local text_width, text_height = GuiGetTextDimensions(menu_gui, version_string)
-	GuiZSetForNextWidget(menu_gui, 100)
-	GuiText(menu_gui, screen_width / 2 - text_width / 2, screen_height - text_height, version_string)
-	--print(version_string)
-	windows[menu_status].func()
 end

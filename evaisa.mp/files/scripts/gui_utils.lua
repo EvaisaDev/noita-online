@@ -603,3 +603,212 @@ function CustomTooltip(gui, callback, z, x_offset, y_offset )
 		GuiLayoutEndLayer( gui );
 	end
 end
+
+function Gui9Piece(gui, id_func, x, y, width, height, alpha, z_index, image_sprite, piece_size)
+    -- top left
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x, y, image_sprite, alpha, 1, 1, 0, 1, "tl")
+    -- top right
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x + width - piece_size, y, image_sprite, alpha, 1, 1, 0, 1, "tr")
+    -- bottom left
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x, y + height - piece_size, image_sprite, alpha, 1, 1, 0, 1, "bl")
+    -- bottom right
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x + width - piece_size, y + height - piece_size, image_sprite, alpha, 1, 1, 0, 1, "br")
+    -- top
+    GuiZSetForNextWidget(gui, z_index) 
+    GuiImage(gui, id_func(), x + piece_size, y, image_sprite, alpha, (width - piece_size * 2) / piece_size, 1, 0, 1, "tc")
+    -- bottom
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x + piece_size, y + height - piece_size, image_sprite, alpha, (width - piece_size * 2) / piece_size, 1, 0, 1, "bc")
+    -- left
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x, y + piece_size, image_sprite, alpha, 1, (height - piece_size * 2) / piece_size, 0, 1, "lc")
+    -- right
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x + width - piece_size, y + piece_size, image_sprite, alpha, 1, (height - piece_size * 2) / piece_size, 0, 1, "rc")
+    -- center
+    GuiZSetForNextWidget(gui, z_index)
+    GuiImage(gui, id_func(), x + piece_size, y + piece_size, image_sprite, alpha, (width - piece_size * 2) / piece_size, (height - piece_size * 2) / piece_size, 0, 1, "c")
+end
+
+local button_stack = {}
+function GuiTextButton(gui, id_func, x, y, text, z_index, line_spacing, color_r, color_g, color_b, color_a, max_width, tooltip_func)
+	color_r = color_r or 1
+	color_g = color_g or 1
+	color_b = color_b or 1
+	color_a = color_a or 1
+	max_width = max_width or 10000
+	local was_hovered = false
+	local id = id_func()
+	if(button_stack[id] == nil)then
+		button_stack[id] = {}
+	else
+		was_hovered = button_stack[id].hovered
+	end
+	local any_was_hovered = false
+	local any_was_clicked = false
+	local any_was_right_clicked = false
+
+	local index = 0
+	local last_x = 0
+	if type(text) == "table" then
+		for i, txt in ipairs(text)do
+			local str = txt.text
+			local color = txt.color or nil
+
+			local x_offset = last_x or 0
+
+			for line in str:gmatch("[^\r\n]+") do
+				local text_width, text_height = GuiGetTextDimensions(gui, line)
+				if(was_hovered)then
+					GuiColorSetForNextWidget(gui, 255 / 255, 255 / 255, 178 / 255, 1)
+				else
+					if color then
+						GuiColorSetForNextWidget(gui, color[1], color[2], color[3], color[4])
+					else
+						GuiColorSetForNextWidget(gui, color_r, color_g, color_b, color_a)
+					end
+				end
+				GuiZSetForNextWidget(gui, z_index)
+				local offset = index * (text_height + (line_spacing or 0))
+
+				if(x_offset ~= 0 and x + x_offset > max_width)then
+					index = index + 1
+					x_offset = 0
+					offset = index * (text_height + (line_spacing or 0))
+				end
+
+				GuiButton(gui, id_func(), x + x_offset, y + offset, line)
+				if(tooltip_func)then
+					tooltip_func()
+				end
+
+				last_x = x + text_width
+
+				local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(gui)
+	
+				if(clicked)then
+					any_was_clicked = true
+				end
+				if(right_clicked)then
+					any_was_right_clicked = true
+				end
+				if(hovered)then
+					any_was_hovered = true
+				end
+
+				x_offset = 0
+
+	
+				index = index + 1
+			end
+			index = index - 1
+
+		end
+	else
+		for line in text:gmatch("[^\r\n]+") do
+			local text_width, text_height = GuiGetTextDimensions(gui, line)
+			if(was_hovered)then
+				GuiColorSetForNextWidget(gui, 255 / 255, 255 / 255, 178 / 255, 1)
+			else
+				GuiColorSetForNextWidget(gui, color_r, color_g, color_b, color_a)
+			end
+			GuiZSetForNextWidget(gui, z_index)
+			local offset = index * (text_height + (line_spacing or 0))
+			GuiButton(gui, id_func(), x, y + offset, line)
+			if(tooltip_func)then
+				tooltip_func()
+			end
+			local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(gui)
+
+			if(clicked)then
+				any_was_clicked = true
+			end
+			if(right_clicked)then
+				any_was_right_clicked = true
+			end
+			if(hovered)then
+				any_was_hovered = true
+			end
+
+			index = index + 1
+		end
+	end
+
+	button_stack[id].hovered = any_was_hovered
+	button_stack[id].clicked = any_was_clicked
+	button_stack[id].right_clicked = any_was_right_clicked
+
+	return any_was_clicked, any_was_clicked, any_was_hovered
+end
+
+function GuiTextMultiline(gui, x, y, text, z_index, line_spacing, color_r, color_g, color_b, color_a, max_width, tooltip_func)
+	-- guitext with multiline support
+	color_r = color_r or 1
+	color_g = color_g or 1
+	color_b = color_b or 1
+	color_a = color_a or 1
+	max_width = max_width or 10000
+
+	local index = 0
+	local last_x = 0
+	if type(text) == "table" then
+		for i, txt in ipairs(text)do
+			local str = txt.text
+			local color = txt.color or nil
+
+			local x_offset = last_x or 0
+
+			for line in str:gmatch("[^\r\n]+") do
+				local text_width, text_height = GuiGetTextDimensions(gui, line)
+
+				if color then
+					GuiColorSetForNextWidget(gui, color[1], color[2], color[3], color[4])
+				else
+					GuiColorSetForNextWidget(gui, color_r, color_g, color_b, color_a)
+				end
+
+				GuiZSetForNextWidget(gui, z_index)
+				local offset = index * (text_height + (line_spacing or 0))
+
+				if(x_offset ~= 0 and x + x_offset > max_width)then
+					index = index + 1
+					x_offset = 0
+					offset = index * (text_height + (line_spacing or 0))
+				end
+
+				GuiText(gui, x + x_offset, y + offset, line)
+				if(tooltip_func)then
+					tooltip_func()
+				end
+
+				last_x = x + text_width
+
+				x_offset = 0
+
+	
+				index = index + 1
+			end
+			index = index - 1
+
+		end
+	else
+		for line in text:gmatch("[^\r\n]+") do
+			local text_width, text_height = GuiGetTextDimensions(gui, line)
+
+			GuiColorSetForNextWidget(gui, color_r, color_g, color_b, color_a)
+
+			GuiZSetForNextWidget(gui, z_index)
+			local offset = index * (text_height + (line_spacing or 0))
+			GuiText(gui, x, y + offset, line)
+			if(tooltip_func)then
+				tooltip_func()
+			end
+	
+			index = index + 1
+		end
+	end
+end

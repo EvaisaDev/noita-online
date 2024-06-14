@@ -195,6 +195,7 @@ game_funcs = {
 					local r, g, b = color.r, color.g, color.b
 					local a = 1
 					GuiColorSetForNextWidget(marker_gui, r / 255, g / 255, b / 255, a)
+					GuiZSetForNextWidget(marker_gui, -100000)
 
 					GuiImage(marker_gui, new_id(), marker_x, marker_y, marker_image, 1, 1, 1)
 					--GuiText(gui, marker_x / 2, marker_y / 2, "o")

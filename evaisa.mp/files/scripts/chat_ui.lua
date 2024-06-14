@@ -7,6 +7,9 @@ chat_gui = chat_gui or GuiCreate()
 
 GuiStartFrame(chat_gui)
 
+if (IsPaused()) then
+	return
+end
 
 
 
