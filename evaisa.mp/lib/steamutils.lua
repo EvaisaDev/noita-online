@@ -307,8 +307,8 @@ steam_utils.getLobbyMembersIDs = function(lobby_id, include_spectators, update_c
 
 end
 
-steam_utils.getPlayerCount = function(lobby, include_spectators)
-	local members = steamutils.getLobbyMembers(lobby, include_spectators)
+steam_utils.getPlayerCount = function(lobby, include_spectators, update_cache)
+	local members = steamutils.getLobbyMembers(lobby, include_spectators, update_cache)
 	return #members
 end
 
