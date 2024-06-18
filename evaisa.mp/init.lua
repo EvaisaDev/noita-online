@@ -896,13 +896,16 @@ function OnWorldPreUpdate()
 					if (game_in_progress) then
 						--print("the hell??")
 
-						lobby_gamemode.update(lobby_code)
-
-						
+						if (lobby_gamemode.update) then
+							lobby_gamemode.update(lobby_code)
+						end
+	
+					
 					end
 
-					lobby_gamemode.lobby_update(lobby_code)
-
+					if(lobby_gamemode.lobby_update ~= nil)then
+						lobby_gamemode.lobby_update(lobby_code)
+					end
 
 					ReceiveMessages(not game_in_progress)
 				end
