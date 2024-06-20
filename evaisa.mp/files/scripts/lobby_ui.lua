@@ -1907,7 +1907,8 @@ local windows = {
 			if(selected_player ~= nil)then
 				local selected_player_name = steamutils.getTranslatedPersonaName(selected_player)
 
-				DrawWindow(menu_gui, -5500 ,(((screen_width / 2) - (window_width / 2))) + 304, screen_height / 2, 188, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
+				local window_width, x_pos = GetMenuSettings("right")
+				DrawWindow(menu_gui, -5500 ,x_pos, screen_height / 2, window_width, window_height, GameTextGetTranslatedOrNot("$mp_mods").." ("..selected_player_name..")", true, function()
 					GuiLayoutBeginVertical(menu_gui, 0, 0, true, 0, 0)
 					
 					local player_mod_data = getLobbyUserData(lobby_code, selected_player) or {}
