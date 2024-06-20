@@ -11,6 +11,7 @@ exceptions_in_logger = true
 dev_mode = true
 debugging = true
 disable_print = false
+trailer_mode = true
 
 
 -----------------------------------
@@ -96,7 +97,9 @@ function GuiOptionsList(gui)
 end
 
 
-
+if(trailer_mode)then
+	ModMagicNumbersFileAdd("mods/evaisa.mp/magic_numbers_trailer.xml")
+end
 
 
 get_content = ModTextFileGetContent
@@ -886,9 +889,10 @@ function OnWorldPreUpdate()
 					local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
 						"in: " .. input_string .. " | out: " .. output_string)
 
-					GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
-						output_string)
-
+					--[[if(not IsPaused())then
+						GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
+							output_string)
+					end]]
 					--print("d")
 
 					--print("Game in progress: "..tostring(game_in_progress))
