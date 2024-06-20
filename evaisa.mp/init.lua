@@ -1268,7 +1268,7 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 				end
 
 				print("A player joined!")
-				
+
 				local h = data.userChanged
 
 				steamutils.getUserAvatar(h)
@@ -1282,19 +1282,25 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 				--print("Clearing frames for " .. tostring(h))
 				member_message_frames[tostring(h)] = nil
 			
+				local name = steamutils.getTranslatedPersonaName(h)
+
+				GamePrint(string.format(GameTextGetTranslatedOrNot("$mp_player_joined") ,tostring(name)))
+				
+
 
 				if(lobby_gamemode.player_join)then
 					lobby_gamemode.player_join(lobby_code, h)
 				end
 			else
 				local h = data.userChanged
-
+				GamePrint(string.format(GameTextGetTranslatedOrNot("$mp_player_left") ,steamutils.getTranslatedPersonaName(h)))
 				active_members[tostring(h)] = nil
 
 				--print("Clearing frames for " .. tostring(h))
 				member_message_frames[tostring(h)] = nil
 				steam.networking.closeSession(h)
 				mp_log:print("Closed session with " .. steamutils.getTranslatedPersonaName(h))
+
 				-- run gamemode on_leave
 				if (lobby_gamemode and lobby_gamemode.disconnected ~= nil) then
 					lobby_gamemode.disconnected(lobby_code, h)

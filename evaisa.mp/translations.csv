@@ -150,3 +150,5 @@ lobby_error_ratelimit_exceeded,Join failed - too many join attempts in a very sh
 mp_preset_default,This is a default lobby preset.,Стандартный шаблон лобби,,,,,,To są domyślne ustawienia pokoju.,,,,,,
 mp_preset_corrupt,This preset was corrupted.,Этот шаблон испорчен,,,,,,Te ustawienia są uszkodzone.,,,,,,
 mp_preset_outdated,This preset file was made on an older version.,Этот шаблон была создан для более старой версии,,,,,,Te ustawienia zostały stworzone na starszej wersji.,,,,,,
+mp_player_left,%s left the game.,Игрок %s покинул игру.,,,Spieler %s hat das Spiel verlassen.,,,Gracz %s opuścił grę.,,,,,,
+mp_player_joined,%s has joined the game,,,,,,,,,,,,,
