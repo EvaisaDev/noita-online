@@ -11,7 +11,7 @@ exceptions_in_logger = true
 dev_mode = true
 debugging = true
 disable_print = false
-trailer_mode = true
+trailer_mode = false
 
 
 -----------------------------------
