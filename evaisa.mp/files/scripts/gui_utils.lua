@@ -522,7 +522,7 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	local precalc_w = w - (margin_x * 2)
 
 	GuiZSetForNextWidget( gui, z_index - 100 )
-	GuiBeginScrollContainer( gui, id + 23587, screen_width + 50, screen_height + 50, precalc_w, h - bar_h - (margin_y * 2), true, 2, 2 )
+	GuiBeginScrollContainer( gui, id + 23587, screen_width + margin_x + 2,  y + bar_h + 3, precalc_w, h - bar_h - (margin_y * 2), true, margin_x or 2, margin_y or 2 )
 	local _, _, _, _, _, _, _, _, _, render_w, render_h = GuiGetPreviousWidgetInfo( gui )
 	GuiZSet( gui, z_index - 101 )
 	callback(x, y, w, h)
@@ -530,6 +530,8 @@ function DrawWindow(gui, z_index, x, y, w, h, title, centered, callback, close_c
 	GuiEndScrollContainer( gui )
 
 	local had_scroll_bar = false
+
+	--print(tostring(render_w - 4).." > "..tostring(w))
 
 	if(render_w - 4 > w)then
 		had_scroll_bar = true
