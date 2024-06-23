@@ -401,7 +401,7 @@ local default_lobby_menus = {
 			Gui9Piece(menu_gui, function() return NewID("EditLobby") end, 0, current_y, box_w, box_h, 0.1, -5600, "mods/evaisa.mp/files/gfx/ui/9piece_white.xml", 3)
 			GuiText(menu_gui, 4, current_y + 2, max_player_string)
 			max_player_change_frame = max_player_change_frame or nil
-			local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, " ", 146)
+			local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", edit_lobby_max_players, 2, true_max, default_max_players, 1, "        ", 146)
 			
 			GuiColorSetForNextWidget(menu_gui, 1, 1, 1, 0.7)
 			local value_text = tostring(math.floor(slider_value))
@@ -602,7 +602,7 @@ local default_lobby_menus = {
 						GuiTextMultiline(menu_gui, 4, current_y + 2, slider_string, -5600, 1, 1, 1, 1, 1, 170, function() GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description)) end)
 						
 
-						local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, " ", 146)
+						local slider_value = GuiSlider(menu_gui, NewID("EditLobby"), 2, current_y + last_h + 2, "", gamemode_settings[setting.id], setting.min, setting.max, setting.default, setting.display_multiplier, "        ", 146)
 						slider_value = setting.modifier(slider_value)
 						local clicked, _, hovered = GuiGetPreviousWidgetInfo(menu_gui)
 						GuiTooltip(menu_gui, GameTextGetTranslatedOrNot(setting.name), GameTextGetTranslatedOrNot(setting.description))
