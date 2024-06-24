@@ -734,7 +734,7 @@ message_handlers = {
 			success = tonumber(tostring(success))
 			--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 			if (success ~= 1) then
-				GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+				GamePrint("Failed to send message ["..event.."] to " .. member.name .. " (" .. tostring(success) .. ")")
 				pretty.table(steam.networking.getConnectionInfo(member.id))
 			else
 				local id = event
@@ -768,7 +768,7 @@ message_handlers = {
 				success = tonumber(tostring(success))
 				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if (success ~= 1) then
-					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+					GamePrint("Failed to send message ["..event.."] to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
 					local id = event
 					if(id ~= nil and type(id) == "string")then
@@ -799,7 +799,7 @@ message_handlers = {
 				success = tonumber(tostring(success))
 				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if (success ~= 1) then
-					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+					GamePrint("Failed to send message ["..event.."] to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
 					local id = event
 					if(id ~= nil and type(id) == "string")then
@@ -834,7 +834,7 @@ message_handlers = {
 		success = tonumber(tostring(success))
 		--GamePrint("Sent message of size " .. tostring(size) .. " to " .. steam.friends.getFriendPersonaName(steam.matchmaking.getLobbyOwner(lobby)) .. " (" .. tostring(success) .. ")")
 		if (success ~= 1) then
-			GamePrint("Failed to send message to Host (" .. tostring(success) .. ")")
+			GamePrint("Failed to send message ["..event.."] to Host (" .. tostring(success) .. ")")
 		else
 			local id = event
 			if(id ~= nil and type(id) == "string")then
@@ -865,7 +865,7 @@ message_handlers = {
 				success = tonumber(tostring(success))
 				--GamePrint("Sent message of size " .. tostring(size) .. " to " .. member.name .. " (" .. tostring(success) .. ")")
 				if (success ~= 1) then
-					GamePrint("Failed to send message to " .. member.name .. " (" .. tostring(success) .. ")")
+					GamePrint("Failed to send message ["..event.."] to " .. member.name .. " (" .. tostring(success) .. ")")
 				else
 					local id = event
 					if(id ~= nil and type(id) == "string")then
@@ -965,7 +965,7 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 
 		success = tonumber(tostring(success))
 		if (success ~= 1) then
-			GamePrint("Failed to send message to " .. steamutils.getTranslatedPersonaName(player) .. " (" .. tostring(success) .. ")")
+			GamePrint("Failed to send message ["..event.."] to " .. steamutils.getTranslatedPersonaName(player) .. " (" .. tostring(success) .. ")")
 		else
 			bytes_sent = bytes_sent + size
 		end

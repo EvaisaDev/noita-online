@@ -2,14 +2,14 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 364
+MP_VERSION = 365
 MP_PRESET_VERSION = 2
 VERSION_FLAVOR_TEXT = "$mp_beta"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 Version_string = "63479623967237"
 exceptions_in_logger = true
-dev_mode = false
-debugging = false
+dev_mode = true
+debugging = true
 disable_print = true
 trailer_mode = false
 
@@ -120,7 +120,7 @@ logger = require("logger")("noita_online_logs")
 mp_log = logger.init("noita-online.log")
 networking_log = logger.init("networking.log")
 debug_log = logger.init("debugging.log")
-exception_log = logger.init("exceptions.log")
+exception_log = logger.init(os.date("%Y-%m-%d_%H-%M-%S")..".log", false, nil, "noita_online_logs/exceptions")
 debug_info = logger.init("debug_info.log", nil, true)
 
 if(not debugging)then

@@ -7,15 +7,10 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         os.execute("mkdir \"" .. output_path .. "\" 2>nul")
     end
 
-    local file_path = output_path .. "/" .. filename
-
-    if overwrite == nil or overwrite then
-        local clear_file = io.open(file_path, "w")
-        clear_file:close()
-    end
+    local file_path = nil
 
     local new_logger = {
-        log_file = io.open(file_path, "a"),
+        log_file = nil,
         last_print = nil,
         last_was_duplicate = false,
         enabled = true
@@ -26,8 +21,21 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
             return
         end
 
+        if(new_logger.last_print == nil)then
+            file_path = output_path .. "/" .. filename
+
+            if overwrite == nil or overwrite then
+                local clear_file = io.open(file_path, "w")
+                clear_file:close()
+            end
+        end
+
+        if(not file_path)then
+            error("Logger not initialized.")
+            return
+        end
+
         if not new_logger.log_file then
-            error("Attempt to print to a closed log file.")
             -- reopen file
             new_logger.log_file = io.open(file_path, "a")
             return
@@ -97,8 +105,8 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
 end
 
 local logger = {
-    init = function(filename, overwrite, no_prefix)
-        return create_logger(default_folder_path, filename, overwrite, no_prefix)
+    init = function(filename, overwrite, no_prefix, folder_overwrite)
+        return create_logger(folder_overwrite or default_folder_path, filename, overwrite, no_prefix)
     end
 }
 
