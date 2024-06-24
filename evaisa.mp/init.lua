@@ -1293,7 +1293,14 @@ function steam.matchmaking.onLobbyChatUpdate(data)
 				end
 			else
 				local h = data.userChanged
-				GamePrint(string.format(GameTextGetTranslatedOrNot("$mp_player_left") ,steamutils.getTranslatedPersonaName(h)))
+
+				if(h == nil or tonumber(tostring(h)) == nil or tonumber(tostring(h)) == 0)then
+					GamePrint("A player has left but their steamid was invalid: "..tostring(h))
+					print("A player has left but their steamid was invalid: "..tostring(h))
+				else
+					GamePrint(string.format(GameTextGetTranslatedOrNot("$mp_player_left"), steamutils.getTranslatedPersonaName(h)))
+				end
+
 				active_members[tostring(h)] = nil
 
 				--print("Clearing frames for " .. tostring(h))

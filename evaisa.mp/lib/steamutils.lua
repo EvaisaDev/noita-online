@@ -55,6 +55,7 @@ steam_utils.getTranslatedPersonaName = function(steam_id, no_streamer_mode)
 
 		if (name == nil or name == "") then
 			name = "Unknown"
+			goto continue
 		end
 		
 		-- cache name
