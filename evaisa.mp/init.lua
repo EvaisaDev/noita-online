@@ -348,15 +348,12 @@ pretty = require("pretty_print")
 
 local is_invalid_version = (PhysicsBodyIDGetBodyAABB == nil)
 
---local pollnet = require("pollnet")
-
 --GamePrint("Making api call")
 
 dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
 dofile("mods/evaisa.mp/lib/character_support.lua")
 
---local request = require("luajit-request")
 local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and
 	true or false
 
@@ -409,30 +406,6 @@ end
 function IsPaused()
 	return steam_overlay_open or GameHasFlagRun("game_paused")
 end
-
---[[
-http_get = function(url, callback)
-	local req_sock = pollnet.http_get(url)
-
-    async( function ()
-		while(true)do
-			if not req_sock then return end
-			local happy, msg = req_sock:poll()
-			if not happy then
-			req_sock:close() -- good form
-			req_sock = nil
-			return
-			end
-			if msg then
-				callback(msg)
-				req_sock:close()
-				break
-			end
-			wait(1)
-		end
-	end)
-
-end]]
 
 if type(Steam) == 'boolean' then Steam = nil end
 
