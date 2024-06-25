@@ -225,8 +225,8 @@ np = require("noitapatcher")
 bitser = require("bitser")
 smallfolk = require("smallfolk")
 binser = require("binser")
-zstandard = require("zstd")
-zstd = zstandard:new()
+--zstandard = require("zstd")
+--zstd = zstandard:new()
 delay = dofile("mods/evaisa.mp/lib/delay.lua")
 streaming = dofile("mods/evaisa.mp/lib/streaming.lua")
 
@@ -356,7 +356,7 @@ dofile("mods/evaisa.mp/files/scripts/debugging.lua")
 
 dofile("mods/evaisa.mp/lib/character_support.lua")
 
-local request = require("luajit-request")
+--local request = require("luajit-request")
 local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and
 	true or false
 
@@ -1421,11 +1421,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	if(failed_to_load)then
 		return
 	end
-
-
-	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_jp_regular_20.lua", "noto_sans_jp_regular_20.xml")
-	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_regular_20.lua", "noto_sans_regular_20.xml")
-	--fontbuilder.generate("mods/evaisa.mp/files/fonts/noto_sans_sc_regular_20.lua", "noto_sans_sc_regular_20.xml")
 
 	--print(json.stringify(char_ranges))
 	-- write to file
