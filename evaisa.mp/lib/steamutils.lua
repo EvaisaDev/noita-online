@@ -124,7 +124,7 @@ steam_utils.getNumLobbyMembers = function()
 	return total_lobby_members
 end
 
-local lfs = require("lfs")
+--local lfs = require("lfs")
 local fs = require("fs")
 
 -- clear avatar cache directory
@@ -138,8 +138,12 @@ function clear_avatar_cache()
         path = path .. "/"
     end
 
-	for file in lfs.dir(cache_folder) do
+	for file in fs.dir(cache_folder) do
+		if(not file) then
+			break
+		end
 		if (file ~= "." and file ~= "..") then
+			print("Removing file: " .. file)
 			local f = cache_folder .. file
 			os.remove(f)
 		end
