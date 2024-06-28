@@ -10,7 +10,7 @@ Version_string = "63479623967237"
 exceptions_in_logger = true
 dev_mode = false
 debugging = true
-disable_print = true
+disable_print = false
 trailer_mode = false
 
 
