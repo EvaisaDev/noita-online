@@ -67,28 +67,28 @@ popups.update = function()
         GuiLayoutBeginVertical(popup.gui, 0, 0)
         if (popup.name) then
             GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 1)
-            local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.name)
+            local text_width, text_height = GuiGetTextDimensions(popup.gui, GameTextGetTranslatedOrNot(popup.name))
             GuiZSetForNextWidget(popup.gui, z_index - 1)
             GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
-            GuiText(popup.gui, (screen_width / 2), (screen_height / 2) - (text_height / 2), popup.name)
+            GuiText(popup.gui, (screen_width / 2), (screen_height / 2) - (text_height / 2), GameTextGetTranslatedOrNot(popup.name))
         end
         if (popup.description) then
             if(type(popup.description) == "string")then
                 GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
-                local text_width, text_height = GuiGetTextDimensions(popup.gui, popup.description)
+                local text_width, text_height = GuiGetTextDimensions(popup.gui, GameTextGetTranslatedOrNot(popup.description))
                 GuiZSetForNextWidget(popup.gui, z_index - 1)
                 GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
-                GuiText(popup.gui, (screen_width / 2), 0, popup.description)
+                GuiText(popup.gui, (screen_width / 2), 0, GameTextGetTranslatedOrNot(popup.description))
             elseif(type(popup.description) == "table")then
                 for i, line in ipairs(popup.description) do
                     if(type(line) == "string")then
                         GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
-                        local text_width, text_height = GuiGetTextDimensions(popup.gui, line)
+                        local text_width, text_height = GuiGetTextDimensions(popup.gui, GameTextGetTranslatedOrNot(line))
                         GuiZSetForNextWidget(popup.gui, z_index - 1)
                         GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
-                        GuiText(popup.gui, (screen_width / 2), 0, line)
+                        GuiText(popup.gui, (screen_width / 2), 0, GameTextGetTranslatedOrNot(line))
                     elseif(type(line) == "table")then
-                        local text_string = line.text
+                        local text_string = GameTextGetTranslatedOrNot(line.text)
                         local text_color = line.color
 
                         if(text_color)then
@@ -103,6 +103,13 @@ popups.update = function()
                         GuiText(popup.gui, (screen_width / 2), 0, text_string)
                     end
                 end
+            elseif(type(popup.description) == "function")then
+                local text_string = popup.description(popup)
+                GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 0.8)
+                local text_width, text_height = GuiGetTextDimensions(popup.gui, GameTextGetTranslatedOrNot(text_string))
+                GuiZSetForNextWidget(popup.gui, z_index - 1)
+                GuiOptionsAddForNextWidget(popup.gui, GUI_OPTION.Align_HorizontalCenter)
+                GuiText(popup.gui, (screen_width / 2), 0, GameTextGetTranslatedOrNot(text_string))
             end
         end
 
@@ -110,7 +117,7 @@ popups.update = function()
         local final_options = {}
         for j, option in ipairs(popup.options) do
             local id = popup:new_id()
-            local text_width, text_height = GuiGetTextDimensions(popup.gui, option.text)
+            local text_width, text_height = GuiGetTextDimensions(popup.gui, GameTextGetTranslatedOrNot(option.text))
             table.insert(final_options, { id = id, option = option, width = text_width })
         end
 
@@ -127,7 +134,7 @@ popups.update = function()
         for j, option in ipairs(final_options) do
             GuiColorSetForNextWidget(popup.gui, 1, 1, 1, 1)
             GuiZSetForNextWidget(popup.gui, z_index - 1)
-            if (GuiButton(popup.gui, option.id, j == 1 and x or 20, 4, option.option.text)) then
+            if (GuiButton(popup.gui, option.id, j == 1 and x or 20, 4, GameTextGetTranslatedOrNot(option.option.text))) then
                 table.remove(active_popups, i)
                 table.insert(to_destroy, popup.gui)
                 option.option.callback()
