@@ -1,9 +1,10 @@
 --------- STATIC VARIABLES ---------
 
 game_id = 881100
---discord_app_id = 943584660334739457LL
-MP_VERSION = 367
-MP_PRESET_VERSION = 2
+
+-- load version numbers
+dofile("mods/evaisa.mp/version.lua")
+
 VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = false
