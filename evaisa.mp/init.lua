@@ -2,12 +2,11 @@
 
 game_id = 881100
 --discord_app_id = 943584660334739457LL
-MP_VERSION = 365
+MP_VERSION = 367
 MP_PRESET_VERSION = 2
-VERSION_FLAVOR_TEXT = "$mp_beta"
+VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
-Version_string = "63479623967237"
-exceptions_in_logger = true
+exceptions_in_logger = false
 dev_mode = false
 debugging = true
 disable_print = true
@@ -365,7 +364,7 @@ if (not (ModIsEnabled("evaisa.betterlogger") and extended_logging_enabled)) then
 			local source = debug.getinfo(2).source
 			local line = debug.getinfo(2).currentline
 
-			old_print("[" .. source .. ":" .. tostring(line) .. "]: " .. tostring(content))
+			old_print(table.concat({"[" .. source .. ":" .. tostring(line) .. "]", ... }, " "))
 		end
 	end
 end

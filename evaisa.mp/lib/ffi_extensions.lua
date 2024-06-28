@@ -10,7 +10,7 @@ local ffi = require("ffi")
 local C = ffi.C
 
 ffi.cdef[[
-typedef bool BOOL;
+typedef bool BOOLEAN;
 typedef uint16_t WORD;
 typedef uint32_t DWORD;
 typedef void *LPVOID;
@@ -25,7 +25,7 @@ typedef DWORD *LPDWORD;
 typedef struct _SECURITY_ATTRIBUTES_2 {
   DWORD  nLength;
   LPVOID lpSecurityDescriptor;
-  BOOL   bInheritHandle;
+  BOOLEAN   bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 typedef struct _STARTUPINFOA {
   DWORD  cb;
@@ -53,24 +53,24 @@ typedef struct _PROCESS_INFORMATION {
   DWORD  dwProcessId;
   DWORD  dwThreadId;
 } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
-BOOL CreatePipe(
+BOOLEAN CreatePipe(
   PHANDLE,
   PHANDLE,
   LPSECURITY_ATTRIBUTES,
   DWORD
 );
-BOOL SetHandleInformation(
+BOOLEAN SetHandleInformation(
   HANDLE,
   DWORD,
   DWORD
 );
 HANDLE GetStdHandle(DWORD);
-BOOL CreateProcessA(
+BOOLEAN CreateProcessA(
   LPCSTR,
   LPCSTR,
   LPSECURITY_ATTRIBUTES,
   LPSECURITY_ATTRIBUTES,
-  BOOL,
+  BOOLEAN,
   DWORD,
   LPVOID,
   LPCSTR,
@@ -81,12 +81,12 @@ DWORD WaitForSingleObject(
   HANDLE,
   DWORD
 );
-BOOL GetExitCodeProcess(
+BOOLEAN GetExitCodeProcess(
   HANDLE,
   LPDWORD
 );
-BOOL CloseHandle(HANDLE);
-BOOL ReadFile(
+BOOLEAN CloseHandle(HANDLE);
+BOOLEAN ReadFile(
   HANDLE,
   LPVOID,
   DWORD,
