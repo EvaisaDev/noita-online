@@ -96,6 +96,75 @@ function GuiOptionsList(gui)
 	return options
 end
 
+local gamemode_path = nil
+
+function GetGamemodeFilePath()
+
+	if(gamemode_path)then
+		return gamemode_path
+	end
+
+	print("Fixing falsely enabled gamemodes")
+
+	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
+		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
+
+	local things = {}
+
+	for k, v in ipairs(ModGetActiveModIDs()) do
+		things[v] = true
+	end
+
+	local file_path = nil
+
+	local file, err = io.open(save_folder, 'rb')
+	if file then
+
+		print("Found mod_config.xml")
+		
+		local content = file:read("*all")
+
+		local parsedModData = nxml.parse(content)
+		for elem in parsedModData:each_child() do
+			if (elem.name == "Mod") then
+				local modID = elem.attr.name
+				local steamID = elem.attr.workshop_item_id
+
+				local infoFile = "mods/" .. modID .. "/mod.xml"
+				if (steamID ~= "0") then
+					infoFile = "../../workshop/content/881100/" .. steamID .. "/mod.xml"
+				end
+
+				local file2, err = io.open(infoFile, 'rb')
+				if file2 then
+					local content2 = file2:read("*all")
+					local parsedModInfo = nxml.parse(content2)
+
+					local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+
+					if (ModIsEnabled(modID) and is_game_mode) then
+						print("Found enabled gamemode: " .. modID)
+						if steamID == "0" then
+							file_path = "mods/" .. modID
+						else
+							file_path = "../../workshop/content/881100/" .. steamID
+						end
+						break
+					end
+				end
+
+			end
+		end
+		file:close()
+
+		
+	end
+
+	gamemode_path = file_path
+
+	return file_path
+end
+
 
 if(trailer_mode)then
 	ModMagicNumbersFileAdd("mods/evaisa.mp/magic_numbers_trailer.xml")
