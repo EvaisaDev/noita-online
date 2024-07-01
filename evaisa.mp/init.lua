@@ -8,9 +8,9 @@ dofile("mods/evaisa.mp/version.lua")
 VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = false
-dev_mode = false
+dev_mode = true
 debugging = true
-disable_print = true
+disable_print = false
 trailer_mode = false
 
 
@@ -310,7 +310,11 @@ end)
 
 
 pngencoder = require("pngencoder")
+
+dofile_once("mods/evaisa.mp/bin/NoitaPatcher/load.lua")
+
 np = require("noitapatcher")
+
 bitser = require("bitser")
 smallfolk = require("smallfolk")
 binser = require("binser")
@@ -649,12 +653,15 @@ function HandleMessage(v, ignore)
 end
 
 local function ReceiveMessages(ignore)
-	local messages = steam.networking.pollMessages() or {}
-	if(is_awaiting_spectate)then
-		return
-	end
-	for k, v in ipairs(messages) do
-		HandleMessage(v, ignore)
+	-- 10 available channels should be enough
+	for i = 0, 10 do
+		local messages = steam.networking.pollMessages(i) or {}
+		if(is_awaiting_spectate)then
+			return
+		end
+		for k, v in ipairs(messages) do
+			HandleMessage(v, ignore)
+		end
 	end
 end
 
@@ -951,10 +958,10 @@ function OnWorldPreUpdate()
 					local text_width, text_height = GuiGetTextDimensions(byte_rate_gui,
 						"in: " .. input_string .. " | out: " .. output_string)
 
-					--[[if(not IsPaused())then
+					if(not IsPaused() and debugging)then
 						GuiText(byte_rate_gui, screen_width - text_width - 50, 1, "in: " .. input_string .. " | out: " ..
 							output_string)
-					end]]
+					end
 					--print("d")
 
 					--print("Game in progress: "..tostring(game_in_progress))

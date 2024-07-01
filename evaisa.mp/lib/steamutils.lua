@@ -718,7 +718,7 @@ steam_utils.messageTypes = {
 }
 
 message_handlers = {
-	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators, event)
+	[steam_utils.messageTypes.AllPlayers] = function(data, lobby, reliable, include_spectators, event, channel)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to " .. member.name)
@@ -731,9 +731,9 @@ message_handlers = {
 			end
 
 			if (reliable) then
-				success, size = steam.networking.sendString(member.id, data)
+				success, size = steam.networking.sendString(member.id, data, channel)
 			else
-				success, size = steam.networking.sendStringUnreliable(member.id, data)
+				success, size = steam.networking.sendStringUnreliable(member.id, data, channel)
 			end
 
 			success = tonumber(tostring(success))
@@ -755,7 +755,7 @@ message_handlers = {
 			::continue::
 		end
 	end,
-	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event)
+	[steam_utils.messageTypes.OtherPlayers] = function(data, lobby, reliable, include_spectators, event, channel)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam_utils.getSteamID()) then
@@ -765,9 +765,9 @@ message_handlers = {
 				local success, size = 0, 0
 
 				if (reliable) then
-					success, size = steam.networking.sendString(member.id, data)
+					success, size = steam.networking.sendString(member.id, data, channel)
 				else
-					success, size = steam.networking.sendStringUnreliable(member.id, data)
+					success, size = steam.networking.sendStringUnreliable(member.id, data, channel)
 				end
 
 				success = tonumber(tostring(success))
@@ -787,7 +787,7 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators, event)
+	[steam_utils.messageTypes.Clients] = function(data, lobby, reliable, include_spectators, event, channel)
 		local members = steamutils.getLobbyMembers(lobby, include_spectators)
 		for k, member in pairs(members) do
 			if (member.id ~= steam_utils.getSteamID() and member.id ~= steam.matchmaking.getLobbyOwner(lobby)) then
@@ -795,9 +795,9 @@ message_handlers = {
 				local success, size = 0, 0
 
 				if (reliable) then
-					success, size = steam.networking.sendString(member.id, data)
+					success, size = steam.networking.sendString(member.id, data, channel)
 				else
-					success, size = steam.networking.sendStringUnreliable(member.id, data)
+					success, size = steam.networking.sendStringUnreliable(member.id, data, channel)
 				end
 
 
@@ -818,7 +818,7 @@ message_handlers = {
 			end
 		end
 	end,
-	[steam_utils.messageTypes.Host] = function(data, lobby, reliable, include_spectators, event)
+	[steam_utils.messageTypes.Host] = function(data, lobby, reliable, include_spectators, event, channel)
 		--networking_log:print("Sending message ["..bitser.loads(data)[1].."] to Host")
 		local success, size = 0, 0
 
@@ -831,9 +831,9 @@ message_handlers = {
 
 
 		if (reliable) then
-			success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data)
+			success, size = steam.networking.sendString(steam.matchmaking.getLobbyOwner(lobby), data, channel)
 		else
-			success, size = steam.networking.sendStringUnreliable(steam.matchmaking.getLobbyOwner(lobby), data)
+			success, size = steam.networking.sendStringUnreliable(steam.matchmaking.getLobbyOwner(lobby), data, channel)
 		end
 
 		success = tonumber(tostring(success))
@@ -853,7 +853,7 @@ message_handlers = {
 
 		::continue::
 	end,
-	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable, include_spectators, event)
+	[steam_utils.messageTypes.Spectators] = function(data, lobby, reliable, include_spectators, event, channel)
 		local members = steamutils.getLobbyMembers(lobby, true)
 		for k, member in pairs(members) do
 			local spectating = steam.matchmaking.getLobbyData(lobby_code, tostring(member.id) .. "_spectator") == "true"
@@ -862,9 +862,9 @@ message_handlers = {
 				local success, size = 0, 0
 
 				if (reliable) then
-					success, size = steam.networking.sendString(member.id, data)
+					success, size = steam.networking.sendString(member.id, data, channel)
 				else
-					success, size = steam.networking.sendStringUnreliable(member.id, data)
+					success, size = steam.networking.sendStringUnreliable(member.id, data, channel)
 				end
 
 				success = tonumber(tostring(success))
@@ -929,7 +929,8 @@ steam_utils.sendDataToPlayer = function(data, player, reliable)
 	end
 end
 ]]
-steam_utils.send = function(event, message, messageType, lobby, reliable, include_spectators)
+steam_utils.send = function(event, message, messageType, lobby, reliable, include_spectators, channel)
+	channel = channel or 0
 	local data = { event, message }
 
 	if (not reliable) then
@@ -941,13 +942,14 @@ steam_utils.send = function(event, message, messageType, lobby, reliable, includ
 		if (type(encodedData) == "number") then
 			encodedData = tostring(encodedData)
 		end
-		message_handlers[messageType](encodedData, lobby, reliable, include_spectators, event)
+		message_handlers[messageType](encodedData, lobby, reliable, include_spectators, event, channel)
 	else
 		GamePrint("Failed to send data, encodedData is nil or not a string")
 	end
 end
 
-steam_utils.sendToPlayer = function(event, message, player, reliable)
+steam_utils.sendToPlayer = function(event, message, player, reliable, channel)
+	channel = channel or 0
 	local data = { event, message }
 
 	if (not reliable) then
@@ -963,9 +965,9 @@ steam_utils.sendToPlayer = function(event, message, player, reliable)
 		local success, size = 0, 0
 
 		if (reliable) then
-			success, size = steam.networking.sendString(player, encodedData)
+			success, size = steam.networking.sendString(player, encodedData, channel)
 		else
-			success, size = steam.networking.sendStringUnreliable(player, encodedData)
+			success, size = steam.networking.sendStringUnreliable(player, encodedData, channel)
 		end
 
 		success = tonumber(tostring(success))
