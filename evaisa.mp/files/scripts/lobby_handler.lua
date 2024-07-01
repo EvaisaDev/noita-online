@@ -365,12 +365,6 @@ function ModData()
 	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
 
-	local things = {}
-
-	for k, v in ipairs(ModGetActiveModIDs()) do
-		things[v] = true
-	end
-
 	local file, err = io.open(save_folder, 'rb')
 	if file then
 
@@ -380,6 +374,18 @@ function ModData()
 
 		local data = {
 		}
+
+		local subscribed_items = steam.UGC.getSubscribedItems()
+		local item_infos = {}
+	
+		for _, v in ipairs(subscribed_items) do
+	
+			local success, size, folder, timestamp = steam.UGC.getItemInstallInfo(v)
+			if (success) then
+				item_infos[tostring(v)] = {size = size, folder = folder, timestamp = timestamp}
+			end
+	
+		end
 
 		if (StreamingGetIsConnected()) then
 			table.insert(data,
@@ -396,29 +402,36 @@ function ModData()
 				local modID = elem.attr.name
 				local steamID = elem.attr.workshop_item_id
 
-				if (things[modID]) then
+				if (ModIsEnabled(modID)) then
 					local infoFile = "mods/" .. modID .. "/mod.xml"
 					if (steamID ~= "0") then
-						infoFile = "../../workshop/content/881100/" .. steamID .. "/mod.xml"
+						if(item_infos[steamID])then
+							infoFile = item_infos[steamID].folder .. "/mod.xml"
+						else
+							debug_log:print("Failed to find item info for: " .. steamID)
+							infoFile = nil
+						end
 					end
 
-					local file2, err = io.open(infoFile, 'rb')
-					if file2 then
-						local content2 = file2:read("*all")
-						if(content2 ~= nil and content2 ~= "")then
-							local parsedModInfo = nxml.parse(content2)
+					if(infoFile)then
+						local file2, err = io.open(infoFile, 'rb')
+						if file2 then
+							local content2 = file2:read("*all")
+							if(content2 ~= nil and content2 ~= "")then
+								local parsedModInfo = nxml.parse(content2)
 
-							local download_link = parsedModInfo.attr.download_link
+								local download_link = parsedModInfo.attr.download_link
 
-							if (elem.attr.enabled == "1") then
-								table.insert(data,
-									{
-										workshop_item_id = steamID,
-										id = modID,
-										name = parsedModInfo.attr.name,
-										description = parsedModInfo.attr.description,
-										download_link = download_link,
-									})
+								if (elem.attr.enabled == "1") then
+									table.insert(data,
+										{
+											workshop_item_id = steamID,
+											id = modID,
+											name = parsedModInfo.attr.name,
+											description = parsedModInfo.attr.description,
+											download_link = download_link,
+										})
+								end
 							end
 						end
 					end

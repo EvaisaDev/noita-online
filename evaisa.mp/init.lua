@@ -104,25 +104,32 @@ function GetGamemodeFilePath()
 		return gamemode_path
 	end
 
-	print("Fixing falsely enabled gamemodes")
+	debug_log:print("GetGamemodeFilePath")
 
 	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
-
-	local things = {}
-
-	for k, v in ipairs(ModGetActiveModIDs()) do
-		things[v] = true
-	end
 
 	local file_path = nil
 
 	local file, err = io.open(save_folder, 'rb')
 	if file then
 
-		print("Found mod_config.xml")
+		debug_log:print("Found mod_config.xml")
 		
 		local content = file:read("*all")
+
+		local subscribed_items = steam.UGC.getSubscribedItems()
+		local item_infos = {}
+
+		for _, v in ipairs(subscribed_items) do
+
+			local success, size, folder, timestamp = steam.UGC.getItemInstallInfo(v)
+			if (success) then
+				item_infos[tostring(v)] = {size = size, folder = folder, timestamp = timestamp}
+			end
+
+		end
+		
 
 		local parsedModData = nxml.parse(content)
 		for elem in parsedModData:each_child() do
@@ -132,26 +139,36 @@ function GetGamemodeFilePath()
 
 				local infoFile = "mods/" .. modID .. "/mod.xml"
 				if (steamID ~= "0") then
-					infoFile = "../../workshop/content/881100/" .. steamID .. "/mod.xml"
+					if(item_infos[steamID])then
+						infoFile = item_infos[steamID].folder .. "/mod.xml"
+					else
+						debug_log:print("Failed to find item info for: " .. steamID)
+						infoFile = nil
+					end
 				end
 
-				local file2, err = io.open(infoFile, 'rb')
-				if file2 then
-					local content2 = file2:read("*all")
-					if(content2 ~= nil and content2 ~= "")then
-						local parsedModInfo = nxml.parse(content2)
+				if(infoFile)then
 
-						local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+					local file2, err = io.open(infoFile, 'rb')
+					if file2 then
+						local content2 = file2:read("*all")
+						if(content2 ~= nil and content2 ~= "")then
+							local parsedModInfo = nxml.parse(content2)
+							
+							local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
 
-						if (ModIsEnabled(modID) and is_game_mode) then
-							print("Found enabled gamemode: " .. modID)
-							if steamID == "0" then
-								file_path = "mods/" .. modID
-							else
-								file_path = "../../workshop/content/881100/" .. steamID
+							if (ModIsEnabled(modID) and is_game_mode) then
+								if steamID == "0" then
+									file_path = "mods/" .. modID
+								else
+									file_path = item_infos[steamID].folder
+								end
+								break
 							end
-							break
 						end
+					else
+						debug_log:print("Failed to open mod.xml: " .. infoFile)
+						debug_log:print("Error: " .. tostring(err))
 					end
 				end
 
@@ -161,6 +178,7 @@ function GetGamemodeFilePath()
 
 		
 	end
+	debug_log:print("Gamemode path: " .. tostring(file_path))
 
 	gamemode_path = file_path
 
@@ -1476,11 +1494,12 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	file:close()
 	
 	--print(translations_content)
+	steam.init()
 
 	__loaded["mods/evaisa.mp/data/gamemodes.lua"] = nil
 	gamemodes = dofile("mods/evaisa.mp/data/gamemodes.lua")
 
-	steam.init()
+
 	steam.friends.setRichPresence("status", "Noita Online - Menu")
 
 	--[[if(GameSDK == nil)then
@@ -1536,10 +1555,16 @@ local fix_falsely_enabled_gamemodes = function()
 	local save_folder = os.getenv('APPDATA'):gsub("\\Roaming", "") ..
 		"\\LocalLow\\Nolla_Games_Noita\\save00\\mod_config.xml"
 
-	local things = {}
+	local subscribed_items = steam.UGC.getSubscribedItems()
+	local item_infos = {}
 
-	for k, v in ipairs(ModGetActiveModIDs()) do
-		things[v] = true
+	for _, v in ipairs(subscribed_items) do
+
+		local success, size, folder, timestamp = steam.UGC.getItemInstallInfo(v)
+		if (success) then
+			item_infos[tostring(v)] = {size = size, folder = folder, timestamp = timestamp}
+		end
+
 	end
 
 	local file, err = io.open(save_folder, 'rb')
@@ -1553,24 +1578,31 @@ local fix_falsely_enabled_gamemodes = function()
 				local modID = elem.attr.name
 				local steamID = elem.attr.workshop_item_id
 
-				if (things[modID]) then
+				if (ModIsEnabled(modID)) then
 					local infoFile = "mods/" .. modID .. "/mod.xml"
 					if (steamID ~= "0") then
-						infoFile = "../../workshop/content/881100/" .. steamID .. "/mod.xml"
+						if(item_infos[steamID])then
+							infoFile = item_infos[steamID].folder .. "/mod.xml"
+						else
+							debug_log:print("Failed to find item info for: " .. steamID)
+							infoFile = nil
+						end
 					end
 
-					local file2, err = io.open(infoFile, 'rb')
-					if file2 then
-						local content2 = file2:read("*all")
-						if(content2 ~= nil and content2 ~= "")then
-							local parsedModInfo = nxml.parse(content2)
+					if (infoFile ~= nil) then
+						local file2, err = io.open(infoFile, 'rb')
+						if file2 then
+							local content2 = file2:read("*all")
+							if(content2 ~= nil and content2 ~= "")then
+								local parsedModInfo = nxml.parse(content2)
 
-							local download_link = parsedModInfo.attr.download_link
-							local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+								local download_link = parsedModInfo.attr.download_link
+								local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
 
-							if (elem.attr.enabled == "1" and is_game_mode) then
-								elem.attr.enabled = "0"
-								print("Disabling " .. modID)
+								if (elem.attr.enabled == "1" and is_game_mode) then
+									elem.attr.enabled = "0"
+									print("Disabling " .. modID)
+								end
 							end
 						end
 					end
