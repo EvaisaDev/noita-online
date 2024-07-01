@@ -1605,10 +1605,10 @@ local windows = {
 
 						if(steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true")then
 							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "restart")
-							steam_utils.send("restart", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
+							steam_utils.send("restart", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true, 0)
 						else
 							--steam.matchmaking.sendLobbyChatMsg(lobby_code, "start")
-							steam_utils.send("start", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true)
+							steam_utils.send("start", start_data, steam_utils.messageTypes.AllPlayers, lobby_code, true, true, 0)
 						end
 						steam_utils.TrySetLobbyData(lobby_code, "in_progress", "true")
 					end

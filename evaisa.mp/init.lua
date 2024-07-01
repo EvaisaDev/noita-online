@@ -202,6 +202,8 @@ end
 
 local inspect = dofile("mods/evaisa.mp/lib/inspect.lua")
 
+zstandard = require("zstd")
+zstd = zstandard:new()
 
 table.insert(package.loaders, 2, load)
 
@@ -654,15 +656,19 @@ end
 
 local function ReceiveMessages(ignore)
 	-- 10 available channels should be enough
-	for i = 0, 10 do
-		local messages = steam.networking.pollMessages(i) or {}
+	--for i = 0, 10 do
+		--print("Polling messages on channel " .. tostring(i))
 		if(is_awaiting_spectate)then
 			return
 		end
-		for k, v in ipairs(messages) do
-			HandleMessage(v, ignore)
+		local messages = steam.networking.pollMessages(0) or {}
+		if(#messages > 0)then
+			--print("Received " .. tostring(#messages) .. " messages")
+			for k, v in ipairs(messages) do
+				HandleMessage(v, ignore)
+			end
 		end
-	end
+	--end
 end
 
 ----- debugging spell stuff ------

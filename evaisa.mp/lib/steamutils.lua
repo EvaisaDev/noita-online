@@ -930,7 +930,8 @@ steam_utils.sendDataToPlayer = function(data, player, reliable)
 end
 ]]
 steam_utils.send = function(event, message, messageType, lobby, reliable, include_spectators, channel)
-	channel = channel or 0
+	-- disabled because channels don't work for some reason
+	channel = 0
 	local data = { event, message }
 
 	if (not reliable) then
@@ -949,7 +950,8 @@ steam_utils.send = function(event, message, messageType, lobby, reliable, includ
 end
 
 steam_utils.sendToPlayer = function(event, message, player, reliable, channel)
-	channel = channel or 0
+	-- disabled because channels don't work for some reason
+	channel = 0
 	local data = { event, message }
 
 	if (not reliable) then
