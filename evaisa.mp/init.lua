@@ -138,18 +138,20 @@ function GetGamemodeFilePath()
 				local file2, err = io.open(infoFile, 'rb')
 				if file2 then
 					local content2 = file2:read("*all")
-					local parsedModInfo = nxml.parse(content2)
+					if(content2 ~= nil and content2 ~= "")then
+						local parsedModInfo = nxml.parse(content2)
 
-					local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+						local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
 
-					if (ModIsEnabled(modID) and is_game_mode) then
-						print("Found enabled gamemode: " .. modID)
-						if steamID == "0" then
-							file_path = "mods/" .. modID
-						else
-							file_path = "../../workshop/content/881100/" .. steamID
+						if (ModIsEnabled(modID) and is_game_mode) then
+							print("Found enabled gamemode: " .. modID)
+							if steamID == "0" then
+								file_path = "mods/" .. modID
+							else
+								file_path = "../../workshop/content/881100/" .. steamID
+							end
+							break
 						end
-						break
 					end
 				end
 
@@ -1560,14 +1562,16 @@ local fix_falsely_enabled_gamemodes = function()
 					local file2, err = io.open(infoFile, 'rb')
 					if file2 then
 						local content2 = file2:read("*all")
-						local parsedModInfo = nxml.parse(content2)
+						if(content2 ~= nil and content2 ~= "")then
+							local parsedModInfo = nxml.parse(content2)
 
-						local download_link = parsedModInfo.attr.download_link
-						local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
+							local download_link = parsedModInfo.attr.download_link
+							local is_game_mode = parsedModInfo.attr.is_game_mode == "1"
 
-						if (elem.attr.enabled == "1" and is_game_mode) then
-							elem.attr.enabled = "0"
-							print("Disabling " .. modID)
+							if (elem.attr.enabled == "1" and is_game_mode) then
+								elem.attr.enabled = "0"
+								print("Disabling " .. modID)
+							end
 						end
 					end
 				end

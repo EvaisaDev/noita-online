@@ -405,19 +405,21 @@ function ModData()
 					local file2, err = io.open(infoFile, 'rb')
 					if file2 then
 						local content2 = file2:read("*all")
-						local parsedModInfo = nxml.parse(content2)
+						if(content2 ~= nil and content2 ~= "")then
+							local parsedModInfo = nxml.parse(content2)
 
-						local download_link = parsedModInfo.attr.download_link
+							local download_link = parsedModInfo.attr.download_link
 
-						if (elem.attr.enabled == "1") then
-							table.insert(data,
-								{
-									workshop_item_id = steamID,
-									id = modID,
-									name = parsedModInfo.attr.name,
-									description = parsedModInfo.attr.description,
-									download_link = download_link,
-								})
+							if (elem.attr.enabled == "1") then
+								table.insert(data,
+									{
+										workshop_item_id = steamID,
+										id = modID,
+										name = parsedModInfo.attr.name,
+										description = parsedModInfo.attr.description,
+										download_link = download_link,
+									})
+							end
 						end
 					end
 				end
