@@ -1,5 +1,7 @@
---- World read / write functionality.
+---@diagnostic disable: cast-local-type
+---World read / write functionality.
 ---@module 'noitapatcher.nsew.world'
+---@class World
 local world = {}
 
 local ffi = require("ffi")
@@ -10,7 +12,7 @@ local C = ffi.C
 ffi.cdef([[
 
 enum ENCODE_CONST {
-    PIXEL_RUN_MAX = 16000,
+    PIXEL_RUN_MAX = 8192,
 
     LIQUID_FLAG_STATIC = 1,
 };
@@ -37,38 +39,60 @@ struct __attribute__ ((__packed__)) EncodedArea {
 
 ]])
 
+---@class PixelRun
+---@field flags integer
+---@field material integer
+---@field length integer
+
+---@class EncodedAreaHeader
+---@field x integer
+---@field y integer
+---@field width integer
+---@field height integer
+---@field pixel_run_count integer
+
+---@class EncodedArea
+---@field header EncodedAreaHeader
+---@field pixel_runs PixelRun[] a pointer
+
 world.EncodedAreaHeader = ffi.typeof("struct EncodedAreaHeader")
 world.PixelRun = ffi.typeof("struct PixelRun")
+---@type fun(): EncodedArea
+---@diagnostic disable-next-line: assign-type-mismatch
 world.EncodedArea = ffi.typeof("struct EncodedArea")
 
 local pliquid_cell = ffi.typeof("struct CLiquidCell*")
 
---- Total bytes taken up by the encoded area
--- @tparam EncodedArea encoded_area
--- @treturn int total number of bytes that encodes the area
--- @usage
--- local data = ffi.string(area, world.encoded_size(area))
--- peer:send(data)
+---Total bytes taken up by the encoded area
+---@param encoded_area EncodedArea
+---@return integer total number of bytes that encodes the area
+---```lua
+---local data = ffi.string(area, world.encoded_size(area))
+---peer:send(data)
+---```
 function world.encoded_size(encoded_area)
-    return (ffi.sizeof(world.EncodedAreaHeader) + encoded_area.header.pixel_run_count * ffi.sizeof(world.PixelRun))
+    return ffi.sizeof(world.EncodedAreaHeader) + encoded_area.header.pixel_run_count * ffi.sizeof(world.PixelRun)
 end
 
---- Encode the given rectangle of the world
--- The rectangle defined by {`start_x`, `start_y`, `end_x`, `end_y`} must not
--- exceed 256 in width or height.
--- @param chunk_map
--- @tparam int start_x coordinate
--- @tparam int start_y coordinate
--- @tparam int end_x coordinate
--- @tparam int end_y coordinate
--- @tparam EncodedArea encoded_area memory to use, if nil this function allocates its own memory
--- @return returns an EncodedArea or nil if the area could not be encoded
--- @see decode
+---Encode the given rectangle of the world
+---The rectangle defined by {`start_x`, `start_y`, `end_x`, `end_y`} must not exceed 256 in width or height.
+---@param chunk_map unknown
+---@param start_x integer coordinate
+---@param start_y integer coordinate
+---@param end_x integer coordinate
+---@param end_y integer coordinate
+---@param encoded_area EncodedArea? memory to use, if nil this function allocates its own memory
+---@return EncodedArea? encoded_area returns an EncodedArea or nil if the area could not be encoded
+---@see decode
 function world.encode_area(chunk_map, start_x, start_y, end_x, end_y, encoded_area)
     start_x = ffi.cast('int32_t', start_x)
     start_y = ffi.cast('int32_t', start_y)
     end_x = ffi.cast('int32_t', end_x)
     end_y = ffi.cast('int32_t', end_y)
+    ---@cast start_x integer
+    ---@cast start_y integer
+    ---@cast end_x integer
+    ---@cast end_x integer
 
     encoded_area = encoded_area or world.EncodedArea()
 
@@ -106,19 +130,24 @@ function world.encode_area(chunk_map, start_x, start_y, end_x, end_y, encoded_ar
 
             local ppixel = world_ffi.get_cell(chunk_map, x, y)
             local pixel = ppixel[0]
+
             if pixel ~= nil then
                 local cell_type = pixel.vtable.get_cell_type(pixel)
 
-                if cell_type ~= C.CELL_TYPE_SOLID then
-                    local material_ptr = pixel.vtable.get_material(pixel)
-                    material_number = world_ffi.get_material_id(material_ptr)
-                end
+                --if cell_type ~= C.CELL_TYPE_SOLID then
+                local material_ptr = pixel.vtable.get_material(pixel)
+                material_number = world_ffi.get_material_id(material_ptr)
+                --end
 
                 if cell_type == C.CELL_TYPE_LIQUID then
                     local liquid_cell = ffi.cast(pliquid_cell, pixel)
                     if liquid_cell.is_static then
                         flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
                     end
+                end
+  
+                if cell_type == C.CELL_TYPE_GAS or cell_type == C.CELL_TYPE_FIRE then
+                    material_number = -1
                 end
             end
 
@@ -163,11 +192,11 @@ end
 
 local PixelRun_const_ptr = ffi.typeof("struct PixelRun const*")
 
---- Load an encoded area back into the world.
--- @param grid_world
--- @tparam EncodedAreaHeader header header of the encoded area
--- @param received pointer or ffi array of PixelRun from the encoded area
--- @see encode_area
+---Load an encoded area back into the world.
+---@param grid_world unknown
+---@param header EncodedAreaHeader header of the encoded area
+---@param pixel_runs PixelRun[] or ffi array of PixelRun from the encoded area
+---@see encode_area
 function world.decode(grid_world, header, pixel_runs)
     local chunk_map = grid_world.vtable.get_chunk_map(grid_world)
 
@@ -184,33 +213,61 @@ function world.decode(grid_world, header, pixel_runs)
     local flags = current_run.flags
     local left = current_run.length + 1
 
+    local new_name = CellFactory_GetName(new_material)
+    if(new_name == "concrete_collapsed")then
+        new_material = CellFactory_GetType("concrete_static")
+    end
+
+
     local y = top_left_y
     while y < bottom_right_y do
         local x = top_left_x
         while x < bottom_right_x do
             if world_ffi.chunk_loaded(chunk_map, x, y) then
                 local ppixel = world_ffi.get_cell(chunk_map, x, y)
-
                 local current_material = 0
-
-                if new_material == -1 then
-                    goto next_pixel
-                end
 
                 if ppixel[0] ~= nil then
                     local pixel = ppixel[0]
                     local cell_type = pixel.vtable.get_cell_type(pixel)
                     if cell_type == C.CELL_TYPE_SOLID then
-                        goto next_pixel
+                        local bodies = PhysicsBodyIDQueryBodies( x, y, x, y, false, false )
+                        
+                        local entities_nearby = EntityGetInRadius( x, y, 50 )
+
+                        local entity_found = false
+                        for k, v in ipairs(entities_nearby)do
+                            local body_ids = PhysicsBodyIDGetFromEntity(v)
+                            if(body_ids ~= nil and #body_ids >= 0)then
+                                for i, body_id in ipairs(body_ids)do
+                                    if(body_id == bodies[1])then
+                                        entity_found = true
+                                    end
+                                end
+                            end
+                        end
+
+                        if entity_found then
+                            goto next_pixel
+                        end
                     end
+         
+
+
                     current_material = world_ffi.get_material_id(pixel.vtable.get_material(pixel))
+
+                    if(((cell_type == C.CELL_TYPE_GAS or cell_type == C.CELL_TYPE_FIRE) or current_material == 0) and new_material == -1)then
+                        goto next_pixel
+                    elseif(new_material == -1)then
+                        new_material = 0
+                    end
 
                     if new_material ~= current_material then
                         world_ffi.remove_cell(grid_world, pixel, x, y, false)
                     end
                 end
 
-                if current_material ~= new_material and new_material ~= 0 then
+                if current_material ~= new_material and new_material ~= 0 and new_material ~= -1 then
                     local mat_ptr = world_ffi.get_material_ptr(new_material)
                     if mat_ptr == nil then
                         GamePrint("NULL mat_ptr encountered")
@@ -224,7 +281,6 @@ function world.decode(grid_world, header, pixel_runs)
                         -- we skip positions like this.
                         goto next_pixel
                     end
-                    
                     local cell_type = pixel.vtable.get_cell_type(pixel)
 
                     if cell_type == C.CELL_TYPE_LIQUID then

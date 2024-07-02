@@ -7,7 +7,7 @@ dofile("mods/evaisa.mp/version.lua")
 
 VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
-exceptions_in_logger = false
+exceptions_in_logger = true
 dev_mode = true
 debugging = true
 disable_print = false
