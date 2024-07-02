@@ -214,8 +214,10 @@ function world.decode(grid_world, header, pixel_runs)
     local left = current_run.length + 1
 
     local new_name = CellFactory_GetName(new_material)
+
     if(new_name == "concrete_collapsed")then
-        new_material = CellFactory_GetType("concrete_static")
+        new_material = CellFactory_GetType("templebrick_static")
+        flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
     end
 
 
@@ -307,6 +309,11 @@ function world.decode(grid_world, header, pixel_runs)
                 current_run = pixel_runs[current_run_ix]
                 new_material = current_run.material
                 flags = current_run.flags
+                local new_name = CellFactory_GetName(new_material)
+                if(new_name == "concrete_collapsed")then
+                    new_material = CellFactory_GetType("templebrick_static")
+                    flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
+                end
                 left = current_run.length + 1
             end
 
