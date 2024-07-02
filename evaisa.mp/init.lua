@@ -632,7 +632,7 @@ function HandleMessage(v, ignore)
 		lobby_gamemode.message(lobby_code, data, v.user)
 	end
 	
-	if (data[1] and type(data[1]) == "string" and data[2]) then
+	if (data[1] and type(data[1]) == "string" and data[2] ~= nil) then
 		if(bytes_received_per_type[data[1]] == nil)then
 			bytes_received_per_type[data[1]] = 0
 		end
@@ -651,6 +651,7 @@ function HandleMessage(v, ignore)
 		end
 	else
 		print("Invalid message: "..tostring(data))
+		print(inspect(data))
 	end
 end
 
