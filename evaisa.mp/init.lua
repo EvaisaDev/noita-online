@@ -5,12 +5,11 @@ game_id = 881100
 -- load version numbers
 dofile("mods/evaisa.mp/version.lua")
 
-VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = true
-debugging = true
-disable_print = false
+debugging = false
+disable_print = true
 trailer_mode = false
 
 

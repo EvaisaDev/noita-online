@@ -1,2 +1,3 @@
-MP_VERSION = 371
+VERSION_FLAVOR_TEXT = "$mp_beta" -- mp_release
+MP_VERSION = 372
 MP_PRESET_VERSION = 2
