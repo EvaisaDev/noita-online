@@ -5,7 +5,6 @@ game_id = 881100
 -- load version numbers
 dofile("mods/evaisa.mp/version.lua")
 
-VERSION_FLAVOR_TEXT = "$mp_release"
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = true
@@ -632,7 +631,7 @@ function HandleMessage(v, ignore)
 		lobby_gamemode.message(lobby_code, data, v.user)
 	end
 	
-	if (data[1] and type(data[1]) == "string" and data[2] ~= nil) then
+	if (data[1] and type(data[1]) == "string") then
 		if(bytes_received_per_type[data[1]] == nil)then
 			bytes_received_per_type[data[1]] = 0
 		end
