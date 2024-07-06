@@ -377,20 +377,14 @@ if(not failed_to_load)then
 		if f then
 			local content = f:read("*all")
 			f:close()
-			return sha1.sha1(content)
+			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "unknown"
 		end
+		return "unknown"
 	end
-
-	function GetCompleteHash()
-		local content_hash = GetContentHash()..tostring(ModGetAPIVersion())
-		
-		return content_hash
-	end
-
 
 	noita_version = np.GetVersionString()
 
-	noita_version_hash = GetCompleteHash()
+	noita_version_hash = GetContentHash()
 
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
