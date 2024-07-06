@@ -104,12 +104,12 @@ end
 
 function handleGamemodeVersionCheck(lobbycode)
 	local gamemode_version = steam.matchmaking.getLobbyData(lobbycode, "gamemode_version")
-	local game_version = steam.matchmaking.getLobbyData(lobbycode, "game_version")
+	local game_version_hash = steam.matchmaking.getLobbyData(lobbycode, "game_version_hash")
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobbycode, "gamemode"))
 	--local gamemode = steam.matchmaking.getLobbyData(lobbycode, "gamemode")
 	mp_log:print("Gamemode: " .. tostring(active_mode.id))
 	mp_log:print("Version: " .. tostring(gamemode_version))
-	mp_log:print("Game version: " .. tostring(game_version))
+	mp_log:print("Game version hash: " .. tostring(game_version_hash))
 	if (active_mode ~= nil and gamemode_version ~= nil) then
 		if (active_mode ~= nil) then
 			if (active_mode.version > tonumber(gamemode_version)) then
@@ -124,7 +124,7 @@ function handleGamemodeVersionCheck(lobbycode)
 					message = string.format(GameTextGetTranslatedOrNot("$mp_client_gamemode_outdated"), GameTextGetTranslatedOrNot(active_mode.name))
 				})
 				return false
-			elseif (game_version ~= tostring(noita_version_hash))then
+			elseif (game_version_hash ~= tostring(noita_version_hash))then
 				disconnect({
 					lobbyID = lobbycode,
 					message = GameTextGetTranslatedOrNot("$mp_game_version_mismatch")
@@ -177,14 +177,14 @@ function IsCorrectVersion(lobby)
 	end
 	local version = steam.matchmaking.getLobbyData(lobby, "version")
 	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
-	local game_version = steam.matchmaking.getLobbyData(lobby, "game_version")
+	local game_version_hash = steam.matchmaking.getLobbyData(lobby, "game_version_hash")
 	--local gamemode = steam.matchmaking.getLobbyData(lobby, "gamemode")
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby, "gamemode"))
 	if (version ~= tostring(MP_VERSION)) then
 		cached_correct_lobbies[lobby] = false
 		return false
 	end
-	if (game_version ~= tostring(noita_version_hash))then
+	if (game_version_hash ~= tostring(noita_version_hash))then
 		cached_correct_lobbies[lobby] = false
 		return false
 	end
@@ -220,6 +220,7 @@ function VersionInfo(lobby)
 
 	local version = steam.matchmaking.getLobbyData(lobby, "version")
 	local gamemode_version = steam.matchmaking.getLobbyData(lobby, "gamemode_version")
+	local game_version_hash = steam.matchmaking.getLobbyData(lobby, "game_version_hash") or "missing"
 	local game_version = steam.matchmaking.getLobbyData(lobby, "game_version") or "missing"
 
 	if(version < tostring(MP_VERSION))then
@@ -232,10 +233,10 @@ function VersionInfo(lobby)
 		info.mp_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), MP_VERSION)
 	end
 
-	if(game_version ~= tostring(noita_version_hash))then
+	if(game_version_hash ~= tostring(noita_version_hash))then
 		info.game_version_same = false
 		info.game_version_string = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_game_host_diff"), game_version)
-		info.game_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), noita_version_hash)
+		info.game_version_string_user = string.format(GameTextGetTranslatedOrNot("$mp_lobby_info_you_using"), noita_version)
 	end
 
 	local active_mode = FindGamemode(steam.matchmaking.getLobbyData(lobby, "gamemode"))
