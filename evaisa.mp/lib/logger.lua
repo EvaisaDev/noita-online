@@ -72,7 +72,7 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         end
 
         -- if the message is the same as the last one, don't print it again
-        --[[if new_logger.last_print == log_without_prefix then
+        if new_logger.last_print == log_without_prefix then
             if(not new_logger.last_was_duplicate)then
                 new_logger.log_file:write("\n[Multiple repeating prints detected, hiding..]\n")
                 new_logger.log_file:flush()
@@ -81,7 +81,7 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
             return
         else
             new_logger.last_was_duplicate = false
-        end]]
+        end
 
         new_logger.last_print = log_without_prefix
 

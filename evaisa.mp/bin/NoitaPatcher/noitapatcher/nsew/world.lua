@@ -12,7 +12,7 @@ local C = ffi.C
 ffi.cdef([[
 
 enum ENCODE_CONST {
-    PIXEL_RUN_MAX = 4096,
+    PIXEL_RUN_MAX = 8192,
 
     LIQUID_FLAG_STATIC = 1,
 };
@@ -130,19 +130,24 @@ function world.encode_area(chunk_map, start_x, start_y, end_x, end_y, encoded_ar
 
             local ppixel = world_ffi.get_cell(chunk_map, x, y)
             local pixel = ppixel[0]
+
             if pixel ~= nil then
                 local cell_type = pixel.vtable.get_cell_type(pixel)
 
-                if cell_type ~= C.CELL_TYPE_SOLID then
-                    local material_ptr = pixel.vtable.get_material(pixel)
-                    material_number = world_ffi.get_material_id(material_ptr)
-                end
+                --if cell_type ~= C.CELL_TYPE_SOLID then
+                local material_ptr = pixel.vtable.get_material(pixel)
+                material_number = world_ffi.get_material_id(material_ptr)
+                --end
 
                 if cell_type == C.CELL_TYPE_LIQUID then
                     local liquid_cell = ffi.cast(pliquid_cell, pixel)
                     if liquid_cell.is_static then
                         flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
                     end
+                end
+  
+                if cell_type == C.CELL_TYPE_GAS or cell_type == C.CELL_TYPE_FIRE then
+                    material_number = -1
                 end
             end
 
@@ -208,6 +213,14 @@ function world.decode(grid_world, header, pixel_runs)
     local flags = current_run.flags
     local left = current_run.length + 1
 
+    local new_name = CellFactory_GetName(new_material)
+
+    if(new_name == "concrete_collapsed")then
+        new_material = CellFactory_GetType("templebrick_static")
+        flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
+    end
+
+
     local y = top_left_y
     while y < bottom_right_y do
         local x = top_left_x
@@ -218,15 +231,51 @@ function world.decode(grid_world, header, pixel_runs)
 
                 if ppixel[0] ~= nil then
                     local pixel = ppixel[0]
+                    local cell_type = pixel.vtable.get_cell_type(pixel)
+                    if cell_type == C.CELL_TYPE_SOLID then
+                        local bodies = PhysicsBodyIDQueryBodies( x, y, x, y, false, false )
+                        
+                        local entities_nearby = EntityGetInRadius( x, y, 50 )
+
+                        local entity_found = false
+                        for k, v in ipairs(entities_nearby)do
+                            local body_ids = PhysicsBodyIDGetFromEntity(v)
+                            if(body_ids ~= nil and #body_ids >= 0)then
+                                for i, body_id in ipairs(body_ids)do
+                                    if(body_id == bodies[1])then
+                                        entity_found = true
+                                    end
+                                end
+                            end
+                        end
+
+                        if entity_found then
+                            goto next_pixel
+                        end
+                    end
+         
+
+
                     current_material = world_ffi.get_material_id(pixel.vtable.get_material(pixel))
+
+                    if(((cell_type == C.CELL_TYPE_GAS or cell_type == C.CELL_TYPE_FIRE) or current_material == 0) and new_material == -1)then
+                        goto next_pixel
+                    elseif(new_material == -1)then
+                        new_material = 0
+                    end
 
                     if new_material ~= current_material then
                         world_ffi.remove_cell(grid_world, pixel, x, y, false)
                     end
                 end
 
-                if current_material ~= new_material and new_material ~= 0 then
-                    local pixel = world_ffi.construct_cell(grid_world, x, y, world_ffi.get_material_ptr(new_material), nil)
+                if current_material ~= new_material and new_material ~= 0 and new_material ~= -1 then
+                    local mat_ptr = world_ffi.get_material_ptr(new_material)
+                    if mat_ptr == nil then
+                        GamePrint("NULL mat_ptr encountered")
+                        goto next_pixel
+                    end
+                    local pixel = world_ffi.construct_cell(grid_world, x, y, mat_ptr, nil)
                     if pixel == nil then
                         -- TODO: This can happen when the material texture has a
                         -- transparent pixel at the given coordinate. There's
@@ -260,6 +309,11 @@ function world.decode(grid_world, header, pixel_runs)
                 current_run = pixel_runs[current_run_ix]
                 new_material = current_run.material
                 flags = current_run.flags
+                local new_name = CellFactory_GetName(new_material)
+                if(new_name == "concrete_collapsed")then
+                    new_material = CellFactory_GetType("templebrick_static")
+                    flags = bit.bor(flags, C.LIQUID_FLAG_STATIC)
+                end
                 left = current_run.length + 1
             end
 

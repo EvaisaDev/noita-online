@@ -9,7 +9,7 @@ noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = false
 debugging = true
-disable_print = true
+disable_print = false
 trailer_mode = false
 
 -----------------------------------
@@ -316,7 +316,7 @@ if(not failed_to_load)then
 	end).catch(function(ex)
 		exception_log:print(tostring(ex))
 		if(exceptions_in_logger)then
-			print(tostring(ex))
+			old_print(tostring(ex))
 		end
 	end)
 
@@ -383,6 +383,10 @@ if(not failed_to_load)then
 	end
 
 	noita_version = np.GetVersionString()
+
+	if(GameIsBetaBuild())then
+		noita_version = noita_version .. " (beta)"
+	end
 
 	noita_version_hash = GetContentHash()
 
@@ -455,7 +459,7 @@ if(not failed_to_load)then
 
 	--GameSDK = nil
 	--discord_sdk = nil
-
+	local fs = require("fs")
 
 	--require("physics")
 	steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
@@ -472,21 +476,17 @@ if(not failed_to_load)then
 
 	dofile("mods/evaisa.mp/lib/character_support.lua")
 
-	local extended_logging_enabled = (ModSettingGet("evaisa.betterlogger.extended_logging") == nil or ModSettingGet("evaisa.betterlogger.extended_logging") == true) and
-		true or false
+	local old_print = print
+	print = function(...)
+		if not disable_print then
+			local content = ...
+			local source = debug.getinfo(2).source
+			local line = debug.getinfo(2).currentline
 
-	if (not (ModIsEnabled("evaisa.betterlogger") and extended_logging_enabled)) then
-		local old_print = print
-		print = function(...)
-			if not disable_print then
-				local content = ...
-				local source = debug.getinfo(2).source
-				local line = debug.getinfo(2).currentline
-
-				old_print(table.concat({"[" .. source .. ":" .. tostring(line) .. "]", ... }, " "))
-			end
+			old_print(table.concat({"[" .. source .. ":" .. tostring(line) .. "]", ... }, " "))
 		end
 	end
+
 
 	function OnPausedChanged(paused, is_wand_pickup)
 		local players = EntityGetWithTag("player_unit") or {}
@@ -631,7 +631,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -718,7 +718,7 @@ if(not failed_to_load)then
 	local invalid_version_popup_open = false
 
 	function OnWorldPreUpdate()
-		try(function()
+		--try(function()
 			if(GameHasFlagRun("mp_blocked_load"))then
 				return
 			end
@@ -880,6 +880,7 @@ if(not failed_to_load)then
 					ResetIDs()
 					ResetWindowStack()
 
+					--print(fs.cd())
 					
 					dofile("mods/evaisa.mp/files/scripts/lobby_ui.lua")
 					dofile("mods/evaisa.mp/files/scripts/chat_ui.lua")
@@ -1002,12 +1003,12 @@ if(not failed_to_load)then
 					end
 				end
 			end
-		end).catch(function(ex)
+		--[[end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
-		end)
+		end)]]
 	end
 
 	function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,
@@ -1030,7 +1031,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1055,7 +1056,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1098,7 +1099,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1227,7 +1228,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1304,7 +1305,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1404,7 +1405,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
@@ -1455,7 +1456,7 @@ if(not failed_to_load)then
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
-				print(tostring(ex))
+				old_print(tostring(ex))
 			end
 		end)
 	end
