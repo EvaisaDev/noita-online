@@ -8,9 +8,10 @@ dofile("mods/evaisa.mp/version.lua")
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = false
-debugging = true
-disable_print = false
+debugging = false
+disable_print = true
 trailer_mode = false
+disable_error_catching = true
 
 -----------------------------------
 
@@ -718,7 +719,7 @@ if(not failed_to_load)then
 	local invalid_version_popup_open = false
 
 	function OnWorldPreUpdate()
-		--try(function()
+		try(function()
 			if(GameHasFlagRun("mp_blocked_load"))then
 				return
 			end
@@ -1003,12 +1004,12 @@ if(not failed_to_load)then
 					end
 				end
 			end
-		--[[end).catch(function(ex)
+		end).catch(function(ex)
 			exception_log:print(tostring(ex))
 			if(exceptions_in_logger)then
 				old_print(tostring(ex))
 			end
-		end)]]
+		end)
 	end
 
 	function OnProjectileFired(shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message,

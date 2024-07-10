@@ -62,6 +62,9 @@ function disconnect(data)
 end
 
 function handleBanCheck(user)
+	if(lobby_code == nil)then
+		return false
+	end
 	if (banned_members[tostring(user)] ~= nil or steam_utils.IsPlayerBlacklisted(user)) then
 		mp_log:print("Disconnected member: " .. tostring(user))
 		banned_members[tostring(user)] = true
@@ -72,6 +75,9 @@ function handleBanCheck(user)
 end
 
 function handleInProgressCheck(user)
+	if(lobby_code == nil)then
+		return false
+	end
 	local is_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") or "false"
 	local allow_in_progress_joining = steam.matchmaking.getLobbyData(lobby_code, "allow_in_progress_joining") or "true"
 	--print(is_in_progress)

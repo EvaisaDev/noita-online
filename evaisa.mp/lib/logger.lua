@@ -62,6 +62,7 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
 
         if(no_prefix)then
             log_message = string.format("%s\n", message)
+            log_without_prefix = log_message
         else
             -- Get the current timestamp
             local timestamp = os.date("%Y-%m-%d %H:%M:%S")
@@ -78,15 +79,16 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
                 new_logger.log_file:flush()
             end
             new_logger.last_was_duplicate = true
-            return
         else
             new_logger.last_was_duplicate = false
         end
 
         new_logger.last_print = log_without_prefix
 
-        new_logger.log_file:write(log_message)
-        new_logger.log_file:flush()
+        if(not new_logger.last_was_duplicate)then
+            new_logger.log_file:write(log_message)
+            new_logger.log_file:flush()
+        end
     end
 
     function new_logger.enabled(_, enabled)

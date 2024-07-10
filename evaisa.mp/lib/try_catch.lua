@@ -9,6 +9,10 @@ local function try (tryBlock)
     local status, err = true, nil
 
     if type(tryBlock) == functionType then
+        if(disable_error_catching)then
+            -- run without pcall, and add result to status err thing
+            status, err = true, tryBlock()
+        end
         status, err = xpcall(tryBlock, debug.traceback)
     end
 
