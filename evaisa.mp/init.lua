@@ -9,7 +9,7 @@ noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = true
 debugging = false
-disable_print = true
+disable_print = false
 trailer_mode = false
 disable_error_catching = true
 
@@ -383,6 +383,7 @@ if(not failed_to_load)then
 		return "unknown"
 	end
 
+	--[[
 	noita_version = np.GetVersionString()
 
 	if(GameIsBetaBuild())then
@@ -390,6 +391,9 @@ if(not failed_to_load)then
 	end
 
 	noita_version_hash = GetContentHash()
+	]]
+	noita_version = "0"
+	noita_version_hash = "0"
 
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
