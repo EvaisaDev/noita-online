@@ -382,13 +382,14 @@ if(not failed_to_load)then
 		end
 		return "unknown"
 	end
-
-	--[[
+	
 	noita_version = np.GetVersionString()
 
 	if(GameIsBetaBuild())then
 		noita_version = noita_version .. " (beta)"
 	end
+
+	--[[
 
 	noita_version_hash = GetContentHash()
 	]]
