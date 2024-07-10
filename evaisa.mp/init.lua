@@ -383,18 +383,14 @@ if(not failed_to_load)then
 		return "unknown"
 	end
 
-	--[[
-
 
 	noita_version_hash = GetContentHash()
-	]]
+
 	noita_version = np.GetVersionString()
 
 	if(GameIsBetaBuild())then
 		noita_version = noita_version .. " (beta)"
 	end
-	
-	noita_version_hash = "a9a13c32fc9fc4e6bb9bb3c3a5100908a0cbbc5f"
 
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
