@@ -227,7 +227,7 @@ if(not failed_to_load)then
 	networking_log = logger.init("networking.log")
 	debug_log = logger.init("debugging.log")
 	exception_log = logger.init(os.date("%Y-%m-%d_%H-%M-%S")..".log", false, nil, "noita_online_logs/exceptions")
-	debug_info = logger.init("debug_info.log", nil, true)
+	debug_info = logger.init("debug_info.log", nil, true, nil, true)
 
 	if(not debugging)then
 		networking_log.enabled = false
@@ -378,7 +378,7 @@ if(not failed_to_load)then
 		if f then
 			local content = f:read("*all")
 			f:close()
-			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "unknown"
+			return "Unknown"--sha1.sha1(content..tostring(ModGetAPIVersion())) or "unknown"
 		end
 		return "unknown"
 	end
@@ -393,6 +393,14 @@ if(not failed_to_load)then
 	end
 
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
+
+	debug_info:print("Noita hash_bytes: ")
+	for i = 1, #noita_version_hash do
+		debug_info:print(string.byte(noita_version_hash, i))
+	end
+
+
+
 
 	--[[last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
 	laa_check_done = true

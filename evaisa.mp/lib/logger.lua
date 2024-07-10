@@ -1,7 +1,7 @@
 -- logger.lua
 local default_folder_path = "logger"
 
-local function create_logger(output_path, filename, overwrite, no_prefix)
+local function create_logger(output_path, filename, overwrite, no_prefix, allow_repeats)
     -- ensure/create the directory for the logger files
     if not os.rename(output_path, output_path) then
         os.execute("mkdir \"" .. output_path .. "\" 2>nul")
@@ -73,19 +73,24 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
         end
 
         -- if the message is the same as the last one, don't print it again
-        if new_logger.last_print == log_without_prefix then
-            if(not new_logger.last_was_duplicate)then
-                new_logger.log_file:write("\n[Multiple repeating prints detected, hiding..]\n")
-                new_logger.log_file:flush()
+        if(not allow_repeats)then
+            if new_logger.last_print == log_without_prefix then
+                if(not new_logger.last_was_duplicate)then
+                    new_logger.log_file:write("\n[Multiple repeating prints detected, hiding..]\n")
+                    new_logger.log_file:flush()
+                end
+                new_logger.last_was_duplicate = true
+            else
+                new_logger.last_was_duplicate = false
             end
-            new_logger.last_was_duplicate = true
         else
+            print("Allowing repeats")
             new_logger.last_was_duplicate = false
         end
 
         new_logger.last_print = log_without_prefix
 
-        if(not new_logger.last_was_duplicate)then
+        if(not new_logger.last_was_duplicate or allow_repeats)then
             new_logger.log_file:write(log_message)
             new_logger.log_file:flush()
         end
@@ -107,8 +112,8 @@ local function create_logger(output_path, filename, overwrite, no_prefix)
 end
 
 local logger = {
-    init = function(filename, overwrite, no_prefix, folder_overwrite)
-        return create_logger(folder_overwrite or default_folder_path, filename, overwrite, no_prefix)
+    init = function(filename, overwrite, no_prefix, folder_overwrite, allow_repeats)
+        return create_logger(folder_overwrite or default_folder_path, filename, overwrite, no_prefix, allow_repeats)
     end
 }
 
