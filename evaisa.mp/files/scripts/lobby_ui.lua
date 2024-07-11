@@ -1633,6 +1633,15 @@ local windows = {
 							mp_log:print("Attempting to load into gamemode: "..(active_mode and active_mode.name or "UNKNOWN"))
 
 							if(active_mode)then
+								local lobby_data_count = steam.matchmaking.getLobbyDataCount(lobby_code)
+								for i = 1, lobby_data_count do
+									local data = steam.matchmaking.getLobbyDataByIndex(lobby_code, i -1 )
+									
+									if(cached_lobby_data[data.key] ~= data.value)then
+										cached_lobby_data[data.key] = data.value
+									end
+									debug_log:print("Lobby Data: ["..tostring(data.key).."] = "..tostring(data.value))
+								end
 
 								in_game = true
 								steam.matchmaking.setLobbyMemberData(lobby_code, "in_game", "true")

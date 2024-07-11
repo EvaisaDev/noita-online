@@ -356,7 +356,8 @@ if(not failed_to_load)then
 
 	debug_info:print("Dev mode: " .. tostring(dev_mode))
 
-	
+	local fs = require("fs")
+
 	local sha1 = require "sha1"
 
 	function GetNoitaVersionHash()
@@ -370,21 +371,35 @@ if(not failed_to_load)then
 		return nil
 	end
 
+	local function sleep(ms)
+		-- loop for n ms
+		local t0 = os.clock()
+		while os.clock() - t0 <= ms / 1000 do
+		end
+	end
+
 	function GetContentHash()
 		-- read data/data.wak
 		local file = "data/data.wak"
 		-- read in binary mode
-		local f = io.open(file, "rb")
+		--[[local f = io.open(file, "rb")
 		if f then
 			local content = f:read("*all")
+			--f:close()
+			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "Unknown"
+		end]]
+
+		local f, err = fs.open(file)
+		if f then
+			local content, size = f:readall()
+			-- cast content from unsigned char to string
+			content = ffi.string(content, size)
 			f:close()
-			return "Unknown"--sha1.sha1(content..tostring(ModGetAPIVersion())) or "unknown"
+			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "Unknown"
 		end
-		return "unknown"
+
+		return "Unknown"
 	end
-
-
-	noita_version_hash = GetContentHash()
 
 	noita_version = np.GetVersionString()
 
@@ -392,15 +407,11 @@ if(not failed_to_load)then
 		noita_version = noita_version .. " (beta)"
 	end
 
+
+
+
+	noita_version_hash = GetContentHash()
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
-
-	debug_info:print("Noita hash_bytes: ")
-	for i = 1, #noita_version_hash do
-		debug_info:print(string.byte(noita_version_hash, i))
-	end
-
-
-
 
 	--[[last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
 	laa_check_done = true
@@ -469,7 +480,6 @@ if(not failed_to_load)then
 
 	--GameSDK = nil
 	--discord_sdk = nil
-	local fs = require("fs")
 
 	--require("physics")
 	steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
@@ -1660,6 +1670,7 @@ if(not failed_to_load)then
 	end
 
 	function OnPlayerSpawned(player)
+
 		-- make popup
 		local streaming, streaming_app = streaming.IsStreaming()
 		if(ModSettingGet("evaisa.mp.streamer_mode_detection") and streaming and not ModSettingGet("evaisa.mp.streamer_mode"))then
