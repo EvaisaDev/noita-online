@@ -9,9 +9,9 @@ noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
 dev_mode = true
 debugging = false
-disable_print = false
+disable_print = true
 trailer_mode = false
-disable_error_catching = true
+disable_error_catching = false
 
 -----------------------------------
 
@@ -381,24 +381,26 @@ if(not failed_to_load)then
 	function GetContentHash()
 		-- read data/data.wak
 		local file = "data/data.wak"
-		-- read in binary mode
-		--[[local f = io.open(file, "rb")
-		if f then
-			local content = f:read("*all")
-			--f:close()
-			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "Unknown"
-		end]]
 
-		local f, err = fs.open(file)
-		if f then
-			local content, size = f:readall()
-			-- cast content from unsigned char to string
-			content = ffi.string(content, size)
-			f:close()
-			return sha1.sha1(content..tostring(ModGetAPIVersion())) or "Unknown"
+		-- use certutil -hashfile  SHA1
+		-- hash file
+
+		local handle = io.popen("certutil -hashfile \"" .. file .. "\" SHA1")
+
+		if not handle then
+			return "Unknown"
+		end
+		
+		local result = handle:read("*a")
+		handle:close()
+
+		local hash = string.match(result, "SHA1 hash of " .. file .. ":\n([%w]+)\n")
+
+		if not hash then
+			return "Unknown"
 		end
 
-		return "Unknown"
+		return hash
 	end
 
 	noita_version = np.GetVersionString()
