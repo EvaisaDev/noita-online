@@ -74,6 +74,36 @@ set_content = ModTextFileSetContent
 
 dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
 
+function GetContentHash()
+	-- read data/data.wak
+	local file = "data\\data.wak"
+
+	-- use certutil -hashfile  SHA1
+	-- hash file
+
+	local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
+
+	if not handle then
+		return "Unknown"
+	end
+	
+	local result = handle:read("*a")
+	handle:close()
+
+	if not result then
+		return "Unknown"
+	end
+
+	-- remove surrounding newlines
+	result = result:gsub("^%s*(.-)%s*$", "%1")
+
+	return result
+end
+noita_version_hash = GetContentHash()
+
+print("Noita version hash: " .. noita_version_hash)
+
+
 
 
 -- do not apply any callbacks or anything because this is fucked up and evil
@@ -378,30 +408,7 @@ if(not failed_to_load)then
 		end
 	end
 
-	function GetContentHash()
-		-- read data/data.wak
-		local file = "data/data.wak"
 
-		-- use certutil -hashfile  SHA1
-		-- hash file
-
-		local handle = io.popen("certutil -hashfile \"" .. file .. "\" SHA1")
-
-		if not handle then
-			return "Unknown"
-		end
-		
-		local result = handle:read("*a")
-		handle:close()
-
-		local hash = string.match(result, "SHA1 hash of " .. file .. ":\n([%w]+)\n")
-
-		if not hash then
-			return "Unknown"
-		end
-
-		return hash
-	end
 
 	noita_version = np.GetVersionString()
 
@@ -412,7 +419,7 @@ if(not failed_to_load)then
 
 
 
-	noita_version_hash = GetContentHash()
+
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
 	--[[last_noita_version = ModSettingGet("evaisa.mp.last_noita_version_hash") or ""
