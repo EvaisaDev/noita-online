@@ -7,7 +7,7 @@ dofile("mods/evaisa.mp/version.lua")
 
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
-dev_mode = true
+dev_mode = false
 debugging = false
 disable_print = true
 trailer_mode = false
@@ -77,9 +77,6 @@ dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
 function GetContentHash()
 	-- read data/data.wak
 	local file = "data\\data.wak"
-
-	-- use certutil -hashfile  SHA1
-	-- hash file
 
 	local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
 
