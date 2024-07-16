@@ -7,9 +7,9 @@ dofile("mods/evaisa.mp/version.lua")
 
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
-dev_mode = false
+dev_mode = true
 debugging = false
-disable_print = true
+disable_print = false
 trailer_mode = false
 disable_error_catching = false
 
@@ -73,32 +73,6 @@ get_content = ModTextFileGetContent
 set_content = ModTextFileSetContent
 
 dofile("mods/evaisa.mp/lib/ffi_extensions.lua")
-
-function GetContentHash()
-	-- read data/data.wak
-	local file = "data\\data.wak"
-
-	local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
-
-	if not handle then
-		return "Unknown"
-	end
-	
-	local result = handle:read("*a")
-	handle:close()
-
-	if not result then
-		return "Unknown"
-	end
-
-	-- remove surrounding newlines
-	result = result:gsub("^%s*(.-)%s*$", "%1")
-
-	return result
-end
-noita_version_hash = GetContentHash()
-
-print("Noita version hash: " .. noita_version_hash)
 
 
 
@@ -301,34 +275,6 @@ if(not failed_to_load)then
 		return bit.band(characteristics, 0x20) == 0x20 -- Properly check the IMAGE_FILE_LARGE_ADDRESS_AWARE flag
 	end
 
-	local function LAAPatch()
-		local batch = string.format([[
-			@echo off
-			taskkill /F /IM "noita.exe"
-			timeout /t 5
-
-			echo Running LAA-enabling script
-
-			start mods/evaisa.mp/bin/laac.exe noita.exe
-
-			echo LAA-enabling script finished, starting Noita
-
-			timeout /t 5
-
-			start noita.exe
-
-			echo You can close this window.
-		]])
-
-		--
-
-		local batchname = "enablelaa.bat"
-		local batchfile = io.open(batchname, "w")
-		batchfile:write(batch)
-		batchfile:close()
-
-		os.execute("start "..batchname)
-	end
 	lobby_data_last_frame = {}
 	lobby_data_updated_this_frame = {}
 
@@ -413,9 +359,62 @@ if(not failed_to_load)then
 		noita_version = noita_version .. " (beta)"
 	end
 
+	function GetContentHash()
+		if not ffi.os == "Windows" then
+			debug_log:print("Used hasher.exe to get the data.wak hash")
+	
+			local file = "data\\data.wak"
+	
+			local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
+		
+			if not handle then
+				return "Unknown"
+			end
+			
+			local result = handle:read("*a")
+			handle:close()
+		
+			if not result then
+				return "Unknown"
+			end
+		
+			-- remove surrounding newlines
+			result = result:gsub("^%s*(.-)%s*$", "%1")
+		
+			return result
+		else
+			debug_log:print("Used certutil to get the data.wak hash")
+	
+			-- run certutil
+			local handle = io.popen("certutil -hashfile data\\data.wak SHA1")
+	
+			if not handle then
+				return "Unknown"
+			end
+	
+			local result = handle:read("*a")
+			handle:close()
+			
+			debug_log:print(result)
 
+			local file = "data\\data.wak"
+		
+			local hash = string.match(result, "SHA1 hash of " .. file .. ":\n([%w]+)\n")
+		
+			if not hash then
+				return "Unknown"
+			end
+	
+			return hash
+		end
+	end
+	
+	
 
+	noita_version_hash = GetContentHash()
 
+	print("Noita version hash: " .. noita_version_hash)
+	
 
 	debug_info:print("Noita hash: " .. tostring(noita_version_hash))
 
