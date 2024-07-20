@@ -360,53 +360,44 @@ if(not failed_to_load)then
 	end
 
 	function GetContentHash()
-		if not ffi.os == "Windows" then
-			debug_log:print("Used hasher.exe to get the data.wak hash")
-	
-			local file = "data\\data.wak"
-	
-			local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
-		
-			if not handle then
-				return "Unknown"
-			end
-			
-			local result = handle:read("*a")
-			handle:close()
-		
-			if not result then
-				return "Unknown"
-			end
-		
-			-- remove surrounding newlines
-			result = result:gsub("^%s*(.-)%s*$", "%1")
-		
-			return result
-		else
-			debug_log:print("Used certutil to get the data.wak hash")
-	
-			-- run certutil
-			local handle = io.popen("certutil -hashfile data\\data.wak SHA1")
-	
-			if not handle then
-				return "Unknown"
-			end
-	
-			local result = handle:read("*a")
-			handle:close()
-			
-			debug_log:print(result)
+		local file = "data\\data.wak"
 
-			local file = "data\\data.wak"
-		
-			local hash = string.match(result, "SHA1 hash of " .. file .. ":\n([%w]+)\n")
-		
-			if not hash then
-				return "Unknown"
-			end
-	
+		-- try to run certutil
+		local handle = io.popen("certutil -hashfile " .. file .. " SHA1")
+
+		if not handle then
+			return "Unknown"
+		end
+
+		local result = handle:read("*a")
+		handle:close()
+
+		local hash = string.match(result, "SHA1 hash of " .. file .. ":\n([%w]+)\n")
+
+		if hash then
 			return hash
 		end
+
+		-- try to run hasher.exe instead
+		debug_log:print("Used hasher.exe to get the data.wak hash")
+
+		local handle = io.popen("mods\\evaisa.mp\\bin\\hasher.exe \"" .. file .. "\"")
+
+		if not handle then
+			return "Unknown"
+		end
+
+		local result = handle:read("*a")
+		handle:close()
+
+		if not result then
+			return "Unknown"
+		end
+
+		-- remove surrounding newlines
+		result = result:gsub("^%s*(.-)%s*$", "%1")
+
+		return result
 	end
 	
 	
