@@ -119,6 +119,7 @@ if(not failed_to_load)then
 
 	local gamemode_path = nil
 
+	-- Old function, doesn't work properly if multiple installs of mod exists and i do not know how to solve this.
 	function GetGamemodeFilePath()
 
 		if(gamemode_path)then
@@ -202,6 +203,32 @@ if(not failed_to_load)then
 		debug_log:print("Gamemode path: " .. tostring(file_path))
 
 		gamemode_path = file_path
+
+		return file_path
+	end
+
+	function GetModFilePath(mod_id, steam_id)
+		local file_path = nil
+
+		if(not steam_id or steam_id == "" or steam_id == "0")then
+			file_path = "mods/" .. mod_id
+		else
+			local subscribed_items = steam.UGC.getSubscribedItems()
+			local item_infos = {}
+
+			for _, v in ipairs(subscribed_items) do
+
+				local success, size, folder, timestamp = steam.UGC.getItemInstallInfo(v)
+				if (success) then
+					item_infos[tostring(v)] = {size = size, folder = folder, timestamp = timestamp}
+				end
+
+			end
+
+			if(item_infos[steam_id])then
+				file_path = item_infos[steam_id].folder
+			end
+		end
 
 		return file_path
 	end
