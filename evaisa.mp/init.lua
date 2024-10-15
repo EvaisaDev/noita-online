@@ -7,9 +7,9 @@ dofile("mods/evaisa.mp/version.lua")
 
 noita_online_download = "https://github.com/EvaisaDev/noita-online/releases"
 exceptions_in_logger = true
-dev_mode = false
+dev_mode = true
 debugging = false
-disable_print = true
+disable_print = false
 trailer_mode = false
 disable_error_catching = false
 
@@ -535,7 +535,9 @@ if(not failed_to_load)then
 		local players = EntityGetWithTag("player_unit") or {}
 
 		if(not is_wand_pickup)then
-			profiler_ui.apply_profiler_rate()
+			if(imgui)then
+				profiler_ui.apply_profiler_rate()
+			end
 		end
 
 		if (players[1]) then
@@ -772,8 +774,13 @@ if(not failed_to_load)then
 				steam_overlay_open = false
 			end]]
 
-			profiler_ui.pre_update()
-
+			if(imgui)then
+				profiler_ui.pre_update()
+			else
+				if (input ~= nil and input:WasKeyPressed("f8")) then
+					GamePrint("Cannot use profiler without dear imgui installed.")
+				end
+			end
 			--input:Update()
 
 			wake_up_waiting_threads(1)
@@ -1115,7 +1122,9 @@ if(not failed_to_load)then
 				if (lobby_code ~= nil) then
 
 					if (lobby_gamemode ~= nil and game_in_progress) then
-						lobby_gamemode.late_update(lobby_code)
+						if (lobby_gamemode.late_update) then
+							lobby_gamemode.late_update(lobby_code)
+						end
 
 						--[[
 						local messages = steam.networking.pollMessages() or {}
@@ -1137,7 +1146,9 @@ if(not failed_to_load)then
 			end
 
 
-			profiler_ui.post_update()
+			if(imgui)then
+				profiler_ui.post_update()
+			end
 
 		end).catch(function(ex)
 			exception_log:print(tostring(ex))

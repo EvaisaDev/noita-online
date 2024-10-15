@@ -336,7 +336,7 @@ local default_lobby_menus = {
 
 			edit_lobby_type = internal_type_map[steam_utils.GetLobbyData("LobbyType")]
 
-			local true_max = 32
+			local true_max = 250
 
 			local default_max_players = 8
 
@@ -2520,7 +2520,7 @@ local windows = {
 			lobby_type = lobby_type or 1
 			gamemode_index = gamemode_index or 1
 
-			local true_max = 32
+			local true_max = 250
 
 			local default_max_players = 8
 
